@@ -49,6 +49,8 @@ const normalizeSubjectReference = (subjectReference: any) => {
     resourceName: normalizeString(subjectReference?.resourceName) || null,
     label: normalizeString(subjectReference?.label) || null,
     route: normalizeString(subjectReference?.route) || null,
+    selectionSnippet: normalizeString(subjectReference?.selectionSnippet) || null,
+    selectionType: normalizeString(subjectReference?.selectionType).toLowerCase() || null,
   };
 };
 

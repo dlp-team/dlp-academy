@@ -10,6 +10,13 @@
 - None.
 
 ## Processed Updates
+- 2026-04-13: Applied follow-up requested by user to complete missing behavior: StudyGuide now preserves exact selected text/formula context in teacher-question references, and Messages reference picker now enforces hierarchical selection (`Asignatura -> Tema -> Recurso`) including topic-level references. Synced in:
+	- [src/pages/Content/StudyGuide.tsx](src/pages/Content/StudyGuide.tsx)
+	- [src/pages/Messages/Messages.tsx](src/pages/Messages/Messages.tsx)
+	- [src/utils/studyGuideQuestionUtils.ts](src/utils/studyGuideQuestionUtils.ts)
+	- [src/services/directMessageService.ts](src/services/directMessageService.ts)
+	- [tests/unit/utils/studyGuideQuestionUtils.test.js](tests/unit/utils/studyGuideQuestionUtils.test.js)
+	- [copilot/explanations/temporal/lossless-reports/2026-04-13/studyguide-contextual-teacher-questions-and-chat-reliability.md](copilot/explanations/temporal/lossless-reports/2026-04-13/studyguide-contextual-teacher-questions-and-chat-reliability.md)
 - 2026-04-13: Added student StudyGuide contextual messaging workflow requested by user: selected-text right-click action (`Preguntar al profesor`) with teacher selection, custom message, and direct-message payload linked to the exact guide route. Also addressed runtime blockers reported in chat entry (index fallback noise and subject-reference permission failures). Synced in:
 	- `src/pages/Content/StudyGuide.tsx`
 	- `src/utils/studyGuideQuestionUtils.ts`

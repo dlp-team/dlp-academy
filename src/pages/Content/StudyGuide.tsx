@@ -290,6 +290,7 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                                         <button
                                             key={fIdx}
                                             onClick={scrollToFormulas}
+                                            data-studyguide-formula={cleanMath(formula)}
                                             className="w-full group/item relative overflow-visible cursor-pointer"
                                         >
                                             <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-3xl blur-2xl opacity-0 group-hover/item:opacity-15 transition-opacity duration-700`} />
@@ -484,10 +485,12 @@ const StudyGuide = ({ user }: any) => {
         x: 0,
         y: 0,
         selectedText: '',
+        selectionType: 'text',
     });
     const [questionComposerOpen, setQuestionComposerOpen] = useState(false);
     const [selectedTeacherUid, setSelectedTeacherUid] = useState('');
     const [selectedGuideSnippet, setSelectedGuideSnippet] = useState('');
+    const [selectedGuideSnippetType, setSelectedGuideSnippetType] = useState<'text' | 'formula'>('text');
     const [teacherQuestionMessage, setTeacherQuestionMessage] = useState('');
     const [sendingTeacherQuestion, setSendingTeacherQuestion] = useState(false);
     const [teacherQuestionFeedback, setTeacherQuestionFeedback] = useState<{ tone: '' | 'success' | 'error'; text: string }>({
@@ -519,13 +522,24 @@ const StudyGuide = ({ user }: any) => {
     const closeTeacherQuestionContextMenu = useCallback(() => {
         setTeacherQuestionContextMenu((previous: any) => (
             previous?.isOpen
-                ? { isOpen: false, x: 0, y: 0, selectedText: '' }
+                ? { isOpen: false, x: 0, y: 0, selectedText: '', selectionType: 'text' }
                 : previous
         ));
     }, []);
 
-    const readSelectedGuideText = useCallback(() => {
+    const readSelectedGuideText = useCallback((event: any) => {
         if (typeof window === 'undefined') return '';
+
+        const formulaContainer = event?.target?.closest?.('[data-studyguide-formula]');
+        if (formulaContainer && contentRootRef.current?.contains(formulaContainer)) {
+            const formulaValue = normalizeValue(formulaContainer.getAttribute('data-studyguide-formula')).replace(/\s+/g, ' ');
+            if (formulaValue) {
+                return {
+                    selectedText: formulaValue,
+                    selectionType: 'formula',
+                };
+            }
+        }
 
         const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0) return '';
@@ -543,14 +557,17 @@ const StudyGuide = ({ user }: any) => {
             return '';
         }
 
-        return selectedText;
+        return {
+            selectedText,
+            selectionType: 'text',
+        };
     }, []);
 
     const handleStudyGuideContextMenu = useCallback((event: any) => {
         if (!isStudentView) return;
 
-        const selectedText = readSelectedGuideText();
-        if (!selectedText) {
+        const selectedContext = readSelectedGuideText(event);
+        if (!selectedContext || !selectedContext.selectedText) {
             closeTeacherQuestionContextMenu();
             return;
         }
@@ -560,7 +577,8 @@ const StudyGuide = ({ user }: any) => {
             isOpen: true,
             x: event.clientX,
             y: event.clientY,
-            selectedText,
+            selectedText: selectedContext.selectedText,
+            selectionType: selectedContext.selectionType,
         });
     }, [closeTeacherQuestionContextMenu, isStudentView, readSelectedGuideText]);
 
@@ -952,12 +970,16 @@ const StudyGuide = ({ user }: any) => {
 
     const handleOpenTeacherQuestionComposer = () => {
         const selectedText = normalizeValue(teacherQuestionContextMenu?.selectedText).replace(/\s+/g, ' ');
+        const selectionType = normalizeValue(teacherQuestionContextMenu?.selectionType).toLowerCase() === 'formula'
+            ? 'formula'
+            : 'text';
         if (!selectedText) {
             closeTeacherQuestionContextMenu();
             return;
         }
 
         setSelectedGuideSnippet(selectedText);
+        setSelectedGuideSnippetType(selectionType);
         setQuestionComposerOpen(true);
         setTeacherQuestionMessage('');
         setTeacherQuestionFeedback({ tone: '', text: '' });
@@ -968,6 +990,8 @@ const StudyGuide = ({ user }: any) => {
         if (sendingTeacherQuestion) return;
         setQuestionComposerOpen(false);
         setTeacherQuestionMessage('');
+        setSelectedGuideSnippet('');
+        setSelectedGuideSnippetType('text');
     };
 
     const handleSendTeacherQuestion = async () => {
@@ -999,6 +1023,7 @@ const StudyGuide = ({ user }: any) => {
         const directMessageContent = composeStudyGuideQuestionMessage({
             guideTitle: guideData?.title || subjectName || 'Guia de estudio',
             selectedText: normalizedSnippet,
+            selectionType: selectedGuideSnippetType,
             question: normalizedQuestion,
             maxLength: 700,
         });
@@ -1008,6 +1033,8 @@ const StudyGuide = ({ user }: any) => {
             topicId,
             guideId: activeDocId,
             guideTitle: guideData?.title || subjectName || 'Guia de estudio',
+            selectionSnippet: normalizedSnippet,
+            selectionType: selectedGuideSnippetType,
         });
 
         setSendingTeacherQuestion(true);
@@ -1038,6 +1065,7 @@ const StudyGuide = ({ user }: any) => {
             setQuestionComposerOpen(false);
             setTeacherQuestionMessage('');
             setSelectedGuideSnippet('');
+            setSelectedGuideSnippetType('text');
         } catch (error: any) {
             const fallbackError = 'No se pudo enviar tu duda al profesor en este momento.';
             setTeacherQuestionFeedback({
@@ -1554,6 +1582,7 @@ const StudyGuide = ({ user }: any) => {
                                                             <button
                                                                 key={formulaIdx}
                                                                 onClick={() => scrollToSection(sectionIdx)}
+                                                                data-studyguide-formula={cleanMath(formula)}
                                                                 className="group/formula relative cursor-pointer text-left w-fit"
                                                             >
                                                                 {/* Glow on hover */}
@@ -1608,6 +1637,7 @@ const StudyGuide = ({ user }: any) => {
                                                             <button
                                                                 key={formulaIdx}
                                                                 onClick={() => scrollToSection(sectionIdx)}
+                                                                data-studyguide-formula={cleanMath(formula)}
                                                                 className="w-full group/item relative overflow-visible cursor-pointer"
                                                             >
                                                                 <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-3xl blur-2xl opacity-0 group-hover/item:opacity-15 transition-opacity duration-700`} />
@@ -1738,7 +1768,9 @@ const StudyGuide = ({ user }: any) => {
                     />
 
                     <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300">
-                        <p className="font-semibold text-slate-700 dark:text-slate-200">Fragmento seleccionado</p>
+                        <p className="font-semibold text-slate-700 dark:text-slate-200">
+                            {selectedGuideSnippetType === 'formula' ? 'Formula seleccionada' : 'Fragmento seleccionado'}
+                        </p>
                         <p className="mt-1 leading-relaxed">{selectedGuideSnippet || 'No hay texto seleccionado.'}</p>
                     </div>
 

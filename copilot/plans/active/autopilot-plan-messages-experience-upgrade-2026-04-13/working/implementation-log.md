@@ -30,3 +30,11 @@
 - Updated `firestore.indexes.json` direct-message composites with explicit `__name__` descending tie-break field.
 - Validation rerun completed: `get_errors` clean, `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js tests/unit/services/directMessageService.test.js tests/unit/utils/directMessageUtils.test.js` (17/17), `npm run lint` passed.
 - Rules emulator suite attempted (`npm run test:rules`), but local environment lacks Firebase CLI (`firebase` command not found).
+- Follow-up refinement implemented for exact StudyGuide references:
+	- Added formula-aware right-click selection capture (`selectionType` text/formula) and explicit formula node markers in StudyGuide.
+	- Extended StudyGuide message/reference payload with `selectionSnippet` and `selectionType`.
+- Follow-up refinement implemented for hierarchical chat references:
+	- Added `Asignatura -> Tema -> Recurso` picker flow in both composer render variants.
+	- Added topic-level reference insertion (`Tema seleccionado`) and topic route generation.
+	- Added reference snippet preview rendering inside chat bubbles for exact-context visibility.
+- Follow-up validation rerun completed: `get_errors` clean, `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js` (6/6), `npm run lint` passed.

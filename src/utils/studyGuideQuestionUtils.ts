@@ -53,11 +53,13 @@ export const buildTeacherCandidateUidsFromSubject = (subjectData: any) => {
 export const composeStudyGuideQuestionMessage = ({
   guideTitle,
   selectedText,
+  selectionType,
   question,
   maxLength = DIRECT_MESSAGE_MAX_LENGTH,
 }: {
   guideTitle?: any;
   selectedText?: any;
+  selectionType?: any;
   question?: any;
   maxLength?: number;
 }) => {
@@ -81,7 +83,10 @@ export const composeStudyGuideQuestionMessage = ({
     prefixLines.push(questionLine);
   }
 
-  const selectionLabelPrefix = 'Fragmento seleccionado: "';
+  const normalizedSelectionType = normalizeInlineText(selectionType).toLowerCase();
+  const selectionLabelPrefix = normalizedSelectionType === 'formula'
+    ? 'Formula seleccionada: "'
+    : 'Fragmento seleccionado: "';
   const selectionLabelSuffix = '"';
   const reservedCharacters = `${prefixLines.join('\n')}\n${selectionLabelPrefix}${selectionLabelSuffix}`.length;
   const selectionBudget = Math.max(80, normalizedMaxLength - reservedCharacters);
@@ -99,11 +104,15 @@ export const buildStudyGuideQuestionReference = ({
   topicId,
   guideId,
   guideTitle,
+  selectionSnippet,
+  selectionType,
 }: {
   subjectId?: any;
   topicId?: any;
   guideId?: any;
   guideTitle?: any;
+  selectionSnippet?: any;
+  selectionType?: any;
 }) => {
   const normalizedSubjectId = normalizeInlineText(subjectId);
   const normalizedTopicId = normalizeInlineText(topicId);
@@ -114,6 +123,8 @@ export const buildStudyGuideQuestionReference = ({
   }
 
   const normalizedGuideTitle = normalizeInlineText(guideTitle) || DEFAULT_GUIDE_TITLE;
+  const normalizedSelectionSnippet = truncateWithEllipsis(normalizeInlineText(selectionSnippet), 280) || null;
+  const normalizedSelectionType = normalizeInlineText(selectionType).toLowerCase() || null;
 
   return {
     subjectId: normalizedSubjectId,
@@ -124,5 +135,7 @@ export const buildStudyGuideQuestionReference = ({
     resourceName: normalizedGuideTitle,
     label: `Guia: ${normalizedGuideTitle}`,
     route: `/home/subject/${normalizedSubjectId}/topic/${normalizedTopicId}/resumen/${normalizedGuideId}`,
+    selectionSnippet: normalizedSelectionSnippet,
+    selectionType: normalizedSelectionType,
   };
 };

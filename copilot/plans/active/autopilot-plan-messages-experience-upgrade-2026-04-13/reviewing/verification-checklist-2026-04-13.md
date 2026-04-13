@@ -15,7 +15,10 @@
 - [x] In-panel message notifications were removed from `/messages` in favor of header-only signaling.
 - [x] StudyGuide for students now exposes right-click "Preguntar al profesor" on selected text and opens composer flow.
 - [x] StudyGuide question composer sends selected snippet + user message + guide reference to chosen teacher recipient.
+- [x] StudyGuide contextual question flow captures both selected text and selected formulas with explicit snippet-type metadata.
 - [x] Messages resource-reference loading tolerates partial permission denials and still returns accessible references.
+- [x] Chat composer reference insertion now follows `Asignatura -> Tema -> Recurso` hierarchy (including topic-level reference mode).
+- [x] Thread reference cards display exact selected snippet context when available.
 
 ## Regression Validation
 - [x] Existing read-marking behavior remains intact and only triggers when a conversation is explicitly opened.
@@ -25,7 +28,9 @@
 ## Technical Validation
 - [x] get_errors is clean for touched files.
 - [x] Targeted unit tests pass (`17/17` on touched messaging + StudyGuide question suites).
+- [x] Follow-up targeted unit test rerun passes (`6/6` on `studyGuideQuestionUtils`).
 - [x] Related existing unit tests pass.
+- [x] Lint rerun passes after follow-up refinements.
 - [ ] Firestore rules emulator suite run locally (blocked in this environment because Firebase CLI is unavailable).
 
 ## Documentation Validation

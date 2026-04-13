@@ -173,6 +173,10 @@ const buildSubjectReferenceRoute = (reference: any) => {
   const resourceType = normalizeType(reference?.resourceType);
 
   if (topicId && resourceId) {
+    if (resourceType === 'topic') {
+      return `/home/subject/${subjectId}/topic/${topicId}`;
+    }
+
     if (resourceType === 'resumen' || resourceType === 'summary') {
       return `/home/subject/${subjectId}/topic/${topicId}/resumen/${resourceId}`;
     }
@@ -261,6 +265,7 @@ const Messages = ({ user }: any) => {
   const [selectedSubjectReference, setSelectedSubjectReference] = useState<any>(null);
   const [showSubjectReferencePicker, setShowSubjectReferencePicker] = useState(false);
   const [referenceSubjectId, setReferenceSubjectId] = useState('');
+  const [referenceTopicId, setReferenceTopicId] = useState('__all_topics__');
   const [referenceResourceId, setReferenceResourceId] = useState('__subject__');
   const [subjectResourcesBySubjectId, setSubjectResourcesBySubjectId] = useState<any>({});
   const [loadingSubjectResources, setLoadingSubjectResources] = useState(false);
@@ -1025,6 +1030,7 @@ const Messages = ({ user }: any) => {
   useEffect(() => {
     if (!availableSubjectEntries.length) {
       setReferenceSubjectId('');
+      setReferenceTopicId('__all_topics__');
       setReferenceResourceId('__subject__');
       setShowSubjectReferencePicker(false);
       setSelectedSubjectReference(null);
@@ -1040,6 +1046,7 @@ const Messages = ({ user }: any) => {
   }, [availableSubjectEntries]);
 
   useEffect(() => {
+    setReferenceTopicId('__all_topics__');
     setReferenceResourceId('__subject__');
   }, [referenceSubjectId]);
 
@@ -1047,6 +1054,62 @@ const Messages = ({ user }: any) => {
     () => subjectResourcesBySubjectId?.[referenceSubjectId] || [],
     [referenceSubjectId, subjectResourcesBySubjectId]
   );
+
+  const referenceTopics = useMemo(() => {
+    const topicMap = new Map<string, { topicId: string; topicName: string }>();
+
+    referenceResources.forEach((resource: any) => {
+      const topicId = normalizeValue(resource?.topicId);
+      if (!topicId || topicMap.has(topicId)) return;
+
+      topicMap.set(topicId, {
+        topicId,
+        topicName: normalizeValue(resource?.topicName || 'Tema'),
+      });
+    });
+
+    return Array.from(topicMap.values()).sort((left, right) => left.topicName.localeCompare(right.topicName, 'es'));
+  }, [referenceResources]);
+
+  const referenceResourcesForTopic = useMemo(() => {
+    if (referenceTopicId === '__all_topics__') return referenceResources;
+    return referenceResources.filter((resource: any) => normalizeValue(resource?.topicId) === referenceTopicId);
+  }, [referenceResources, referenceTopicId]);
+
+  useEffect(() => {
+    if (referenceTopicId === '__all_topics__') {
+      return;
+    }
+
+    const topicExists = referenceTopics.some((topic) => topic.topicId === referenceTopicId);
+    if (!topicExists) {
+      setReferenceTopicId('__all_topics__');
+      return;
+    }
+
+    const activeResourceId = normalizeValue(referenceResourceId);
+    if (!activeResourceId || activeResourceId === '__subject__' || activeResourceId === '__topic__') {
+      return;
+    }
+
+    const selectedResourceExists = referenceResourcesForTopic.some((resource: any) => normalizeValue(resource?.id) === activeResourceId);
+    if (!selectedResourceExists) {
+      setReferenceResourceId('__topic__');
+    }
+  }, [referenceResourceId, referenceResourcesForTopic, referenceTopicId, referenceTopics]);
+
+  useEffect(() => {
+    if (referenceTopicId === '__all_topics__') {
+      if (referenceResourceId !== '__subject__') {
+        setReferenceResourceId('__subject__');
+      }
+      return;
+    }
+
+    if (referenceResourceId === '__subject__') {
+      setReferenceResourceId('__topic__');
+    }
+  }, [referenceResourceId, referenceTopicId]);
 
   useEffect(() => {
     if (!referenceSubjectId || subjectResourcesBySubjectId?.[referenceSubjectId]) return;
@@ -1304,7 +1367,28 @@ const Messages = ({ user }: any) => {
       return;
     }
 
-    const selectedResource = referenceResources.find(
+    if (referenceResourceId === '__topic__') {
+      const selectedTopic = referenceTopics.find((topic) => topic.topicId === referenceTopicId);
+      if (!selectedTopic) {
+        setComposerFeedback({ tone: 'error', text: 'Selecciona un tema válido para compartir la referencia.' });
+        return;
+      }
+
+      setSelectedSubjectReference({
+        subjectId: referenceSubjectId,
+        subjectName: normalizeValue(selectedSubject?.subjectName || 'Asignatura'),
+        topicId: normalizeValue(selectedTopic?.topicId),
+        resourceType: 'topic',
+        resourceId: normalizeValue(selectedTopic?.topicId),
+        resourceName: normalizeValue(selectedTopic?.topicName || 'Tema'),
+        label: `Tema: ${normalizeValue(selectedTopic?.topicName || 'Tema')}`,
+        route: `/home/subject/${referenceSubjectId}/topic/${normalizeValue(selectedTopic?.topicId)}`,
+      });
+      setShowSubjectReferencePicker(false);
+      return;
+    }
+
+    const selectedResource = referenceResourcesForTopic.find(
       (resource: any) => normalizeValue(resource?.id) === referenceResourceId
     );
 
@@ -2037,6 +2121,12 @@ const Messages = ({ user }: any) => {
                     const messageAttachments = Array.isArray(message?.attachments) ? message.attachments : [];
                     const messageSubjectReference = message?.subjectReference || null;
                     const messageSubjectReferenceRoute = buildSubjectReferenceRoute(messageSubjectReference);
+                    const messageSelectionSnippet = normalizeValue(messageSubjectReference?.selectionSnippet);
+                    const messageSelectionType = normalizeType(messageSubjectReference?.selectionType);
+                    const messageSelectionLabel = messageSelectionType === 'formula' ? 'Fórmula seleccionada' : 'Texto seleccionado';
+                    const messageSelectionPreview = messageSelectionSnippet.length > 180
+                      ? `${messageSelectionSnippet.slice(0, 177)}...`
+                      : messageSelectionSnippet;
                     const previousRow = rowIndex > 0 ? selectedThreadRows[rowIndex - 1] : null;
                     const isGroupedWithPreviousMessage = previousRow?.type === 'message'
                       && normalizeValue(previousRow?.message?.senderUid) === normalizeValue(message?.senderUid);
@@ -2054,20 +2144,33 @@ const Messages = ({ user }: any) => {
                           }`}
                         >
                           {messageSubjectReference && (
-                            <button
-                              type="button"
-                              onClick={() => handleOpenSubjectReference(messageSubjectReference)}
-                              disabled={!messageSubjectReferenceRoute}
-                              className={`mb-2 inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-semibold transition-colors ${
-                                isOwnMessage
-                                  ? 'border-indigo-200/40 bg-indigo-500/20 text-indigo-50 hover:bg-indigo-500/30'
-                                  : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-200 dark:hover:bg-sky-900/30'
-                              }`}
-                              title={messageSubjectReferenceRoute ? 'Abrir referencia' : 'Referencia sin ruta disponible'}
-                            >
-                              <Link2 className="h-3.5 w-3.5" />
-                              {normalizeValue(messageSubjectReference?.label || messageSubjectReference?.resourceName || messageSubjectReference?.subjectName || 'Referencia compartida')}
-                            </button>
+                            <div className="mb-2 space-y-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenSubjectReference(messageSubjectReference)}
+                                disabled={!messageSubjectReferenceRoute}
+                                className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-semibold transition-colors ${
+                                  isOwnMessage
+                                    ? 'border-indigo-200/40 bg-indigo-500/20 text-indigo-50 hover:bg-indigo-500/30'
+                                    : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-200 dark:hover:bg-sky-900/30'
+                                }`}
+                                title={messageSubjectReferenceRoute ? 'Abrir referencia' : 'Referencia sin ruta disponible'}
+                              >
+                                <Link2 className="h-3.5 w-3.5" />
+                                {normalizeValue(messageSubjectReference?.label || messageSubjectReference?.resourceName || messageSubjectReference?.subjectName || 'Referencia compartida')}
+                              </button>
+
+                              {messageSelectionPreview && (
+                                <p className={`rounded-lg border px-2 py-1 text-[11px] ${
+                                  isOwnMessage
+                                    ? 'border-indigo-200/40 bg-indigo-500/20 text-indigo-50/95'
+                                    : 'border-sky-200 bg-sky-50/80 text-sky-800 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-100'
+                                }`}>
+                                  <span className="font-semibold">{messageSelectionLabel}: </span>
+                                  <span className="italic">"{messageSelectionPreview}"</span>
+                                </p>
+                              )}
+                            </div>
                           )}
 
                           {messageAttachments.length > 0 && (
@@ -2283,7 +2386,7 @@ const Messages = ({ user }: any) => {
                     <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60">
                       <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Compartir referencia académica</p>
 
-                      <div className="grid gap-2 md:grid-cols-2">
+                      <div className="grid gap-2 md:grid-cols-3">
                         <label className="text-[11px] text-slate-500 dark:text-slate-400">
                           Asignatura
                           <select
@@ -2300,6 +2403,22 @@ const Messages = ({ user }: any) => {
                         </label>
 
                         <label className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Tema
+                          <select
+                            value={referenceTopicId}
+                            onChange={(event: any) => setReferenceTopicId(event.target.value)}
+                            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                          >
+                            <option value="__all_topics__">Todos los temas</option>
+                            {referenceTopics.map((topic: any) => (
+                              <option key={topic.topicId} value={topic.topicId}>
+                                {topic.topicName}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="text-[11px] text-slate-500 dark:text-slate-400">
                           Recurso
                           <select
                             value={referenceResourceId}
@@ -2307,7 +2426,15 @@ const Messages = ({ user }: any) => {
                             className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                           >
                             <option value="__subject__">Asignatura completa</option>
-                            {referenceResources.map((resource: any) => (
+                            <option value="__topic__" disabled={referenceTopicId === '__all_topics__' || referenceTopics.length === 0}>
+                              Tema seleccionado
+                            </option>
+                            {referenceResourcesForTopic.length === 0 && (
+                              <option value="__no_resource__" disabled>
+                                Sin recursos disponibles en este tema
+                              </option>
+                            )}
+                            {referenceResourcesForTopic.map((resource: any) => (
                               <option key={resource.id} value={resource.id}>
                                 {resource.topicName} · {resource.resourceName}
                               </option>
@@ -2317,7 +2444,7 @@ const Messages = ({ user }: any) => {
                       </div>
 
                       {loadingSubjectResources && (
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">Cargando recursos para {normalizeValue(selectedSubjectEntry?.subjectName || 'asignatura')}...</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">Cargando temas y recursos para {normalizeValue(selectedSubjectEntry?.subjectName || 'asignatura')}...</p>
                       )}
 
                       <div className="flex justify-end">
@@ -2536,7 +2663,7 @@ const Messages = ({ user }: any) => {
                     <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60">
                       <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Compartir referencia académica</p>
 
-                      <div className="grid gap-2 md:grid-cols-2">
+                      <div className="grid gap-2 md:grid-cols-3">
                         <label className="text-[11px] text-slate-500 dark:text-slate-400">
                           Asignatura
                           <select
@@ -2553,6 +2680,22 @@ const Messages = ({ user }: any) => {
                         </label>
 
                         <label className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Tema
+                          <select
+                            value={referenceTopicId}
+                            onChange={(event: any) => setReferenceTopicId(event.target.value)}
+                            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                          >
+                            <option value="__all_topics__">Todos los temas</option>
+                            {referenceTopics.map((topic: any) => (
+                              <option key={topic.topicId} value={topic.topicId}>
+                                {topic.topicName}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="text-[11px] text-slate-500 dark:text-slate-400">
                           Recurso
                           <select
                             value={referenceResourceId}
@@ -2560,7 +2703,15 @@ const Messages = ({ user }: any) => {
                             className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                           >
                             <option value="__subject__">Asignatura completa</option>
-                            {referenceResources.map((resource: any) => (
+                            <option value="__topic__" disabled={referenceTopicId === '__all_topics__' || referenceTopics.length === 0}>
+                              Tema seleccionado
+                            </option>
+                            {referenceResourcesForTopic.length === 0 && (
+                              <option value="__no_resource__" disabled>
+                                Sin recursos disponibles en este tema
+                              </option>
+                            )}
+                            {referenceResourcesForTopic.map((resource: any) => (
                               <option key={resource.id} value={resource.id}>
                                 {resource.topicName} · {resource.resourceName}
                               </option>
@@ -2570,7 +2721,7 @@ const Messages = ({ user }: any) => {
                       </div>
 
                       {loadingSubjectResources && (
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">Cargando recursos para {normalizeValue(selectedSubjectEntry?.subjectName || 'asignatura')}...</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">Cargando temas y recursos para {normalizeValue(selectedSubjectEntry?.subjectName || 'asignatura')}...</p>
                       )}
 
                       <div className="flex justify-end">

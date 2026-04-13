@@ -73,3 +73,35 @@
 - `firestore.indexes.json`
 - `src/firebase/config.ts`
 - `copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/**`
+
+## Follow-Up Delta (2026-04-13)
+
+### Additional Requested Scope
+- Ensure StudyGuide right-click works for both text and formulas, preserving the exact selected snippet in the message reference metadata.
+- Upgrade chat reference picker to hierarchical flow:
+  - Asignatura -> Tema -> Recurso.
+
+### Follow-Up Changes Implemented
+- [src/pages/Content/StudyGuide.tsx](src/pages/Content/StudyGuide.tsx)
+  - Added formula-aware right-click capture via `data-studyguide-formula` markers.
+  - Extended contextual selection state with `selectionType` (`text` / `formula`).
+  - Passed `selectionSnippet` and `selectionType` into StudyGuide question send flow.
+  - Updated composer snippet preview label to distinguish formula vs text selections.
+- [src/utils/studyGuideQuestionUtils.ts](src/utils/studyGuideQuestionUtils.ts)
+  - Added `selectionType` support to `composeStudyGuideQuestionMessage(...)`.
+  - Added `selectionSnippet` + `selectionType` to `buildStudyGuideQuestionReference(...)`.
+- [src/services/directMessageService.ts](src/services/directMessageService.ts)
+  - Normalized and persisted `subjectReference.selectionSnippet` and `subjectReference.selectionType`.
+- [src/pages/Messages/Messages.tsx](src/pages/Messages/Messages.tsx)
+  - Added topic-level reference state and synchronization (`referenceTopicId`).
+  - Added topic-aware derived options (`referenceTopics`, `referenceResourcesForTopic`).
+  - Updated both composer picker variants to the required hierarchy (`Asignatura`, `Tema`, `Recurso`).
+  - Added topic-level insertion option (`Tema seleccionado`) and route support (`/home/subject/:subjectId/topic/:topicId`).
+  - Added in-thread rendering of exact snippet preview when `selectionSnippet` is present.
+- [tests/unit/utils/studyGuideQuestionUtils.test.js](tests/unit/utils/studyGuideQuestionUtils.test.js)
+  - Added assertions for formula label behavior and selection metadata in reference payload.
+
+### Follow-Up Validation
+- `get_errors` clean on touched files.
+- `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js` -> pass (6/6).
+- `npm run lint` -> pass.

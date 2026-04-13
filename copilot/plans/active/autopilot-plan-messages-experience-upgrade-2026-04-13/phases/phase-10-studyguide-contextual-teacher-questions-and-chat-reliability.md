@@ -54,3 +54,9 @@ Implement a student-first StudyGuide workflow where selected text can be sent to
 
 ## Status
 - Completed on 2026-04-13.
+
+## Follow-Up Refinement (2026-04-13)
+- Extended contextual selection handling to capture formulas as first-class snippets (`selectionType: formula`) in addition to plain text.
+- Propagated exact selection metadata into `subjectReference` payload (`selectionSnippet`, `selectionType`) for downstream thread rendering.
+- Upgraded chat reference picker to hierarchical flow (`Asignatura -> Tema -> Recurso`) with explicit topic-level option (`Tema seleccionado`).
+- Added in-thread snippet preview rendering so recipients can see the exact selected fragment/formula without opening the destination route.

@@ -24,6 +24,7 @@
 - `sendDirectMessage`
 
 ## Changelog
+- 2026-04-13: Expanded `subjectReference` normalization to persist `selectionSnippet` and `selectionType` for exact-context reference rendering in chat threads.
 - 2026-04-13: Added attachment upload support (`image`, `pdf`, office/text formats) with per-conversation Storage paths and metadata persistence.
 - 2026-04-13: Added optional `subjectReference` payload normalization and persistence for exact academic-content linking from chat.
 - 2026-04-13: Added attachment limits export (`DIRECT_MESSAGE_ATTACHMENT_LIMITS`) for UI-level validation alignment.

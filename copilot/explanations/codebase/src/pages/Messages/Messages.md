@@ -30,6 +30,8 @@
 - `default Messages`
 
 ## Changelog
+- 2026-04-13: Updated reference insertion workflow to a strict hierarchy (`Asignatura -> Tema -> Recurso`) with support for topic-level references (`Tema seleccionado`) and topic-filtered resource lists.
+- 2026-04-13: Message-bubble reference cards now render the exact selected StudyGuide snippet (text/formula) when provided in `subjectReference.selectionSnippet`.
 - 2026-04-13: Improved reliability when opening chats by silencing expected `failed-precondition` logs during automatic index fallback and keeping compatibility-mode behavior unchanged.
 - 2026-04-13: Hardened subject-reference resource loading with partial-permission tolerance and merge strategy across root and nested subject-topic resource collections.
 - 2026-04-13: Added composer file-attachment workflow (validation, removal, send) and message-bubble rendering for image/file attachments.

@@ -47,6 +47,17 @@ describe('studyGuideQuestionUtils', () => {
     expect(message.length).toBeLessThanOrEqual(700);
   });
 
+  it('uses formula label when selection type is formula', () => {
+    const message = composeStudyGuideQuestionMessage({
+      guideTitle: 'Algebra',
+      selectedText: 'x^2 + y^2 = z^2',
+      selectionType: 'formula',
+      question: 'Que significa esta igualdad aqui?',
+    });
+
+    expect(message).toContain('Formula seleccionada:');
+  });
+
   it('truncates very long selected text to fit direct-message limits', () => {
     const message = composeStudyGuideQuestionMessage({
       guideTitle: 'Tema extenso',
@@ -64,6 +75,8 @@ describe('studyGuideQuestionUtils', () => {
       topicId: 'topic-1',
       guideId: 'guide-1',
       guideTitle: 'Guia de Algebra',
+      selectionSnippet: 'x^2 + y^2 = z^2',
+      selectionType: 'formula',
     });
 
     expect(reference).toEqual({
@@ -75,6 +88,8 @@ describe('studyGuideQuestionUtils', () => {
       resourceName: 'Guia de Algebra',
       label: 'Guia: Guia de Algebra',
       route: '/home/subject/subject-1/topic/topic-1/resumen/guide-1',
+      selectionSnippet: 'x^2 + y^2 = z^2',
+      selectionType: 'formula',
     });
   });
 });
