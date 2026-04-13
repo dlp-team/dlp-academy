@@ -27,6 +27,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-04-13: Updated teacher-question context preview to render selected formula snippets with KaTeX (`BlockMath`) so LaTeX is preserved visually in the composer.
 - 2026-04-13: Improved ask-teacher discoverability by adding a visible "Preguntar al profesor" action button in StudyGuide and allowing the flow for any authenticated StudyGuide viewer (no strict student-only gate).
 - 2026-04-13: Extended contextual question capture to support both selected text and selected formulas; formula nodes now expose explicit selection metadata for right-click messaging.
 - 2026-04-13: StudyGuide teacher-question payload now persists snippet metadata (`selectionSnippet`, `selectionType`) so chat references can display the exact selected context.

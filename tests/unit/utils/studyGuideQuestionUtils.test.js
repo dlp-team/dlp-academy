@@ -92,4 +92,18 @@ describe('studyGuideQuestionUtils', () => {
       selectionType: 'formula',
     });
   });
+
+  it('keeps full formula snippet without truncation', () => {
+    const longFormula = '\\frac{a+b}{c+d}'.repeat(80);
+    const reference = buildStudyGuideQuestionReference({
+      subjectId: 'subject-1',
+      topicId: 'topic-1',
+      guideId: 'guide-2',
+      guideTitle: 'Guia de Formula Larga',
+      selectionSnippet: longFormula,
+      selectionType: 'formula',
+    });
+
+    expect(reference?.selectionSnippet).toBe(longFormula);
+  });
 });

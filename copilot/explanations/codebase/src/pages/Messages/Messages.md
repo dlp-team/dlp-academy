@@ -30,6 +30,7 @@
 - `default Messages`
 
 ## Changelog
+- 2026-04-13: Formula-type reference snippets now render as KaTeX in thread reference context boxes, preserving LaTeX readability.
 - 2026-04-13: Updated reference insertion workflow to a strict hierarchy (`Asignatura -> Tema -> Recurso`) with support for topic-level references (`Tema seleccionado`) and topic-filtered resource lists.
 - 2026-04-13: Message-bubble reference cards now render the exact selected StudyGuide snippet (text/formula) when provided in `subjectReference.selectionSnippet`.
 - 2026-04-13: Improved reliability when opening chats by silencing expected `failed-precondition` logs during automatic index fallback and keeping compatibility-mode behavior unchanged.

@@ -1804,7 +1804,13 @@ const StudyGuide = ({ user }: any) => {
                         <p className="font-semibold text-slate-700 dark:text-slate-200">
                             {selectedGuideSnippetType === 'formula' ? 'Formula seleccionada' : 'Fragmento seleccionado'}
                         </p>
-                        <p className="mt-1 leading-relaxed">{selectedGuideSnippet || 'No hay texto seleccionado.'}</p>
+                        {selectedGuideSnippetType === 'formula' && selectedGuideSnippet ? (
+                            <div className="mt-2 overflow-x-auto custom-scrollbar">
+                                <BlockMath math={cleanMath(selectedGuideSnippet)} />
+                            </div>
+                        ) : (
+                            <p className="mt-1 leading-relaxed">{selectedGuideSnippet || 'No hay texto seleccionado.'}</p>
+                        )}
                     </div>
 
                     {teacherQuestionFeedback.text && (

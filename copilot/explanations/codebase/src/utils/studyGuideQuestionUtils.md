@@ -21,5 +21,6 @@
 - Covered by `tests/unit/utils/studyGuideQuestionUtils.test.js`.
 
 ## Changelog
+- 2026-04-13: Updated reference snippet normalization to preserve full formula LaTeX content (no ellipsis truncation for `selectionType: formula`).
 - 2026-04-13: Added formula-aware message labeling (`Formula seleccionada`) and reference metadata fields (`selectionSnippet`, `selectionType`) for exact-context chat rendering.
 - 2026-04-13: Added initial utility set for the student StudyGuide right-click "Preguntar al profesor" workflow.

@@ -10,6 +10,12 @@
 - None.
 
 ## Processed Updates
+- 2026-04-13: Implemented user-requested LaTeX preservation in teacher context references: formula snippets now render with KaTeX in StudyGuide composer and Messages thread, and formula payloads are preserved without truncation. Synced in:
+	- [src/pages/Content/StudyGuide.tsx](src/pages/Content/StudyGuide.tsx)
+	- [src/pages/Messages/Messages.tsx](src/pages/Messages/Messages.tsx)
+	- [src/utils/studyGuideQuestionUtils.ts](src/utils/studyGuideQuestionUtils.ts)
+	- [tests/unit/utils/studyGuideQuestionUtils.test.js](tests/unit/utils/studyGuideQuestionUtils.test.js)
+	- [copilot/explanations/temporal/lossless-reports/2026-04-13/studyguide-contextual-teacher-questions-and-chat-reliability.md](copilot/explanations/temporal/lossless-reports/2026-04-13/studyguide-contextual-teacher-questions-and-chat-reliability.md)
 - 2026-04-13: After user report ("no encuentro la opcion en StudyGuide"), added discoverability hotfix for ask-teacher flow: visible quick action button in StudyGuide plus relaxed role gate (authenticated viewers) while preserving right-click path. Synced in:
 	- [src/pages/Content/StudyGuide.tsx](src/pages/Content/StudyGuide.tsx)
 	- [copilot/explanations/temporal/lossless-reports/2026-04-13/studyguide-contextual-teacher-questions-and-chat-reliability.md](copilot/explanations/temporal/lossless-reports/2026-04-13/studyguide-contextual-teacher-questions-and-chat-reliability.md)

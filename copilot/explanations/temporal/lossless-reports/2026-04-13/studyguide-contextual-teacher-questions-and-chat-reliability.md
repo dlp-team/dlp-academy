@@ -121,3 +121,23 @@
 - `get_errors` clean on touched file.
 - `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js` -> pass (6/6).
 - `npm run lint` -> pass.
+
+## LaTeX Context Preservation Patch (2026-04-13)
+
+### User Requirement
+- Ensure the teacher-context box and shared reference context preserve LaTeX when the selection came from a formula.
+
+### Patch Applied
+- [src/pages/Content/StudyGuide.tsx](src/pages/Content/StudyGuide.tsx)
+  - Formula snippets in the composer context box now render using KaTeX (`BlockMath`) instead of plain text.
+- [src/pages/Messages/Messages.tsx](src/pages/Messages/Messages.tsx)
+  - Message reference context now renders formula snippets as KaTeX HTML when `selectionType` is `formula`.
+- [src/utils/studyGuideQuestionUtils.ts](src/utils/studyGuideQuestionUtils.ts)
+  - Preserves full formula snippets in `selectionSnippet` (no truncation) to avoid breaking LaTeX expressions.
+- [tests/unit/utils/studyGuideQuestionUtils.test.js](tests/unit/utils/studyGuideQuestionUtils.test.js)
+  - Added regression test confirming formula snippets are not truncated.
+
+### Patch Validation
+- `get_errors` clean on touched files.
+- `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js` -> pass (7/7).
+- `npm run lint` -> pass.

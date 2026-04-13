@@ -43,3 +43,9 @@
 	- Removed strict student-only gate so any authenticated StudyGuide viewer can use the ask-teacher flow.
 	- Kept right-click contextual flow active as parallel entrypoint.
 - Hotfix validation rerun completed: `get_errors` clean, `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js` (6/6), `npm run lint` passed.
+- LaTeX-context preservation refinement:
+	- StudyGuide composer context box now renders formula selections via KaTeX.
+	- Messages thread reference context now renders formula snippets via KaTeX for `selectionType=formula`.
+	- Formula snippets are no longer truncated in `buildStudyGuideQuestionReference` to preserve valid LaTeX payloads.
+	- Added regression test to enforce formula snippet non-truncation.
+- Validation rerun completed: `get_errors` clean, `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js` (7/7), `npm run lint` passed.

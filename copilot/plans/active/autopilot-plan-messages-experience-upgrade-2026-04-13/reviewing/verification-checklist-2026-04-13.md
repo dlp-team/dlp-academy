@@ -20,6 +20,7 @@
 - [x] Chat composer reference insertion now follows `Asignatura -> Tema -> Recurso` hierarchy (including topic-level reference mode).
 - [x] Thread reference cards display exact selected snippet context when available.
 - [x] StudyGuide now exposes a visible quick action button (`Preguntar al profesor`) in addition to right-click contextual action.
+- [x] Formula-based context snippets preserve and render LaTeX in both StudyGuide composer and Messages thread reference preview.
 
 ## Regression Validation
 - [x] Existing read-marking behavior remains intact and only triggers when a conversation is explicitly opened.
@@ -30,6 +31,7 @@
 - [x] get_errors is clean for touched files.
 - [x] Targeted unit tests pass (`17/17` on touched messaging + StudyGuide question suites).
 - [x] Follow-up targeted unit test rerun passes (`6/6` on `studyGuideQuestionUtils`).
+- [x] Latest targeted unit test rerun passes (`7/7` on `studyGuideQuestionUtils`) including formula non-truncation regression.
 - [x] Related existing unit tests pass.
 - [x] Lint rerun passes after follow-up refinements.
 - [ ] Firestore rules emulator suite run locally (blocked in this environment because Firebase CLI is unavailable).

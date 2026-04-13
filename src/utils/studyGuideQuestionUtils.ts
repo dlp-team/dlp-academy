@@ -123,8 +123,11 @@ export const buildStudyGuideQuestionReference = ({
   }
 
   const normalizedGuideTitle = normalizeInlineText(guideTitle) || DEFAULT_GUIDE_TITLE;
-  const normalizedSelectionSnippet = truncateWithEllipsis(normalizeInlineText(selectionSnippet), 280) || null;
   const normalizedSelectionType = normalizeInlineText(selectionType).toLowerCase() || null;
+  const normalizedSelectionSnippetRaw = normalizeInlineText(selectionSnippet);
+  const normalizedSelectionSnippet = normalizedSelectionType === 'formula'
+    ? normalizedSelectionSnippetRaw || null
+    : truncateWithEllipsis(normalizedSelectionSnippetRaw, 280) || null;
 
   return {
     subjectId: normalizedSubjectId,

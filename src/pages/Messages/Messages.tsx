@@ -1,6 +1,7 @@
 // src/pages/Messages/Messages.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import katex from 'katex';
 import {
   Archive,
   ArchiveRestore,
@@ -56,6 +57,7 @@ import {
   resolveConversationParticipantUid,
   timestampToMillis,
 } from '../../utils/directMessageUtils';
+import 'katex/dist/katex.min.css';
 
 const ROLE_META: any = {
   admin: {
@@ -83,6 +85,31 @@ const ROLE_META: any = {
 const normalizeType = (value: any) => String(value || '').trim().toLowerCase();
 
 const normalizeValue = (value: any) => String(value || '').trim();
+
+const cleanLatexSnippet = (math: any) => {
+  if (typeof math !== 'string') return '';
+  const cleaned = math.trim();
+  if (!cleaned) return '';
+  if (cleaned.startsWith('\\(') && cleaned.endsWith('\\)')) return cleaned.slice(2, -2).trim();
+  if (cleaned.startsWith('\\[') && cleaned.endsWith('\\]')) return cleaned.slice(2, -2).trim();
+  if (cleaned.startsWith('$') && cleaned.endsWith('$')) return cleaned.slice(1, -1).trim();
+  return cleaned;
+};
+
+const renderLatexSnippetHtml = (math: any) => {
+  const cleanedMath = cleanLatexSnippet(math);
+  if (!cleanedMath) return '';
+
+  try {
+    return katex.renderToString(cleanedMath, {
+      throwOnError: false,
+      displayMode: true,
+      strict: 'ignore',
+    });
+  } catch {
+    return '';
+  }
+};
 
 const getRoleLabel = (roleValue: any) => ROLE_META?.[normalizeType(roleValue)]?.label || 'Usuario';
 
@@ -2124,9 +2151,14 @@ const Messages = ({ user }: any) => {
                     const messageSelectionSnippet = normalizeValue(messageSubjectReference?.selectionSnippet);
                     const messageSelectionType = normalizeType(messageSubjectReference?.selectionType);
                     const messageSelectionLabel = messageSelectionType === 'formula' ? 'Fórmula seleccionada' : 'Texto seleccionado';
-                    const messageSelectionPreview = messageSelectionSnippet.length > 180
-                      ? `${messageSelectionSnippet.slice(0, 177)}...`
-                      : messageSelectionSnippet;
+                    const messageSelectionPreview = messageSelectionType === 'formula'
+                      ? messageSelectionSnippet
+                      : (messageSelectionSnippet.length > 180
+                        ? `${messageSelectionSnippet.slice(0, 177)}...`
+                        : messageSelectionSnippet);
+                    const messageSelectionLatexHtml = messageSelectionType === 'formula'
+                      ? renderLatexSnippetHtml(messageSelectionPreview)
+                      : '';
                     const previousRow = rowIndex > 0 ? selectedThreadRows[rowIndex - 1] : null;
                     const isGroupedWithPreviousMessage = previousRow?.type === 'message'
                       && normalizeValue(previousRow?.message?.senderUid) === normalizeValue(message?.senderUid);
@@ -2167,7 +2199,14 @@ const Messages = ({ user }: any) => {
                                     : 'border-sky-200 bg-sky-50/80 text-sky-800 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-100'
                                 }`}>
                                   <span className="font-semibold">{messageSelectionLabel}: </span>
-                                  <span className="italic">"{messageSelectionPreview}"</span>
+                                  {messageSelectionType === 'formula' && messageSelectionLatexHtml ? (
+                                    <span
+                                      className="mt-1 block overflow-x-auto custom-scrollbar [&_.katex]:text-current [&_.katex-display]:my-1"
+                                      dangerouslySetInnerHTML={{ __html: messageSelectionLatexHtml }}
+                                    />
+                                  ) : (
+                                    <span className="italic">"{messageSelectionPreview}"</span>
+                                  )}
                                 </p>
                               )}
                             </div>
