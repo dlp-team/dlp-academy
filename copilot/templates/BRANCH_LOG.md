@@ -12,6 +12,8 @@
 - **Owner:** {{OWNER_ID}} (e.g., `pc<id>`)
 - **Parent Branch:** {{PARENT_BRANCH}} (main | development | feature/...)
 - **Derived From Branch:** {{DERIVED_FROM_BRANCH or "none"}}
+- **Owner Validation:** `COPILOT_PC_ID` must equal `Owner` before any file edit
+- **Permission Gate:** pass | fail (if fail, STOP and do not edit)
 - **Status:** active | paused | blocked | ready-for-merge | testing
 - **Autopilot Active:** true | false
 - **Related Plan:** {{PLAN_FILE or "None"}} (e.g., `copilot/plans/active/my-plan/README.md`)
@@ -30,8 +32,9 @@
 ## Branch Identity
 
 - **Current Branch:** {{BRANCH_NAME}}
-- **Parent Branch:** {{PARENT_BRANCH}}
+- **Parent Branch:** {{PARENT_BRANCH}} (MANDATORY for every branch; merge target must match this value)
 - **Derived From Branch:** {{DERIVED_FROM_BRANCH or "none"}}
+- **Derived Branch Rule:** If this branch was created from another branch, parent branch must be explicitly recorded and preserved.
 - **Lineage Policy:** Preserve all related plans from current or ancestor branch lineage. Do not delete prior lineage plan entries when adding a new plan.
 
 ---
@@ -51,6 +54,7 @@ Track all plans associated with this branch lineage.
 ## Merge Status
 
 - **Merge Permission:** pending-human-approval | approved | denied
+- **Merge Target Branch:** {{PARENT_BRANCH}} (MUST match Branch Identity parent branch)
 - **Approved By (Human):** {{NAME_OR_ID}}
 - **Approval Date:** {{YYYY-MM-DD}}
 - **Approval Evidence:** {{PR comment / note / link}}

@@ -108,9 +108,17 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
    - Read `copilot/README.md` (Master navigation hub)
    - Read `copilot/ACTIVE-GOVERNANCE/git-workflow-rules.md` (Git discipline rules)
    - If prompt/chat references `AUTOPILOT_PLAN.md` or says "autopilot plan", immediately execute checklist Step 0.5 intake detection against `AUTOPILOT_PLAN.md` and `copilot/plans/AUTOPILOT_PLAN.md`
+   - Resolve local `COPILOT_PC_ID` before any file edits
+   - If `COPILOT_PC_ID` is missing/empty: STOP immediately
    - Check current branch: `git branch --show-current`
+   - Verify branch owner in `copilot/BRANCHES_STATUS.md` matches `COPILOT_PC_ID`
+   - Verify branch owner in `BRANCH_LOG.md` matches `COPILOT_PC_ID` (if log exists)
+   - If ownership mismatch exists: STOP immediately (no edits, no commits)
    - If on `main`: Create new feature branch (`git checkout -b feature/<task-name>`)
    - If on feature branch: Continue on existing branch
+   - When creating a new branch, immediately update `copilot/BRANCHES_STATUS.md` on `development` with the branch and summary, then commit and push
+   - Do NOT start implementation until branch registration is visible on `development`
+   - If current branch parent is `development` and a new plan is requested: create a child branch from current branch, execute the new plan on child branch, and record `parent-branch` in child `BRANCH_LOG.md`
    - **Command execution MUST follow the authorization framework:**
      - Check `copilot/ACTIVE-GOVERNANCE/ALLOWED_COMMANDS.md` before executing any command
      - Check `copilot/ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md` to ensure command is not banned
@@ -136,7 +144,7 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
     - Question: "Continue with next phase or proceed to final verification?"
     - Response: **Autopilot must answer itself** and continue autonomously
     - **Repeat this loop until 100% of task is complete**
-11. **Branch Lifecycle Management** (REQUIRED DURING MERGE): When merging a feature branch into development:
+11. **Branch Lifecycle Management** (REQUIRED DURING MERGE): When merging a feature branch into its parent branch:
     - See: [`copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md`](copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md)
     - After merge: Mark branch as `pending-delete` in BRANCHES_STATUS.md with today's date
     - Merged branches are scheduled for auto-deletion after 7-day grace period
@@ -145,6 +153,7 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
 11.5 **Human Merge Approval Gate** (REQUIRED):
    - Read `BRANCH_LOG.md` and verify both `Autopilot Status` and `Merge Status`
    - If `Autopilot Status` is `true`, merge is forbidden until `Merge Status` is explicitly `approved` by a real human
+   - Merge target MUST match `parent-branch` declared in `BRANCH_LOG.md`
    - Do NOT use `vscode/askQuestions` to ask whether to merge in autopilot mode
    - If status is `pending-human-approval` or `denied`, stop before merge and wait for human branch-log update
 12. **Final Verification**: When all work is done, run final verification via vscode/askQuestions with full checklist
@@ -172,7 +181,10 @@ Use these commands in the terminal to validate your work autonomously:
 3. **Missing Dependencies**: Propose via `vscode/askQuestions` first.
 4. **Git Branch Protection** (AUTOPILOT ONLY):
    - **STOP IMMEDIATELY** if current branch is `main` before making any commits
+   - **STOP IMMEDIATELY** if `COPILOT_PC_ID` is missing/empty
+   - **STOP IMMEDIATELY** if branch owner does not match `COPILOT_PC_ID`
    - **CREATE NEW FEATURE BRANCH** and migrate work if needed (see git-workflow-rules.md)
+   - **PLAN ISOLATION RULE**: if branch parent is `development` and a new plan is requested, create child branch from current branch and execute there
    - **VERIFY BRANCH** before every push: `git branch --show-current` must NOT return "main"
 5. **Push Failures**: If push fails, diagnose cause (conflicts, permissions) via `git status`. Ask user for direction if unresolvable.
 6. **Git History Corruption**: Do NOT use `git reset --hard`, `git rebase -i`, or destructive Git operations without explicit user permission.
