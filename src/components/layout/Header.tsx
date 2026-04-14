@@ -273,7 +273,13 @@ const Header = ({ user }: any) => {
     () => generalNotifications.filter((notification: any) => !notification?.read).length,
     [generalNotifications]
   );
+  const unreadMessagePreviews = useMemo(
+    () => messageNotifications.filter((notification: any) => !notification?.read).slice(0, 3),
+    [messageNotifications]
+  );
+
   const [showPanel, setShowPanel] = useState(false);
+  const [showMessagePreview, setShowMessagePreview] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '' });
   const prevCountRef = useRef<any>(null);
   const isFirstLoadRef = useRef(true);
@@ -323,6 +329,12 @@ const Header = ({ user }: any) => {
     prevCountRef.current = generalNotifications.length;
     return () => clearTimeout(toastTimer);
   }, [generalNotifications]);
+
+  useEffect(() => {
+    if (unreadMessagePreviews.length === 0) {
+      setShowMessagePreview(false);
+    }
+  }, [unreadMessagePreviews.length]);
 
   return (
     <>
@@ -396,20 +408,74 @@ const Header = ({ user }: any) => {
                 </button>
             )}
 
-            {/* 4. SETTINGS BUTTON */}
-            <button
-                onClick={() => navigate('/messages')}
-                className="relative p-2.5 text-gray-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-full transition-all duration-200 cursor-pointer"
-                title="Mensajes"
-                aria-label="Abrir mensajes"
+            {/* 4. MESSAGES BUTTON */}
+            <div
+                className="relative"
+                onMouseEnter={() => setShowMessagePreview(unreadMessagePreviews.length > 0)}
+                onMouseLeave={() => setShowMessagePreview(false)}
             >
-                <MessageCircle size={20} />
-                {messageUnreadCount > 0 && (
-                  <span className="absolute -left-0.5 -top-0.5 inline-flex min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
-                    {messageUnreadCount > 99 ? '99+' : messageUnreadCount}
-                  </span>
-                )}
-            </button>
+              <button
+                  onClick={() => {
+                    setShowMessagePreview(false);
+                    navigate('/messages');
+                  }}
+                  onFocus={() => setShowMessagePreview(unreadMessagePreviews.length > 0)}
+                  className="relative p-2.5 text-gray-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-full transition-all duration-200 cursor-pointer"
+                  title="Mensajes"
+                  aria-label="Abrir mensajes"
+              >
+                  <MessageCircle size={20} />
+                  {messageUnreadCount > 0 && (
+                    <span className="absolute -left-0.5 -top-0.5 inline-flex min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
+                      {messageUnreadCount > 99 ? '99+' : messageUnreadCount}
+                    </span>
+                  )}
+              </button>
+
+              {showMessagePreview && unreadMessagePreviews.length > 0 && (
+                <div className="absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 z-[10000]">
+                  <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Mensajes sin leer</p>
+                    <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-700 dark:bg-sky-900/30 dark:text-sky-200">
+                      {messageUnreadCount}
+                    </span>
+                  </div>
+
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {unreadMessagePreviews.map((notification: any) => {
+                      const sender = String(notification?.senderDisplayName || notification?.senderEmail || 'Usuario').trim();
+                      const preview = String(notification?.message || 'Tienes un mensaje nuevo.').trim();
+
+                      return (
+                        <button
+                          key={notification.id}
+                          type="button"
+                          onClick={() => {
+                            setShowMessagePreview(false);
+                            navigate('/messages');
+                          }}
+                          className="block w-full px-4 py-2.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/80"
+                        >
+                          <p className="truncate text-xs font-semibold text-slate-800 dark:text-slate-100">{sender}</p>
+                          <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{preview}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMessagePreview(false);
+                      navigate('/messages');
+                    }}
+                    className="w-full border-t border-slate-100 px-4 py-2 text-center text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-50 dark:border-slate-800 dark:text-sky-300 dark:hover:bg-sky-900/20"
+                  >
+                    Ver todos los mensajes
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* 4. SETTINGS BUTTON */}
             <button 
@@ -458,8 +524,15 @@ const Header = ({ user }: any) => {
                         onMarkAsRead={markAsRead}
                     onMarkAllAsRead={handleMarkAllGeneralAsRead}
                       triggerRef={notificationsTriggerRef}
-                      onOpenAll={() => {
+                      onOpenAll={(notification: any) => {
                         setShowPanel(false);
+                        if (notification?.id) {
+                          navigate('/notifications', {
+                            state: { openNotificationId: notification.id },
+                          });
+                          return;
+                        }
+
                         navigate('/notifications');
                       }}
                       onResolveMoveRequest={handleResolveMoveRequest}

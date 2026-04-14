@@ -1,5 +1,5 @@
 // src/components/ui/notificationPresentation.tsx
-import { Bell, ClipboardList, Clock3, FolderSync, MessageCircle, Share2 } from 'lucide-react';
+import { Bell, CheckCheck, ClipboardList, Clock3, FolderSync, MessageCircle, Share2 } from 'lucide-react';
 
 export const formatNotificationRelativeTime = (timestamp: any) => {
   if (!timestamp) return '';
@@ -57,10 +57,17 @@ export const getNotificationVisual = (notification: any) => {
     };
   }
 
-  if (type === 'assignment_new') {
+  if (type === 'assignment_new' || type === 'topic_assignment_new') {
+    return {
+      icon: CheckCheck,
+      iconContainerClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    };
+  }
+
+  if (type === 'topic_quiz_new') {
     return {
       icon: ClipboardList,
-      iconContainerClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+      iconContainerClass: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
     };
   }
 

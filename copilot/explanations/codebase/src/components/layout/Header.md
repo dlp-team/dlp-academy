@@ -127,6 +127,11 @@ function ExampleScreen() {
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
 
 ## Changelog
+### 2026-04-14
+- Added hover/focus unread direct-message preview panel on the messages shortcut.
+- Preview shows up to 3 unread direct-message notifications and keeps click-through to `/messages`.
+- Updated bell panel `onOpenAll` handoff to pass selected notification context when opening `/notifications`.
+
 ### 2026-04-13
 - Added unread-chat badge prioritization for messages shortcut: header now listens to unread `directMessages` and groups by conversation key.
 - Kept notification-based message unread count as fallback when unread chat grouping is zero.

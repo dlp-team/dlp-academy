@@ -13,5 +13,8 @@
 - Persists header theme slider visibility preference updates.
 
 ## Changelog
+### 2026-04-14
+- Added assertion coverage for `notifications.newContent` in loaded snapshot/default settings behavior.
+
 ### 2026-04-07
 - Created explanation mirror after adding Phase 03 coverage for `headerThemeSliderEnabled` load/update behavior.

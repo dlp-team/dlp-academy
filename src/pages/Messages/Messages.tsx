@@ -111,6 +111,47 @@ const renderLatexSnippetHtml = (math: any) => {
   }
 };
 
+const stripDuplicatedFormulaSelectionLine = (content: any, subjectReference: any) => {
+  const rawContent = String(content || '');
+  if (!rawContent) return '';
+
+  const referenceSelectionType = normalizeType(subjectReference?.selectionType);
+  const referenceSelectionSnippet = normalizeValue(subjectReference?.selectionSnippet);
+
+  if (referenceSelectionType !== 'formula' || !referenceSelectionSnippet) {
+    return rawContent;
+  }
+
+  const cleanedReferenceSnippet = cleanLatexSnippet(referenceSelectionSnippet);
+  if (!cleanedReferenceSnippet) {
+    return rawContent;
+  }
+
+  const filteredLines = rawContent
+    .split('\n')
+    .filter((line) => {
+      const trimmedLine = String(line || '').trim();
+      if (!trimmedLine) return true;
+
+      if (!/^f[oó]rmula seleccionada\s*:/i.test(trimmedLine)) {
+        return true;
+      }
+
+      const lineSnippet = trimmedLine
+        .replace(/^f[oó]rmula seleccionada\s*:\s*/i, '')
+        .replace(/^"(.*)"$/, '$1')
+        .trim();
+
+      if (!lineSnippet) {
+        return false;
+      }
+
+      return cleanLatexSnippet(lineSnippet) !== cleanedReferenceSnippet;
+    });
+
+  return filteredLines.join('\n').trim();
+};
+
 const getRoleLabel = (roleValue: any) => ROLE_META?.[normalizeType(roleValue)]?.label || 'Usuario';
 
 const hasSameStringArray = (left: string[] = [], right: string[] = []) => {
@@ -2159,6 +2200,10 @@ const Messages = ({ user }: any) => {
                     const messageSelectionLatexHtml = messageSelectionType === 'formula'
                       ? renderLatexSnippetHtml(messageSelectionPreview)
                       : '';
+                    const messageDisplayContent = stripDuplicatedFormulaSelectionLine(
+                      message?.content,
+                      messageSubjectReference
+                    );
                     const previousRow = rowIndex > 0 ? selectedThreadRows[rowIndex - 1] : null;
                     const isGroupedWithPreviousMessage = previousRow?.type === 'message'
                       && normalizeValue(previousRow?.message?.senderUid) === normalizeValue(message?.senderUid);
@@ -2257,7 +2302,9 @@ const Messages = ({ user }: any) => {
                             </div>
                           )}
 
-                          <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                          {messageDisplayContent && (
+                            <p className="text-sm whitespace-pre-wrap break-words">{messageDisplayContent}</p>
+                          )}
                           <div className="mt-1 flex items-center justify-between gap-2">
                             <div className={`flex items-center gap-1 ${isOwnMessage ? 'text-indigo-100/90' : 'text-slate-400 dark:text-slate-500'}`}>
                               <button

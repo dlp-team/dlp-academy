@@ -36,8 +36,22 @@ const Notifications = ({ user }: any) => {
       await markAsRead(notification.id);
     }
 
-    if (notification?.subjectId) {
-      navigate(`/home/subject/${notification.subjectId}`);
+    const explicitRoute = String(notification?.route || '').trim();
+    const subjectId = String(notification?.subjectId || '').trim();
+    const topicId = String(notification?.topicId || '').trim();
+
+    if (explicitRoute) {
+      navigate(explicitRoute);
+      return;
+    }
+
+    if (subjectId && topicId) {
+      navigate(`/home/subject/${subjectId}/topic/${topicId}`);
+      return;
+    }
+
+    if (subjectId) {
+      navigate(`/home/subject/${subjectId}`);
     }
   };
 

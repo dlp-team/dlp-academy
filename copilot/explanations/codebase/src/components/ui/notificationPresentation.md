@@ -19,4 +19,5 @@
 - `getNotificationVisual`
 
 ## Changelog
+- 2026-04-14: Added dedicated visual mappings for task notifications (`assignment_new` / `topic_assignment_new`) and test notifications (`topic_quiz_new`) while preserving direct-message and bell fallback semantics.
 - 2026-04-12: Introduced alongside `NotificationItemCard` to remove duplicate notification presentation logic across panel and page views.

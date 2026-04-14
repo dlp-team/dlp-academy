@@ -1,6 +1,5 @@
 // src/components/ui/NotificationsPanel.tsx
 import React, { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { CheckCheck, BellOff } from 'lucide-react';
 import NotificationItemCard from './NotificationItemCard';
 
@@ -14,7 +13,6 @@ const NotificationsPanel = ({
     onOpenAll,
     onClose
 }: any) => {
-    const navigate = useNavigate();
     const panelRef = useRef<any>(null);
 
     useEffect(() => {
@@ -34,10 +32,11 @@ const NotificationsPanel = ({
             onMarkAsRead(notification.id);
         }
 
-        if (notification?.subjectId) {
-            navigate(`/home/subject/${notification.subjectId}`);
-            onClose();
+        if (typeof onOpenAll === 'function') {
+            onOpenAll(notification);
         }
+
+        onClose();
     };
 
     const unreadCount = notifications.filter(n => !n.read).length;

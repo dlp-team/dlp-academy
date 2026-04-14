@@ -1,5 +1,19 @@
 # useNotifications.tsx
 
+## [2026-04-14] Topic Content Notifications + New-Content Toggle
+
+### Change
+- Extended student notification generation to cover visible topic content across `topicAssignments`, `quizzes`, `documents`, and `resumen`.
+- Added subject-id chunked listeners (`where('subjectId', 'in', chunk)`) to keep recipient scope limited to enrolled subjects.
+- Added notification route metadata for downstream page navigation.
+- Added settings gate for new-content notification generation using `settings.notifications.newContent` (fallback: enabled).
+- Preserved 24h due-soon assignment alert behavior and submission-delivered dedup guard.
+
+### Impact
+- Students receive typed academic notifications (task/test/material) only for enrolled-subject content.
+- New-content alerts can be disabled from settings without disabling due-soon reminders.
+- Notifications page can route via explicit payload route when present.
+
 ## [2026-04-04] Type-Based TTL Retention and Cleanup
 
 ### Change
@@ -48,7 +62,7 @@
 
 ## Overview
 - **Source file:** `src/hooks/useNotifications.tsx`
-- **Last documented:** 2026-04-04
+- **Last documented:** 2026-04-14
 - **Role:** Custom hook for real-time notification retrieval and read-state updates.
 
 ## Responsibilities

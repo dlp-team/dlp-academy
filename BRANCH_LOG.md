@@ -1,62 +1,66 @@
 <!-- BRANCH_LOG.md -->
-# Branch Log: feature/hector/autopilot-plan-messages-suite-2026-0413
+# Branch Log: feature/hector/autopilot-plan-notifications-suite-2026-0414
 
 ## Critical Reference
 - Workflow Guide: copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md
-- Current Step: 16
-- Last Opened: 2026-04-13
+- Current Step: 23
+- Last Opened: 2026-04-14
 - Note: Any copilot working on this branch must follow the checklist and update Current Step after each major phase.
 
 ## Metadata
-- Created/Updated: 2026-04-13
+- Created/Updated: 2026-04-14
 - Owner: hector
 - Lock Status: locked-private
-- Current Work: Apply AUTOPILOT_PLAN messaging suite upgrades (avatars, attachments, header unread chats, subject references) on top of the existing messages experience plan.
+- Current Work: Execute AUTOPILOT_PLAN notifications suite on a new branch (notification taxonomy, topic alerts, settings toggle, message hover preview, bell navigation, formula dedup).
 
 ## Related Plans
-- Active plan: copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/
-- Strategy: copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/strategy-roadmap.md
-- User updates: copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/user-updates.md
-- Intake source: copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/source-autopilot-user-spec-messages-suite.md
+- Active plan: copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/
+- Strategy: copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/strategy-roadmap.md
+- User updates: copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/user-updates.md
+- Intake source: copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/source-autopilot-user-spec-notifications-suite.md
 
 ## Touched Files
 - BRANCH_LOG.md
-- copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/README.md
-- copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/strategy-roadmap.md
-- copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/user-updates.md
-- copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/working/implementation-log.md
-- copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/reviewing/verification-checklist-2026-04-13.md
-- copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/phases/phase-07-autopilot-intake-and-gap-audit.md
-- copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/phases/phase-08-attachments-notification-and-reference-ux.md
-- copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/phases/phase-09-validation-doc-sync-closure.md
-- copilot/plans/active/autopilot-plan-messages-experience-upgrade-2026-04-13/source-autopilot-user-spec-messages-suite.md
+- copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/README.md
+- copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/strategy-roadmap.md
+- copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/user-updates.md
+- copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/working/implementation-log.md
+- copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/reviewing/verification-checklist-2026-04-14.md
+- copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/phases/**
+- copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/subplans/**
+- copilot/plans/active/autopilot-plan-notifications-suite-2026-04-14/source-autopilot-user-spec-notifications-suite.md
+- src/hooks/useNotifications.tsx
+- src/components/ui/notificationPresentation.tsx
+- src/components/ui/NotificationsPanel.tsx
+- src/pages/Notifications/Notifications.tsx
 - src/components/layout/Header.tsx
-- src/components/ui/CommunicationItemCard.tsx
 - src/pages/Messages/Messages.tsx
-- src/services/directMessageService.ts
-- storage.rules
-- tests/unit/components/CommunicationItemCard.test.jsx
-- tests/unit/services/directMessageService.test.js
-- copilot/explanations/temporal/lossless-reports/2026-04-13/messages-experience-upgrade-whatsapp-instagram-inspired.md
+- src/pages/Settings/components/NotificationSection.tsx
+- src/pages/Settings/hooks/useSettingsPageState.ts
+- tests/unit/components/NotificationsPanel.test.jsx
+- tests/unit/hooks/useSettingsPageState.test.js
+- copilot/explanations/temporal/lossless-reports/2026-04-14/autopilot-plan-notifications-suite-phase-02-07.md
+- copilot/explanations/codebase/src/hooks/useNotifications.md
 - copilot/explanations/codebase/src/components/layout/Header.md
-- copilot/explanations/codebase/src/components/ui/CommunicationItemCard.md
+- copilot/explanations/codebase/src/components/ui/notificationPresentation.md
+- copilot/explanations/codebase/src/components/ui/NotificationsPanel.md
+- copilot/explanations/codebase/src/pages/Notifications/Notifications.md
 - copilot/explanations/codebase/src/pages/Messages/Messages.md
-- copilot/explanations/codebase/src/services/directMessageService.md
+- copilot/explanations/codebase/src/pages/Settings/components/NotificationSection.md
+- copilot/explanations/codebase/src/pages/Settings/hooks/useSettingsPageState.md
+- copilot/explanations/codebase/tests/unit/components/NotificationsPanel.test.md
+- copilot/explanations/codebase/tests/unit/hooks/useSettingsPageState.test.md
 
 ## External Comments
 - (none)
 
 ## Merge Status
-- ready-for-review
+- in-progress
 
 ## Execution Notes
-- Step 2 completed: created branch `feature/hector/autopilot-plan-messages-suite-2026-0413` from existing messages feature work.
-- Step 6 completed: AUTOPILOT source intake file added to active plan package.
-- Implemented remaining AUTOPILOT requirements in the Messages stack:
-	- avatar-first conversation list and thread header identity,
-	- composer attachments + message attachment rendering,
-	- header unread-chat badge alignment,
-	- clickable common-subject chips,
-	- subject/resource references (asignatura, resumen, recurso) with route navigation,
-	- removal of in-panel direct-message notifications.
-- Validation completed with clean diagnostics, targeted tests (14/14), and lint pass.
+- Step 2 completed: created branch `feature/hector/autopilot-plan-notifications-suite-2026-0414`.
+- Step 6 completed: created active plan package with phases and subplans.
+- AUTOPILOT intake file moved into plan package with source-traceability naming.
+- Steps 2-7 completed for implementation scope: notification taxonomy, student visible-content notifications, settings toggle, message hover preview, bell routing flow, and formula dedup.
+- Validation completed: get_errors clean, targeted unit tests passing, and lint passing.
+- Step 23 pending final user confirmation via vscode/askQuestions leverage gate.

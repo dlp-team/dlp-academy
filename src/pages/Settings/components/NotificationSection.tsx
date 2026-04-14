@@ -1,4 +1,4 @@
-// src/pages/Settings/components/NotificationSection.jsx
+// src/pages/Settings/components/NotificationSection.tsx
 import React from 'react';
 import { Bell } from 'lucide-react';
 import Toggle from '../../../components/ui/Toggle';
@@ -23,6 +23,20 @@ const NotificationSection = ({ notifications, onUpdate }: any) => {
           <Toggle 
             enabled={notifications.email} 
             onChange={(val) => onUpdate('notifications.email', val)} 
+          />
+        </div>
+
+        {/* New Content Notifications */}
+        <div className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3 pl-12">
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white">Nuevo contenido académico</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Avisos cuando se publiquen tareas, tests o material visible</p>
+            </div>
+          </div>
+          <Toggle 
+            enabled={notifications.newContent} 
+            onChange={(val) => onUpdate('notifications.newContent', val)} 
           />
         </div>
 

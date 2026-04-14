@@ -1,4 +1,4 @@
-// src/pages/Settings/hooks/useSettingsPageState.js
+// src/pages/Settings/hooks/useSettingsPageState.ts
 import { useState, useEffect } from 'react';
 import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { applyThemeToDom } from '../../../utils/themeMode';
@@ -24,6 +24,7 @@ export default function useSettingsPageState({ user, db }: any) {
     notifications: {
       email: true,
       push: false,
+      newContent: true,
       newFeatures: true
     }
   });

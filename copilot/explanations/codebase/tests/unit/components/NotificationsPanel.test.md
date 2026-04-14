@@ -2,6 +2,9 @@
 # NotificationsPanel.test.jsx
 
 ## Changelog
+### 2026-04-14
+- Updated subject-notification activation expectation: panel item click now calls `onOpenAll` (history-page flow) instead of direct route navigation.
+
 ### 2026-04-04
 - Added coverage for `Ver todas` action dispatch (`onOpenAll`).
 - Added coverage for trigger-boundary outside click behavior (trigger click does not close panel via outside handler).
@@ -18,4 +21,4 @@
 - **Role:** Behavioral regression suite for notification interactions and shortcut request actions.
 
 ## Notes
-- Uses mocked `useNavigate` to keep tests deterministic and avoid router setup overhead.
+- Uses callback assertions (`onOpenAll`, `onMarkAsRead`, `onClose`) to keep routing behavior deterministic without router-level dependencies.

@@ -11,6 +11,7 @@ import { isNotificationExpired } from '../utils/notificationRetentionUtils';
 
 const NEW_ASSIGNMENT_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
 const DUE_SOON_WINDOW_MS = 24 * 60 * 60 * 1000;
+const SUBJECT_QUERY_CHUNK_SIZE = 10;
 
 const toDateSafe = (value: any) => {
     if (!value) return null;
@@ -24,6 +25,57 @@ const dateKey = (date: any) => {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}${month}${day}`;
+};
+
+const chunkArray = (values: any[] = [], chunkSize = SUBJECT_QUERY_CHUNK_SIZE) => {
+    if (!Array.isArray(values) || values.length === 0) return [];
+
+    const normalizedChunkSize = Number.isFinite(Number(chunkSize)) && Number(chunkSize) > 0
+        ? Math.floor(Number(chunkSize))
+        : SUBJECT_QUERY_CHUNK_SIZE;
+
+    const chunks = [];
+    for (let index = 0; index < values.length; index += normalizedChunkSize) {
+        chunks.push(values.slice(index, index + normalizedChunkSize));
+    }
+
+    return chunks;
+};
+
+const buildTopicRoute = (subjectId: any, topicId: any) => {
+    const normalizedSubjectId = String(subjectId || '').trim();
+    const normalizedTopicId = String(topicId || '').trim();
+
+    if (!normalizedSubjectId) return '';
+    if (!normalizedTopicId) return `/home/subject/${normalizedSubjectId}`;
+    return `/home/subject/${normalizedSubjectId}/topic/${normalizedTopicId}`;
+};
+
+const buildResourceRoute = ({ subjectId, topicId, resourceId, resourceType }: any) => {
+    const normalizedSubjectId = String(subjectId || '').trim();
+    const normalizedTopicId = String(topicId || '').trim();
+    const normalizedResourceId = String(resourceId || '').trim();
+    const normalizedResourceType = String(resourceType || '').trim().toLowerCase();
+
+    if (!normalizedSubjectId || !normalizedTopicId || !normalizedResourceId) {
+        return buildTopicRoute(normalizedSubjectId, normalizedTopicId);
+    }
+
+    if (normalizedResourceType === 'resumen' || normalizedResourceType === 'summary') {
+        return `/home/subject/${normalizedSubjectId}/topic/${normalizedTopicId}/resumen/${normalizedResourceId}`;
+    }
+
+    return `/home/subject/${normalizedSubjectId}/topic/${normalizedTopicId}/resource/${normalizedResourceId}`;
+};
+
+const isNewContentNotificationEnabled = (user: any) => {
+    const fromSettings = user?.settings?.notifications?.newContent;
+    if (typeof fromSettings === 'boolean') return fromSettings;
+
+    const fromRootNotifications = user?.notifications?.newContent;
+    if (typeof fromRootNotifications === 'boolean') return fromRootNotifications;
+
+    return true;
 };
 
 export const useNotifications = (user: any) => {
@@ -105,9 +157,15 @@ export const useNotifications = (user: any) => {
     useEffect(() => {
         if (!uid || activeRole !== 'student' || !user?.institutionId) return undefined;
 
+        const newContentNotificationsEnabled = isNewContentNotificationEnabled(user);
         let cancelled = false;
-        let unsubscribeAssignments: any = null;
-        let unsubscribeSubmissions: any = null;
+        const unsubscribeCallbacks: any[] = [];
+
+        const registerUnsubscribe = (callback: any) => {
+            if (typeof callback === 'function') {
+                unsubscribeCallbacks.push(callback);
+            }
+        };
 
         const startStudentAssignmentNotifications = async () => {
             try {
@@ -123,36 +181,49 @@ export const useNotifications = (user: any) => {
                 const enrolledSubjectIds = new Set(subjectSnapshot.docs.map((subjectDoc) => subjectDoc.id));
                 if (enrolledSubjectIds.size === 0) return;
 
+                const subjectIdChunks = chunkArray(Array.from(enrolledSubjectIds), SUBJECT_QUERY_CHUNK_SIZE);
+                if (subjectIdChunks.length === 0) return;
+
                 let deliveredByAssignment = new Set();
 
-                const maybeCreateNotifications = async (assignmentDocs: any) => {
+                const maybeCreateAssignmentNotifications = async (assignmentDocs: any) => {
                     const existingIds = new Set(existingNotificationIdsRef.current);
                     const now = new Date();
 
                     for (const assignmentDoc of assignmentDocs) {
-                        const assignment = assignmentDoc.data();
-                        if (!assignment) continue;
-                        if (!enrolledSubjectIds.has(assignment.subjectId)) continue;
+                        const assignment = assignmentDoc.data() || {};
+                        const assignmentSubjectId = String(assignment.subjectId || '').trim();
+                        if (!assignmentSubjectId || !enrolledSubjectIds.has(assignmentSubjectId)) continue;
                         if (assignment.visibleToStudents === false) continue;
 
-                        const assignmentId = assignmentDoc.id;
+                        const assignmentId = String(assignmentDoc.id || '').trim();
+                        if (!assignmentId) continue;
+
+                        const assignmentTopicId = String(assignment.topicId || '').trim() || null;
+                        const route = buildTopicRoute(assignmentSubjectId, assignmentTopicId);
                         const title = assignment.title || 'Nueva tarea';
-                        const createdAt = toDateSafe(assignment.createdAt);
+                        const createdAt = toDateSafe(assignment.createdAt || assignment.updatedAt);
                         const dueAt = toDateSafe(assignment.dueAt);
 
-                        if (createdAt && (now.getTime() - createdAt.getTime()) <= NEW_ASSIGNMENT_LOOKBACK_MS) {
+                        if (
+                            newContentNotificationsEnabled
+                            && createdAt
+                            && (now.getTime() - createdAt.getTime()) <= NEW_ASSIGNMENT_LOOKBACK_MS
+                        ) {
                             const newTaskNotificationId = `assignment_new_${assignmentId}_${uid}`;
                             if (!existingIds.has(newTaskNotificationId)) {
                                 await setDoc(doc(db, 'notifications', newTaskNotificationId), {
                                     userId: uid,
                                     institutionId: user.institutionId,
-                                    subjectId: assignment.subjectId,
-                                    topicId: assignment.topicId || null,
+                                    subjectId: assignmentSubjectId,
+                                    topicId: assignmentTopicId,
+                                    route: route || null,
                                     read: false,
                                     type: 'assignment_new',
                                     title: 'Nueva tarea disponible',
                                     message: `Se ha publicado: ${title}`,
-                                    createdAt: serverTimestamp()
+                                    contentType: 'assignment',
+                                    createdAt: serverTimestamp(),
                                 });
                                 existingIds.add(newTaskNotificationId);
                                 existingNotificationIdsRef.current.add(newTaskNotificationId);
@@ -171,13 +242,15 @@ export const useNotifications = (user: any) => {
                                 await setDoc(doc(db, 'notifications', dueSoonNotificationId), {
                                     userId: uid,
                                     institutionId: user.institutionId,
-                                    subjectId: assignment.subjectId,
-                                    topicId: assignment.topicId || null,
+                                    subjectId: assignmentSubjectId,
+                                    topicId: assignmentTopicId,
+                                    route: route || null,
                                     read: false,
                                     type: 'assignment_due_soon',
                                     title: 'Entrega en menos de 24 horas',
                                     message: `La tarea "${title}" vence pronto.`,
-                                    createdAt: serverTimestamp()
+                                    contentType: 'assignment',
+                                    createdAt: serverTimestamp(),
                                 });
                                 existingIds.add(dueSoonNotificationId);
                                 existingNotificationIdsRef.current.add(dueSoonNotificationId);
@@ -186,12 +259,111 @@ export const useNotifications = (user: any) => {
                     }
                 };
 
+                const maybeCreateQuizNotifications = async (quizDocs: any) => {
+                    if (!newContentNotificationsEnabled) return;
+
+                    const existingIds = new Set(existingNotificationIdsRef.current);
+                    const now = new Date();
+
+                    for (const quizDoc of quizDocs) {
+                        const quiz = quizDoc.data() || {};
+                        const quizSubjectId = String(quiz.subjectId || '').trim();
+                        if (!quizSubjectId || !enrolledSubjectIds.has(quizSubjectId)) continue;
+                        if (quiz.visibleToStudents === false) continue;
+
+                        const createdAt = toDateSafe(quiz.createdAt || quiz.generatedAt || quiz.updatedAt);
+                        if (!createdAt || (now.getTime() - createdAt.getTime()) > NEW_ASSIGNMENT_LOOKBACK_MS) {
+                            continue;
+                        }
+
+                        const quizId = String(quizDoc.id || '').trim();
+                        if (!quizId) continue;
+
+                        const quizTopicId = String(quiz.topicId || '').trim() || null;
+                        const quizTitle = String(quiz.title || quiz.name || 'Nuevo test').trim() || 'Nuevo test';
+                        const notificationId = `topic_quiz_new_${quizId}_${uid}`;
+
+                        if (existingIds.has(notificationId)) continue;
+
+                        await setDoc(doc(db, 'notifications', notificationId), {
+                            userId: uid,
+                            institutionId: user.institutionId,
+                            subjectId: quizSubjectId,
+                            topicId: quizTopicId,
+                            route: buildTopicRoute(quizSubjectId, quizTopicId) || null,
+                            read: false,
+                            type: 'topic_quiz_new',
+                            title: 'Nuevo test disponible',
+                            message: `Se ha publicado: ${quizTitle}`,
+                            contentType: 'quiz',
+                            createdAt: serverTimestamp(),
+                        });
+
+                        existingIds.add(notificationId);
+                        existingNotificationIdsRef.current.add(notificationId);
+                    }
+                };
+
+                const maybeCreateMaterialNotifications = async (materialDocs: any, collectionName: string) => {
+                    if (!newContentNotificationsEnabled) return;
+
+                    const existingIds = new Set(existingNotificationIdsRef.current);
+                    const now = new Date();
+
+                    for (const materialDoc of materialDocs) {
+                        const material = materialDoc.data() || {};
+                        const materialSubjectId = String(material.subjectId || '').trim();
+                        if (!materialSubjectId || !enrolledSubjectIds.has(materialSubjectId)) continue;
+                        if (material.visibleToStudents === false) continue;
+
+                        const createdAt = toDateSafe(material.createdAt || material.uploadedAt || material.updatedAt);
+                        if (!createdAt || (now.getTime() - createdAt.getTime()) > NEW_ASSIGNMENT_LOOKBACK_MS) {
+                            continue;
+                        }
+
+                        const materialId = String(materialDoc.id || '').trim();
+                        if (!materialId) continue;
+
+                        const materialTopicId = String(material.topicId || '').trim() || null;
+                        const materialTitle = String(
+                            material.name
+                            || material.title
+                            || (collectionName === 'resumen' ? 'Nuevo resumen' : 'Nuevo material')
+                        ).trim() || 'Nuevo material';
+                        const notificationId = `topic_material_new_${collectionName}_${materialId}_${uid}`;
+
+                        if (existingIds.has(notificationId)) continue;
+
+                        await setDoc(doc(db, 'notifications', notificationId), {
+                            userId: uid,
+                            institutionId: user.institutionId,
+                            subjectId: materialSubjectId,
+                            topicId: materialTopicId,
+                            route: buildResourceRoute({
+                                subjectId: materialSubjectId,
+                                topicId: materialTopicId,
+                                resourceId: materialId,
+                                resourceType: collectionName,
+                            }) || null,
+                            read: false,
+                            type: 'topic_material_new',
+                            title: collectionName === 'resumen' ? 'Nuevo resumen disponible' : 'Nuevo material disponible',
+                            message: `Se ha publicado: ${materialTitle}`,
+                            contentType: collectionName,
+                            createdAt: serverTimestamp(),
+                        });
+
+                        existingIds.add(notificationId);
+                        existingNotificationIdsRef.current.add(notificationId);
+                    }
+                };
+
                 const submissionsQuery = query(
                     collection(db, 'topicAssignmentSubmissions'),
                     where('userId', '==', uid)
                 );
 
-                unsubscribeSubmissions = onSnapshot(submissionsQuery, (snapshot: any) => {
+                registerUnsubscribe(onSnapshot(submissionsQuery, (snapshot: any) => {
                     deliveredByAssignment = new Set(
                         snapshot.docs
                             .map((submissionDoc) => submissionDoc.data())
@@ -201,19 +373,64 @@ export const useNotifications = (user: any) => {
                     );
                 }, () => {
                     deliveredByAssignment = new Set();
-                });
+                }));
 
-                const assignmentsQuery = query(
-                    collection(db, 'topicAssignments'),
-                    where('institutionId', '==', user.institutionId)
-                );
+                subjectIdChunks.forEach((subjectIdChunk: any[]) => {
+                    const assignmentsQuery = query(
+                        collection(db, 'topicAssignments'),
+                        where('subjectId', 'in', subjectIdChunk)
+                    );
 
-                unsubscribeAssignments = onSnapshot(assignmentsQuery, (snapshot: any) => {
-                    maybeCreateNotifications(snapshot.docs).catch((error: any) => {
-                        console.error('Error creating assignment notifications:', error);
-                    });
-                }, (error: any) => {
-                    console.error('Error listening assignment notifications source:', error);
+                    registerUnsubscribe(onSnapshot(assignmentsQuery, (snapshot: any) => {
+                        maybeCreateAssignmentNotifications(snapshot.docs).catch((error: any) => {
+                            console.error('Error creating assignment notifications:', error);
+                        });
+                    }, (error: any) => {
+                        console.error('Error listening assignment notifications source:', error);
+                    }));
+
+                    if (!newContentNotificationsEnabled) {
+                        return;
+                    }
+
+                    const quizzesQuery = query(
+                        collection(db, 'quizzes'),
+                        where('subjectId', 'in', subjectIdChunk)
+                    );
+
+                    registerUnsubscribe(onSnapshot(quizzesQuery, (snapshot: any) => {
+                        maybeCreateQuizNotifications(snapshot.docs).catch((error: any) => {
+                            console.error('Error creating quiz notifications:', error);
+                        });
+                    }, (error: any) => {
+                        console.error('Error listening quiz notifications source:', error);
+                    }));
+
+                    const documentsQuery = query(
+                        collection(db, 'documents'),
+                        where('subjectId', 'in', subjectIdChunk)
+                    );
+
+                    registerUnsubscribe(onSnapshot(documentsQuery, (snapshot: any) => {
+                        maybeCreateMaterialNotifications(snapshot.docs, 'documents').catch((error: any) => {
+                            console.error('Error creating material notifications from documents:', error);
+                        });
+                    }, (error: any) => {
+                        console.error('Error listening document notifications source:', error);
+                    }));
+
+                    const summariesQuery = query(
+                        collection(db, 'resumen'),
+                        where('subjectId', 'in', subjectIdChunk)
+                    );
+
+                    registerUnsubscribe(onSnapshot(summariesQuery, (snapshot: any) => {
+                        maybeCreateMaterialNotifications(snapshot.docs, 'resumen').catch((error: any) => {
+                            console.error('Error creating material notifications from resumen:', error);
+                        });
+                    }, (error: any) => {
+                        console.error('Error listening summary notifications source:', error);
+                    }));
                 });
             } catch (error) {
                 console.error('Error initializing student assignment notifications:', error);
@@ -224,10 +441,21 @@ export const useNotifications = (user: any) => {
 
         return () => {
             cancelled = true;
-            if (unsubscribeAssignments) unsubscribeAssignments();
-            if (unsubscribeSubmissions) unsubscribeSubmissions();
+            unsubscribeCallbacks.forEach((callback) => {
+                try {
+                    callback();
+                } catch (error) {
+                    console.error('Error unsubscribing student notification listener:', error);
+                }
+            });
         };
-    }, [uid, activeRole, user?.institutionId]);
+    }, [
+        uid,
+        activeRole,
+        user?.institutionId,
+        user?.notifications?.newContent,
+        user?.settings?.notifications?.newContent,
+    ]);
 
     const unreadCount = notifications.filter(n => !n.read).length;
 

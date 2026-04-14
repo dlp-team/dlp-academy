@@ -4,18 +4,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import NotificationsPanel from '../../../src/components/ui/NotificationsPanel';
 
-const routerMocks = vi.hoisted(() => ({
-  navigate: vi.fn(),
-}));
-
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-  return {
-    ...actual,
-    useNavigate: () => routerMocks.navigate,
-  };
-});
-
 const renderPanel = (overrides = {}) => {
   const defaultProps = {
     notifications: [],
@@ -46,7 +34,7 @@ describe('NotificationsPanel', () => {
     expect(screen.getByText(/sin notificaciones/i)).toBeTruthy();
   });
 
-  it('marks as read and navigates when clicking a subject notification', () => {
+  it('marks as read and opens full history when clicking a notification', () => {
     const { props } = renderPanel({
       notifications: [
         {
@@ -63,7 +51,7 @@ describe('NotificationsPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /nueva actividad/i }));
 
     expect(props.onMarkAsRead).toHaveBeenCalledWith('notif-subject-1');
-    expect(routerMocks.navigate).toHaveBeenCalledWith('/home/subject/subject-1');
+    expect(props.onOpenAll).toHaveBeenCalledWith(expect.objectContaining({ id: 'notif-subject-1' }));
     expect(props.onClose).toHaveBeenCalledTimes(1);
   });
 

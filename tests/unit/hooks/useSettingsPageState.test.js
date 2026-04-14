@@ -39,7 +39,7 @@ describe('useSettingsPageState', () => {
           language: 'es',
           viewMode: 'grid',
           rememberSort: true,
-          notifications: { email: true, push: false, newFeatures: true },
+          notifications: { email: true, push: false, newContent: true, newFeatures: true },
         }),
       });
       return vi.fn();
@@ -57,6 +57,7 @@ describe('useSettingsPageState', () => {
 
     expect(result.current.settings.theme).toBe('system');
     expect(result.current.settings.headerThemeSliderEnabled).toBe(true);
+    expect(result.current.settings.notifications.newContent).toBe(true);
     expect(mocks.applyThemeToDom).toHaveBeenCalledWith('system');
   });
 

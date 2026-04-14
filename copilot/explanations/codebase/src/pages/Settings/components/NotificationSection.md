@@ -1,8 +1,8 @@
-# NotificationSection.jsx
+# NotificationSection.tsx
 
 ## Overview
-- **Source file:** `src/pages/Settings/components/NotificationSection.jsx`
-- **Last documented:** 2026-02-24
+- **Source file:** `src/pages/Settings/components/NotificationSection.tsx`
+- **Last documented:** 2026-04-14
 - **Role:** Reusable UI component consumed by the parent page/module.
 
 ## Responsibilities
@@ -15,6 +15,10 @@
 - `react`
 - `lucide-react`
 - `../../../components/ui/Toggle`
+
+## Changelog
+### 2026-04-14
+- Added `notifications.newContent` toggle UI to control student alerts for newly published visible content (tasks, tests, and material).
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.

@@ -2,6 +2,10 @@
 # NotificationsPanel.tsx
 
 ## Changelog
+### 2026-04-14
+- Changed dropdown item activation flow: clicking any notification in the bell panel now marks it as read and opens notifications history via `onOpenAll`.
+- Removed direct subject-route navigation from panel item click path to enforce page-first behavior.
+
 ### 2026-04-12
 - Migrated per-notification row rendering to shared `NotificationItemCard`.
 - Removed duplicated icon/time/action rendering logic from panel.

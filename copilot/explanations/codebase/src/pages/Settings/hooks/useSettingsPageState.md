@@ -1,8 +1,8 @@
-# useSettingsPageState.js
+# useSettingsPageState.ts
 
 ## Overview
-- **Source file:** `src/pages/Settings/hooks/useSettingsPageState.js`
-- **Last documented:** 2026-02-24
+- **Source file:** `src/pages/Settings/hooks/useSettingsPageState.ts`
+- **Last documented:** 2026-04-14
 - **Role:** Custom hook with stateful/business logic for this page area.
 
 ## Responsibilities
@@ -19,6 +19,9 @@
 - `firebase/firestore`
 
 ## Changelog
+### 2026-04-14
+- Added `notifications.newContent` default setting so new-content toggle state is stable even for profiles that predate this field.
+
 ### 2026-04-07
 - Added `headerThemeSliderEnabled` to settings state and snapshot synchronization.
 - Added compatibility fallback reads from `settings.*` fields for theme and slider preference values.
