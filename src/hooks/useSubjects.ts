@@ -340,7 +340,12 @@ export const useSubjects = (user: any) => {
 
     useEffect(() => {
         if (isPreviewMockMode) {
-            setSubjects(PREVIEW_MOCK_SUBJECTS.map((subject: any) => ({ ...subject })));
+            const isStudent = activeRole === 'student';
+            setSubjects(
+                PREVIEW_MOCK_SUBJECTS
+                    .filter((s: any) => !s._studentOnly || isStudent)
+                    .map((subject: any) => ({ ...subject })),
+            );
             setLoading(false);
             return;
         }

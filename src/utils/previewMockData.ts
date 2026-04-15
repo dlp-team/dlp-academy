@@ -107,7 +107,7 @@ export const PREVIEW_MOCK_SUBJECTS = [
     lastActivityAt: '2026-03-22',
     topicCount: 1,
   },
-  // Subjects inside "Fisica ESO" folder (teacher-only via folder, students via shortcuts)
+  // Subjects inside "Fisica ESO" folder (teacher-only via folder)
   {
     id: 'preview-subject-5',
     name: 'Fisica',
@@ -167,6 +167,28 @@ export const PREVIEW_MOCK_SUBJECTS = [
     isCurrent: true,
     lastActivityAt: '2026-03-21',
     topicCount: 1,
+  },
+  // Student-visible copy of Fisica 2 ESO (simulates shortcut/course assignment)
+  {
+    id: 'preview-subject-student-fisica',
+    name: 'Fisica',
+    course: '2 ESO',
+    level: 'ESO',
+    grade: '2',
+    tags: ['fisica', 'eso'],
+    ownerId: 'preview-teacher',
+    institutionId: PREVIEW_MOCK_INSTITUTION_ID,
+    color: 'from-violet-400 to-violet-600',
+    icon: 'book',
+    cardStyle: 'default',
+    modernFillColor: '#8b5cf6',
+    completed: false,
+    folderId: null,
+    academicYear: '2025-2026',
+    isCurrent: true,
+    lastActivityAt: '2026-03-18',
+    topicCount: 1,
+    _studentOnly: true,
   },
 ];
 
@@ -286,6 +308,20 @@ export const PREVIEW_MOCK_TOPICS_BY_SUBJECT: Record<string, any[]> = {
       name: 'Ondas y sonido',
       title: 'Ondas y sonido',
       description: 'Propagacion de ondas mecanicas y acustica.',
+      number: '01',
+      order: 1,
+      status: 'completed',
+      isVisible: true,
+      color: 'from-violet-400 to-violet-600',
+    },
+  ],
+  'preview-subject-student-fisica': [
+    {
+      id: 'preview-topic-physics-2eso-1',
+      subjectId: 'preview-subject-student-fisica',
+      name: 'Fuerzas y movimiento',
+      title: 'Fuerzas y movimiento',
+      description: 'Leyes de Newton y problemas de dinamica basica.',
       number: '01',
       order: 1,
       status: 'completed',
