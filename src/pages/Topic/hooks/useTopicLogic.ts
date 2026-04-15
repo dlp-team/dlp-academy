@@ -27,7 +27,20 @@ const EMPTY_CONFIRM_DIALOG = {
 };
 
 export const useTopicLogic = (user: any) => {
-    const navigate = useNavigate();
+    const routerNavigate = useNavigate();
+    const navigate = (to: any, options: any = undefined) => {
+        if (
+            user?.__previewLock === true
+            && typeof to === 'string'
+            && to.startsWith('/')
+            && !to.startsWith('/theme-preview')
+        ) {
+            routerNavigate(`/theme-preview${to}`, options);
+            return;
+        }
+
+        routerNavigate(to, options);
+    };
     const { subjectId, topicId } = useParams();
     const fileInputRef = useRef<any>(null);
     const toastTimerRef = useRef<any>(null);

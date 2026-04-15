@@ -186,6 +186,7 @@ const InstitutionAdminDashboard = ({ user }: any) => {
             iconUploadError={customization.iconUploadError}
             customizationInitialValues={customization.customizationInitialValues}
             onIconUpload={customization.handleIconUpload}
+            onIconUrlSave={customization.handleIconUrlSave}
             onLogoUpload={customization.handleLogoUpload}
             onLogoUrlSave={customization.handleLogoUrlSave}
             onSaveCustomization={customization.handleSaveCustomization}

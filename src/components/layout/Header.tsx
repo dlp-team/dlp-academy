@@ -70,7 +70,7 @@ const Header = ({ user }: any) => {
 
   // --- 2. USER DATA LOGIC (Cached + Live) ---
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || user?.__previewLock) return;
 
     const cacheKey = `user_profile_${user.uid}`;
     const getUserThemePreference = (profileData: any) => profileData?.theme || profileData?.settings?.theme || 'system';
@@ -148,7 +148,7 @@ const Header = ({ user }: any) => {
   const userData = { ...(user || {}), ...(firestoreUser || {}) };
   const assignedRoles = getAssignedRoles(userData);
   const activeRole = getActiveRole(userData);
-  const canSwitchRole = assignedRoles.length > 1;
+  const canSwitchRole = !userData?.__previewLock && assignedRoles.length > 1;
   const institutionBranding = useInstitutionBranding(userData);
 
   const getDisplayName = () => {
@@ -192,6 +192,19 @@ const Header = ({ user }: any) => {
 
   const dashboardRoute = getDashboardRoute(activeRole);
   const dashboardLabel = getDashboardLabel(activeRole);
+  const previewSafeNavigate = useCallback((path: any) => {
+    if (
+      userData?.__previewLock === true
+      && typeof path === 'string'
+      && path.startsWith('/')
+      && !path.startsWith('/theme-preview')
+    ) {
+      navigate(`/theme-preview${path}`);
+      return;
+    }
+
+    navigate(path);
+  }, [navigate, userData?.__previewLock]);
 
   const handleRoleSwitch = (event: any) => {
     const nextRole = event?.target?.value;
@@ -361,7 +374,7 @@ const Header = ({ user }: any) => {
         {/* --- LEFT: LOGO --- */}
         <div 
             className="flex items-center gap-3 cursor-pointer group" 
-            onClick={() => navigate('/home')}
+          onClick={() => previewSafeNavigate('/home')}
         >
           {institutionBranding.logoUrl ? (
             <img
@@ -416,7 +429,7 @@ const Header = ({ user }: any) => {
             {/* 3. DASHBOARD BUTTON (Role-based) */}
             {dashboardRoute && (
                 <button
-                    onClick={() => navigate(dashboardRoute)}
+                onClick={() => previewSafeNavigate(dashboardRoute)}
                     className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all duration-200 cursor-pointer"
                 title={dashboardLabel ?? undefined}
                 >
@@ -427,7 +440,7 @@ const Header = ({ user }: any) => {
 
             {/* 4. SETTINGS BUTTON */}
             <button 
-                onClick={() => navigate('/settings')}
+              onClick={() => previewSafeNavigate('/settings')}
                 className="p-2.5 text-gray-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-full transition-all duration-200 cursor-pointer"
                 title="Configuración"
             >
@@ -437,7 +450,7 @@ const Header = ({ user }: any) => {
             {/* 5. USER PROFILE (Clickable Area) */}
             <div 
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => navigate('/profile')} 
+              onClick={() => previewSafeNavigate('/profile')} 
             >
                 {/* Text Info */}
                 <div className="text-right hidden sm:block">
@@ -474,7 +487,7 @@ const Header = ({ user }: any) => {
                       triggerRef={notificationsTriggerRef}
                       onOpenAll={() => {
                         setShowPanel(false);
-                        navigate('/notifications');
+                        previewSafeNavigate('/notifications');
                       }}
                       onResolveMoveRequest={handleResolveMoveRequest}
                       isResolvingMoveRequest={isResolvingMoveRequest}

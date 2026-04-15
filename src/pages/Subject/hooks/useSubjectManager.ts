@@ -17,7 +17,20 @@ const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/we
 const MAX_IN_QUERY_VALUES = 10;
 
 export const useSubjectManager = (user: any, subjectId: any) => {
-    const navigate = useNavigate();
+    const routerNavigate = useNavigate();
+    const navigate = (to: any, options: any = undefined) => {
+        if (
+            user?.__previewLock === true
+            && typeof to === 'string'
+            && to.startsWith('/')
+            && !to.startsWith('/theme-preview')
+        ) {
+            routerNavigate(`/theme-preview${to}`, options);
+            return;
+        }
+
+        routerNavigate(to, options);
+    };
     const [subject, setSubject] = useState<any>(null);
     const [topics, setTopics] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);

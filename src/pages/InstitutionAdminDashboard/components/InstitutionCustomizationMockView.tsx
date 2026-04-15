@@ -249,6 +249,16 @@ const InstitutionCustomizationMockView = ({
 
   return (
     <>
+    <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 mb-4">
+      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Nombre en pestaña del navegador</label>
+      <input
+        type="text"
+        value={form.browserTabTitle || ''}
+        onChange={(event) => handleChange('browserTabTitle', event.target.value)}
+        className="w-full mt-2 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+        placeholder="Título en la pestaña del navegador"
+      />
+    </section>
     <div className={containerClassName} data-testid="institution-customization-preview-root">
       <aside
         className={`relative h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-[width] duration-300 ease-in-out ${
@@ -524,6 +534,8 @@ const InstitutionCustomizationMockView = ({
       closeOnBackdropClick={!saving}
       maxWidth="md"
       contentClassName="p-0"
+      rootClassName={fullscreen ? 'fixed inset-x-0 bottom-0 z-[10100] overflow-y-auto' : undefined}
+      rootStyle={fullscreen ? { top: 0 } : undefined}
     >
       <div className="p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Confirmar guardado</h3>
@@ -558,6 +570,8 @@ const InstitutionCustomizationMockView = ({
       closeOnBackdropClick={!saving}
       maxWidth="md"
       contentClassName="p-0"
+      rootClassName={fullscreen ? 'fixed inset-x-0 bottom-0 z-[10100] overflow-y-auto' : undefined}
+      rootStyle={fullscreen ? { top: 0 } : undefined}
     >
       <div className="p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Confirmar restablecimiento</h3>

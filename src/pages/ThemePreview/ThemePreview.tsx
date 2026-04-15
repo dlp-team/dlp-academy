@@ -1,8 +1,25 @@
 // src/pages/ThemePreview/ThemePreview.tsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import Home from '../Home/Home';
+import Subject from '../Subject/Subject';
+import Topic from '../Topic/Topic';
+import Quizzes from '../Quizzes/Quizzes';
+import EditQuiz from '../Quizzes/QuizEdit';
+import QuizReviewPage from '../Quizzes/QuizReviewPage';
+import QuizRepaso from '../Quizzes/QuizRepaso';
+import StudyGuide from '../Content/StudyGuide';
+import StudyGuideEditor from '../Content/StudyGuideEditor';
+import Formula from '../Content/Formula';
+import Exam from '../Content/Exam';
+import Profile from '../Profile/Profile';
+import Settings from '../Settings/Settings';
+import Notifications from '../Notifications/Notifications';
+import TeacherDashboard from '../TeacherDashboard/TeacherDashboard';
+import StudentDashboard from '../StudentDashboard/StudentDashboard';
 import { isInstitutionPreviewThemeMessage } from '../../utils/institutionPreviewProtocol';
+
+const THEME_PREVIEW_SESSION_KEY = 'dlp_theme_preview_active';
 
 const PREVIEW_ROLE_KEYS = new Set(['teacher', 'student']);
 const USER_ROLE_KEYS = new Set(['teacher', 'student', 'institutionadmin', 'admin']);
@@ -73,19 +90,18 @@ const buildPreviewUserWithRole = (baseUser: any, previewRole: any) => {
     ? String(previewRole || '').trim().toLowerCase()
     : 'teacher';
 
-  const mergedRoles = Array.from(new Set([
-    safePreviewRole,
-    ...(Array.isArray(baseUser?.roles) ? baseUser.roles : []),
-    ...(Array.isArray(baseUser?.availableRoles) ? baseUser.availableRoles : []),
-  ]));
+  // The preview role is controlled from the customization toolbar, so the
+  // in-app header role selector inside the iframe must stay hidden.
+  const lockedRoles = [safePreviewRole];
 
   return {
     ...baseUser,
     role: safePreviewRole,
     activeRole: safePreviewRole,
-    roles: mergedRoles,
-    availableRoles: mergedRoles,
+    roles: lockedRoles,
+    availableRoles: lockedRoles,
     rememberSort: false,
+    __previewLock: true,
   };
 };
 
@@ -98,6 +114,15 @@ const ThemePreview = () => {
   useEffect(() => {
     setPreviewRole(normalizePreviewRole(searchParams.get('role')));
   }, [searchParams]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.sessionStorage.setItem(THEME_PREVIEW_SESSION_KEY, '1');
+    } catch {
+      // Ignore storage write errors in restricted contexts.
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
@@ -184,7 +209,28 @@ const ThemePreview = () => {
   }
 
   return (
-    <Home user={resolvedPreviewUser} />
+    <Routes>
+      <Route index element={<Home user={resolvedPreviewUser} />} />
+      <Route path="home" element={<Home user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId" element={<Subject user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId" element={<Topic user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/quiz/:quizId" element={<Quizzes user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/resumen/:guideId/edit" element={<StudyGuideEditor user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/quiz/:quizId/edit" element={<EditQuiz user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/quiz/:quizId/review" element={<QuizReviewPage user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/quizzes/repaso" element={<QuizRepaso user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/resumen/:fileId" element={<StudyGuide user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/resource/:fileId" element={<StudyGuide user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/guide/:guideId" element={<StudyGuide user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/formulas/:fileId" element={<Formula user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/exam/:examId" element={<Exam user={resolvedPreviewUser} />} />
+      <Route path="profile" element={<Profile user={resolvedPreviewUser} />} />
+      <Route path="settings" element={<Settings user={resolvedPreviewUser} />} />
+      <Route path="notifications" element={<Notifications user={resolvedPreviewUser} />} />
+      <Route path="teacher-dashboard" element={<TeacherDashboard user={resolvedPreviewUser} />} />
+      <Route path="student-dashboard" element={<StudentDashboard user={resolvedPreviewUser} />} />
+      <Route path="*" element={<Navigate to="/theme-preview/home" replace />} />
+    </Routes>
   );
 };
 

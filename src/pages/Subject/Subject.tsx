@@ -23,7 +23,20 @@ import { getActiveRole } from '../../utils/permissionUtils';
 const Subject = ({ user }: any) => {
     const params = useParams();
     const subjectId = params.subjectId || params.id; 
-    const navigate = useNavigate();
+    const routerNavigate = useNavigate();
+    const navigate = (to: any, options: any = undefined) => {
+        if (
+            user?.__previewLock === true
+            && typeof to === 'string'
+            && to.startsWith('/')
+            && !to.startsWith('/theme-preview')
+        ) {
+            routerNavigate(`/theme-preview${to}`, options);
+            return;
+        }
+
+        routerNavigate(to, options);
+    };
     const location = useLocation();
     const activeRole = getActiveRole(user);
     const isBinReadOnlyView = useMemo(() => {
@@ -170,6 +183,7 @@ const Subject = ({ user }: any) => {
                     classMembers={classMembers}
                     membersLoading={membersLoading}
                     topicCount={effectiveIsTeacher ? topics.length : topics.filter(t => t.isVisible !== false).length}
+                    onBackToSubjects={() => navigate('/home')}
                 />
 
                 {isBinReadOnlyView && (

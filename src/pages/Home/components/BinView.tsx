@@ -48,6 +48,12 @@ const BIN_SORT_DESCRIPTIONS = {
 
 const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
     const navigate = useNavigate();
+    const getPreviewSafePath = (path: any) => {
+        if (user?.__previewLock === true && typeof path === 'string' && path.startsWith('/home')) {
+            return `/theme-preview${path}`;
+        }
+        return path;
+    };
     const isStudent = getActiveRole(user) === 'student';
 
     const [trashedItems, setTrashedItems] = useState<any[]>([]);
@@ -569,7 +575,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
 
     const handleOpenReadOnlySubject = (subjectId: any) => {
         if (!subjectId) return;
-        navigate(`/home/subject/${subjectId}?mode=readonly&source=bin`);
+        navigate(getPreviewSafePath(`/home/subject/${subjectId}?mode=readonly&source=bin`));
     };
 
     const handleSelectItem = (itemId: any, itemType: any) => {

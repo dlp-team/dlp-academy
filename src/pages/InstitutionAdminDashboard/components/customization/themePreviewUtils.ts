@@ -30,6 +30,7 @@ const TOKEN_SELECTORS = {
 export const DEFAULTS = {
   institutionName: '',
   logoUrl: '',
+  browserTabTitle: '',
   primary: '#6366f1',
   secondary: '#8b5cf6',
   accent: '#a855f7',

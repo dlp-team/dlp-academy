@@ -59,6 +59,13 @@ const useInstitutionBranding = (user: any) => {
         faviconLink.setAttribute('href', iconUrl);
     }, [branding?.iconUrl]);
 
+    React.useEffect(() => {
+        const title = typeof branding?.browserTabTitle === 'string' ? branding.browserTabTitle.trim() : '';
+        if (title) {
+            document.title = title;
+        }
+    }, [branding?.browserTabTitle]);
+
     return branding;
 };
 

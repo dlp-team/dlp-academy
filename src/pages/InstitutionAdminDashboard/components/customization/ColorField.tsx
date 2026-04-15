@@ -9,6 +9,7 @@ const isValidHexColor = (value: any) => /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.t
 const ColorField = ({ token, label, description, icon, value, onChange, onFocus, onBlur, isActive }: any) => {
   const inputRef = useRef<any>(null);
   const [hexInputValue, setHexInputValue] = useState(() => normalizeHexColorInput(value));
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => {
     setHexInputValue(normalizeHexColorInput(value));
@@ -25,6 +26,14 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
     setHexInputValue(normalizeHexColorInput(value));
   };
 
+  const handleNativeColorInput = (rawValue: any) => {
+    const nextColor = normalizeHexColorInput(rawValue);
+    if (!isValidHexColor(nextColor)) return;
+
+    setHexInputValue(nextColor);
+    onChange(token, nextColor);
+  };
+
   const handleContainerClick = (event: any) => {
     const target = event?.target;
 
@@ -35,12 +44,17 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
       return;
     }
 
-    onFocus(token);
+    if (isActive) {
+      onBlur(null);
+    } else {
+      onFocus(token);
+    }
   };
 
   return (
     <div
       data-testid={`color-field-${token}`}
+      data-color-field-active={isActive ? 'true' : 'false'}
       className={`
         rounded-xl border transition-all duration-200 cursor-pointer
         ${isActive
@@ -62,9 +76,23 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
             aria-label={`Abrir selector de color para ${label}`}
             onClick={(event) => {
               event.stopPropagation();
-              if (typeof inputRef.current?.showPicker === 'function') {
-                inputRef.current.showPicker();
+              // If the native picker is already open, close it by blurring the input.
+              if (isPickerOpen) {
+                inputRef.current?.blur();
                 return;
+              }
+              // Activate the card if not already active.
+              if (!isActive) {
+                onFocus(token);
+              }
+              // Open the native color picker.
+              try {
+                if (typeof inputRef.current?.showPicker === 'function') {
+                  inputRef.current.showPicker();
+                  return;
+                }
+              } catch {
+                // Fallback to click for browsers that block showPicker.
               }
 
               inputRef.current?.click();
@@ -75,7 +103,7 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
           />
           {isActive && (
             <div
-              className="absolute -inset-1 rounded-2xl animate-ping opacity-40"
+              className="absolute -inset-1 rounded-2xl animate-ping opacity-40 pointer-events-none"
               style={{ backgroundColor: value }}
             />
           )}
@@ -83,11 +111,10 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
             ref={inputRef}
             type="color"
             value={value}
-            onChange={(event) => {
-              const nextColor = normalizeHexColorInput(event.target.value);
-              setHexInputValue(nextColor);
-              onChange(token, nextColor);
-            }}
+            onFocus={() => setIsPickerOpen(true)}
+            onBlur={() => setIsPickerOpen(false)}
+            onInput={(event) => handleNativeColorInput((event.target as HTMLInputElement).value)}
+            onChange={(event) => handleNativeColorInput((event.target as HTMLInputElement).value)}
             onClick={(event) => event.stopPropagation()}
             data-color-field-swatch="true"
             className="sr-only"
@@ -98,14 +125,6 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
           <div className="flex items-center gap-1.5 mb-0.5">
             <span className="text-xs">{icon}</span>
             <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">{label}</span>
-            {isActive && (
-              <span
-                className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white leading-none"
-                style={{ backgroundColor: value }}
-              >
-                activo
-              </span>
-            )}
           </div>
           <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight truncate">{description}</p>
         </div>

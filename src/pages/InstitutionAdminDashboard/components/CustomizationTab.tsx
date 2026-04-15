@@ -31,6 +31,7 @@ const CustomizationTab = ({
   iconUploadError,
   customizationInitialValues,
   onIconUpload,
+  onIconUrlSave,
   onLogoUpload,
   onLogoUrlSave,
   onSaveCustomization,
@@ -77,6 +78,7 @@ const CustomizationTab = ({
         iconUploading={iconUploading}
         iconUploadError={iconUploadError}
         onIconUpload={onIconUpload}
+        onIconUrlSave={onIconUrlSave}
         onLogoUpload={onLogoUpload}
         onLogoUrlSave={onLogoUrlSave}
         onPaletteApply={handlePaletteApply}

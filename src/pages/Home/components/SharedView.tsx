@@ -1,5 +1,5 @@
 // src/pages/Home/components/SharedView.jsx
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Users, Folder as FolderIcon, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -43,6 +43,12 @@ const SharedView = ({
     onOpenSubjectClasses = () => {}
 }: any) => {
     const navigate = useNavigate();
+    const getPreviewSafePath = useCallback((path: any) => {
+        if (user?.__previewLock === true && typeof path === 'string' && path.startsWith('/home')) {
+            return `/theme-preview${path}`;
+        }
+        return path;
+    }, [user]);
 
     const [selectedTags] = useState<any[]>([]);
 
@@ -269,7 +275,7 @@ const SharedView = ({
                                             activeMenu={activeMenu}
                                             onToggleMenu={onToggleMenu}
                                             onSelect={() => onSelectSubject(subject)}
-                                            onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
+                                            onSelectTopic={(sid, tid) => navigate(getPreviewSafePath(`/home/subject/${sid}/topic/${tid}`))}
                                             onEdit={(e, s) => onEditSubject(e, s)} 
                                             onDelete={(e, s, action = 'delete') => {
                                                 if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(s, 'subject')) return;
