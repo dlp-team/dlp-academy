@@ -1,7 +1,7 @@
 // src/pages/Content/Exam.tsx
 /* eslint-disable react-hooks/error-boundaries */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     ChevronLeft, ChevronRight, Clock, Eye, EyeOff, ClipboardList,
     Trophy, CheckCircle2, ArrowLeft, Sparkles, RotateCcw,
@@ -343,6 +343,7 @@ const CompletionScreen = ({ examData, revealedAnswers, timeLeft, total, gradient
 const Exam = ({ user }) => {
     const { subjectId, topicId, examId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const questionRef = useRef<any>(null);
 
     const [loading, setLoading] = useState(true);
@@ -400,6 +401,18 @@ const Exam = ({ user }) => {
                 setSubjectLoadWarning('');
                 setExamData(null);
 
+                // Preview mode: use prefetched exam data instead of Firestore
+                const prefetchedExam = (location?.state as any)?.prefetchedExam;
+                if (prefetchedExam) {
+                    const questions = prefetchedExam.questions || [];
+                    setExamData({ ...prefetchedExam, questions });
+                    if (prefetchedExam.subjectColor) {
+                        setTopicGradient(prefetchedExam.subjectColor);
+                    }
+                    setLoading(false);
+                    return;
+                }
+
                 try {
                     if (subjectId) {
                         const subSnap = await getDoc(doc(db, 'subjects', subjectId));
@@ -452,7 +465,7 @@ const Exam = ({ user }) => {
             }
         };
         load();
-    }, [subjectId, examId, navigate, user]);
+    }, [subjectId, examId, navigate, user, location?.state]);
 
 
     // Timer

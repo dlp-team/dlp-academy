@@ -7,6 +7,9 @@ import Topic from '../Topic/Topic';
 import Profile from '../Profile/Profile';
 import Settings from '../Settings/Settings';
 import Notifications from '../Notifications/Notifications';
+import StudyGuide from '../Content/StudyGuide';
+import Exam from '../Content/Exam';
+import Quizzes from '../Quizzes/Quizzes';
 import { isInstitutionPreviewThemeMessage } from '../../utils/institutionPreviewProtocol';
 
 const THEME_PREVIEW_SESSION_KEY = 'dlp_theme_preview_active';
@@ -380,6 +383,11 @@ const ThemePreview = () => {
       <Route path="home" element={<Home user={resolvedPreviewUser} />} />
       <Route path="home/subject/:subjectId" element={<Subject user={resolvedPreviewUser} />} />
       <Route path="home/subject/:subjectId/topic/:topicId" element={<Topic user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/resumen/:guideId" element={<StudyGuide user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/resumen/:guideId/:fileId" element={<StudyGuide user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/formulas/:guideId" element={<StudyGuide user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/exam/:examId" element={<Exam user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/quiz/:quizId" element={<Quizzes user={resolvedPreviewUser} />} />
       <Route path="home/subject/:subjectId/topic/:topicId/*" element={<MockTopicContentPreview />} />
       <Route path="profile" element={<Profile user={resolvedPreviewUser} />} />
       <Route path="settings" element={<Settings user={resolvedPreviewUser} />} />
