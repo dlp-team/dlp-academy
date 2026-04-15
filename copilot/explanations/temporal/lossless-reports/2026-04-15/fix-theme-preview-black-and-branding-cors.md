@@ -103,3 +103,27 @@ Date: 2026-04-15
 
 ## Residual risk
 - If future preview requirements need full subject/topic in-preview navigation, dedicated preview route rendering for those pages may be needed instead of Home-only rendering.
+
+## Follow-up fix (topic entry loop)
+Date: 2026-04-15
+
+### Additional issue reported
+- [ERROR.md](ERROR.md#L1) reported: "Maximum update depth exceeded" in [src/pages/Subject/hooks/useSubjectManager.ts](src/pages/Subject/hooks/useSubjectManager.ts#L58) when entering a subject/topic in preview.
+
+### Follow-up root cause
+- Both [src/pages/Subject/hooks/useSubjectManager.ts](src/pages/Subject/hooks/useSubjectManager.ts#L25) and [src/pages/Topic/hooks/useTopicLogic.ts](src/pages/Topic/hooks/useTopicLogic.ts#L35) declared a non-memoized `navigate` function.
+- Each hook included `navigate` inside a `useEffect` dependency list.
+- In preview mock mode, the effect sets local state; a new `navigate` reference each render retriggered the same effect and created a render loop.
+
+### Follow-up changes
+1. Memoized preview-safe navigation callback in subject manager:
+- [src/pages/Subject/hooks/useSubjectManager.ts](src/pages/Subject/hooks/useSubjectManager.ts#L1)
+
+2. Memoized preview-safe navigation callback in topic logic:
+- [src/pages/Topic/hooks/useTopicLogic.ts](src/pages/Topic/hooks/useTopicLogic.ts#L1)
+
+### Follow-up validation
+- Diagnostics checked with `get_errors`:
+  - [src/pages/Subject/hooks/useSubjectManager.ts](src/pages/Subject/hooks/useSubjectManager.ts)
+  - [src/pages/Topic/hooks/useTopicLogic.ts](src/pages/Topic/hooks/useTopicLogic.ts)
+- Result: No errors found.

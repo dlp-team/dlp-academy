@@ -1,5 +1,5 @@
 // src/pages/Topic/hooks/useTopicLogic.ts
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
     FileText, Award, Sigma, BookOpen, NotebookPen, Pencil, Target, Trophy 
@@ -32,9 +32,10 @@ const EMPTY_CONFIRM_DIALOG = {
 
 export const useTopicLogic = (user: any) => {
     const routerNavigate = useNavigate();
-    const navigate = (to: any, options: any = undefined) => {
+    const isPreviewLocked = user?.__previewLock === true;
+    const navigate = useCallback((to: any, options: any = undefined) => {
         if (
-            user?.__previewLock === true
+            isPreviewLocked
             && typeof to === 'string'
             && to.startsWith('/')
             && !to.startsWith('/theme-preview')
@@ -44,7 +45,7 @@ export const useTopicLogic = (user: any) => {
         }
 
         routerNavigate(to, options);
-    };
+    }, [isPreviewLocked, routerNavigate]);
     const { subjectId, topicId } = useParams();
     const fileInputRef = useRef<any>(null);
     const toastTimerRef = useRef<any>(null);

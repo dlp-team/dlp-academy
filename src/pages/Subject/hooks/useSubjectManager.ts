@@ -1,5 +1,5 @@
 // src/pages/Subject/hooks/useSubjectManager.js
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     collection, query, doc, getDoc, onSnapshot, 
@@ -22,9 +22,10 @@ const MAX_IN_QUERY_VALUES = 10;
 
 export const useSubjectManager = (user: any, subjectId: any) => {
     const routerNavigate = useNavigate();
-    const navigate = (to: any, options: any = undefined) => {
+    const isPreviewLocked = user?.__previewLock === true;
+    const navigate = useCallback((to: any, options: any = undefined) => {
         if (
-            user?.__previewLock === true
+            isPreviewLocked
             && typeof to === 'string'
             && to.startsWith('/')
             && !to.startsWith('/theme-preview')
@@ -34,7 +35,7 @@ export const useSubjectManager = (user: any, subjectId: any) => {
         }
 
         routerNavigate(to, options);
-    };
+    }, [isPreviewLocked, routerNavigate]);
     const [subject, setSubject] = useState<any>(null);
     const [topics, setTopics] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
