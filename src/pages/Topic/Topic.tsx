@@ -13,6 +13,11 @@ import {
     collection, query, where, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import {
+    getPreviewMockAssignmentsByTopicId,
+    getPreviewMockQuizResultsByTopicId,
+    getPreviewMockQuizScoreReviewsByTopicId,
+} from '../../utils/previewMockData';
 
 // UI Components
 import TopicHeader from './components/TopicHeader';
@@ -49,6 +54,7 @@ const Topic = ({ user }: any) => {
     const [previewAsStudent, setPreviewAsStudent] = useState(false);
     const canUsePreview = !isStudentRole && !isBinReadOnlyView;
     const isStudentView = isStudentRole || previewAsStudent;
+    const isPreviewMockMode = user?.__previewMockData === true;
     const { failedQuestions } = useTopicFailedQuestions(user, logic.topicId);
     const { members: classMembers = [] } = useClassMembers(logic.subject);
     const topicRealtimeFeedback = assignmentsFeedback || reviewsFeedback || scoresFeedback;
@@ -94,6 +100,31 @@ const Topic = ({ user }: any) => {
             return;
         }
 
+        if (isPreviewMockMode) {
+            const mockResults = getPreviewMockQuizResultsByTopicId(logic.topicId);
+            let scopedResults = isStudentView
+                ? mockResults.filter((result: any) => result.userId === user?.uid)
+                : mockResults;
+
+            if (isStudentView && scopedResults.length === 0 && user?.uid && mockResults.length > 0) {
+                const fallback = mockResults[0];
+                scopedResults = [{
+                    ...fallback,
+                    id: `${fallback.id}-preview-${user.uid}`,
+                    userId: user.uid,
+                    userName: user?.displayName || 'Alumno vista previa',
+                    userEmail: user?.email || '',
+                }];
+            }
+
+            queueMicrotask(() => {
+                setQuizResults(scopedResults);
+                setScoresFeedback('');
+            });
+
+            return;
+        }
+
         queueMicrotask(() => {
             setScoresFeedback('');
         });
@@ -118,12 +149,20 @@ const Topic = ({ user }: any) => {
         });
 
         return () => unsubscribe();
-    }, [user, logic.subjectId, logic.topicId, isStudentView]);
+    }, [user, logic.subjectId, logic.topicId, isStudentView, isPreviewMockMode]);
 
     useEffect(() => {
         if (!user || !logic.subjectId || !logic.topicId || isStudentView) {
             queueMicrotask(() => {
                 setQuizScoreReviews([]);
+                setReviewsFeedback('');
+            });
+            return;
+        }
+
+        if (isPreviewMockMode) {
+            queueMicrotask(() => {
+                setQuizScoreReviews(getPreviewMockQuizScoreReviewsByTopicId(logic.topicId));
                 setReviewsFeedback('');
             });
             return;
@@ -154,7 +193,7 @@ const Topic = ({ user }: any) => {
         });
 
         return () => unsubscribe();
-    }, [user, logic.subjectId, logic.topicId, isStudentView]);
+    }, [user, logic.subjectId, logic.topicId, isStudentView, isPreviewMockMode]);
 
     useEffect(() => {
         if (!logic.subjectId || !logic.topicId) {
@@ -162,6 +201,31 @@ const Topic = ({ user }: any) => {
                 setTopicAssignments([]);
                 setAssignmentsFeedback('');
             });
+            return undefined;
+        }
+
+        if (isPreviewMockMode) {
+            const allAssignments = getPreviewMockAssignmentsByTopicId(logic.topicId)
+                .sort((a: any, b: any) => {
+                    const aDate = a?.dueAt ? new Date(a.dueAt) : null;
+                    const bDate = b?.dueAt ? new Date(b.dueAt) : null;
+                    if (!aDate && !bDate) return 0;
+                    if (!aDate) return 1;
+                    if (!bDate) return -1;
+                    return aDate.getTime() - bDate.getTime();
+                });
+
+            queueMicrotask(() => {
+                if (isStudentRole) {
+                    setTopicAssignments(allAssignments.filter((assignment: any) => assignment.visibleToStudents !== false));
+                    setAssignmentsFeedback('');
+                    return;
+                }
+
+                setTopicAssignments(allAssignments);
+                setAssignmentsFeedback('');
+            });
+
             return undefined;
         }
 
@@ -206,7 +270,7 @@ const Topic = ({ user }: any) => {
         });
 
         return () => unsubscribe();
-    }, [logic.subjectId, logic.topicId, isStudentRole]);
+    }, [logic.subjectId, logic.topicId, isStudentRole, isPreviewMockMode]);
 
     const quizAnalyticsByQuiz = useMemo(() => {
         const byQuiz: any = {};

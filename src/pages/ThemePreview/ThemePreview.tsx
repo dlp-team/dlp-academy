@@ -38,19 +38,139 @@ const MockDashboardPreview = ({ role = 'teacher' }: any) => {
   );
 };
 
+const resolvePreviewSection = (pathname: string) => {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.includes('resumen')) return 'resumen';
+  if (segments.includes('formulas')) return 'formulas';
+  if (segments.includes('exam')) return 'exam';
+  if (segments.includes('quiz')) return 'quiz';
+  if (segments.includes('assignments')) return 'assignments';
+  return 'contenido';
+};
+
+const PREVIEW_SECTION_CONTENT: Record<string, any> = {
+  resumen: {
+    title: 'Guia de estudio (mock)',
+    description: 'Bloques de teoria, resumen y formulas listos para revisar estilos tipograficos.',
+    cards: [
+      {
+        title: 'Descripciones lagrangiana y euleriana',
+        subtitle: 'Seccion teorica',
+        body: 'La vista previa muestra contenido extenso con formulas y estructura por capitulos.',
+      },
+      {
+        title: 'Trayectorias y sendas',
+        subtitle: 'Ejemplo practico',
+        body: 'Incluye explicaciones paso a paso y bloques destacados para ejemplos.',
+      },
+    ],
+  },
+  formulas: {
+    title: 'Formulario (mock)',
+    description: 'Tarjetas de formulas para validar espaciado, jerarquia visual y legibilidad.',
+    cards: [
+      {
+        title: 'E\' = E (1 + i)^n',
+        subtitle: 'Amortizacion',
+        body: 'Formula principal para actualizar coste de adquisicion.',
+      },
+      {
+        title: 'C_amort = A_h * t',
+        subtitle: 'Coste por pieza',
+        body: 'Relacion entre coste horario de amortizacion y tiempo de uso.',
+      },
+    ],
+  },
+  exam: {
+    title: 'Examen (mock)',
+    description: 'Preguntas largas con resultados esperados y solucion detallada para vista previa.',
+    cards: [
+      {
+        title: 'Pregunta 1',
+        subtitle: 'Coste horario de amortizacion',
+        body: 'Resultado esperado: 6.86 EUR/h y 8.23 EUR/pieza.',
+      },
+      {
+        title: 'Pregunta 2',
+        subtitle: 'Coste de materia prima por lote',
+        body: 'Resultado esperado: 3510 EUR por lote y 35.10 EUR/unidad.',
+      },
+    ],
+  },
+  quiz: {
+    title: 'Tests practicos (mock)',
+    description: 'Niveles basico, intermedio y avanzado con estados de progreso simulados.',
+    cards: [
+      {
+        title: 'Quiz nivel basico',
+        subtitle: 'Actividad evaluable',
+        body: '2 preguntas, ventana activa y progreso de clase simulado.',
+      },
+      {
+        title: 'Quiz nivel intermedio',
+        subtitle: 'Practica autocorregible',
+        body: 'Promedio de clase y metricas de participacion en vista previa.',
+      },
+      {
+        title: 'Quiz nivel avanzado',
+        subtitle: 'Repaso final',
+        body: 'Botones de intento y estados visuales de nota renderizados con datos mock.',
+      },
+    ],
+  },
+  assignments: {
+    title: 'Tareas (mock)',
+    description: 'Entregables con fecha limite, visibilidad y archivos de instrucciones simulados.',
+    cards: [
+      {
+        title: 'Actividad 1: amortizacion horaria',
+        subtitle: 'Entrega en plazo',
+        body: 'Incluye archivo de enunciado y estado de entrega de ejemplo.',
+      },
+      {
+        title: 'Actividad 2: comparativa de maquinas',
+        subtitle: 'Permite entrega fuera de plazo',
+        body: 'Tarjeta con banderas de visibilidad y politica de entrega tardia.',
+      },
+    ],
+  },
+  contenido: {
+    title: 'Contenido de tema (mock)',
+    description: 'Ruta interna de tema en modo simulacion.',
+    cards: [],
+  },
+};
+
 const MockTopicContentPreview = () => {
   const { subjectId, topicId } = useParams();
   const location = useLocation();
-  const section = location.pathname.split('/').filter(Boolean).slice(-1)[0] || 'contenido';
+  const section = resolvePreviewSection(location.pathname);
+  const sectionData = PREVIEW_SECTION_CONTENT[section] || PREVIEW_SECTION_CONTENT.contenido;
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 p-4 sm:p-6">
       <div className="max-w-5xl mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
-        <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Contenido de tema (mock preview)</h1>
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{sectionData.title}</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Seccion simulada: {section}. Esta ruta usa datos mock para vista previa.
+          {sectionData.description}
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
+
+        {Array.isArray(sectionData.cards) && sectionData.cards.length > 0 && (
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+            {sectionData.cards.map((card: any) => (
+              <article
+                key={`${section}-${card.title}`}
+                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4"
+              >
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{card.subtitle}</p>
+                <h2 className="mt-1 text-sm font-black text-slate-900 dark:text-white">{card.title}</h2>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{card.body}</p>
+              </article>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-5 flex flex-wrap gap-2">
           <Link
             to={`/theme-preview/home/subject/${subjectId || ''}/topic/${topicId || ''}`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold"

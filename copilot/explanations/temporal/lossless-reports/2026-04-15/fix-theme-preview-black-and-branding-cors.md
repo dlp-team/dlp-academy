@@ -133,3 +133,44 @@ Date: 2026-04-15
 - Focused hook tests passed:
   - `npm run test -- tests/unit/hooks/useSubjectManager.test.js tests/unit/hooks/useTopicLogic.test.js`
   - Result: 26/26 tests passed.
+
+## Follow-up enhancement (study-guide/exam/quiz/task mockups)
+Date: 2026-04-15
+
+### Additional request
+- Extend preview mock data so topic preview includes richer mockups for study guides, exams, quizzes, and tasks.
+
+### Follow-up changes
+1. Expanded centralized preview data payloads:
+- [src/utils/previewMockData.ts](src/utils/previewMockData.ts#L1)
+- Added richer topic-detail overrides with:
+  - structured study-guide sections,
+  - exam question sets with detailed answers,
+  - multi-level quizzes,
+  - topic assignments,
+  - quiz results and review overrides.
+
+2. Topic page now uses mock streams in preview mode (no Firestore listeners for those streams):
+- [src/pages/Topic/Topic.tsx](src/pages/Topic/Topic.tsx#L1)
+- Quiz results/reviews/assignments now hydrate from preview helper selectors when `__previewMockData` is active.
+
+3. Topic content assignments tab now has preview-safe rendering:
+- [src/pages/Topic/components/TopicContent.tsx](src/pages/Topic/components/TopicContent.tsx#L1)
+- Preview mode renders assignment mock cards directly and avoids Firestore-dependent assignment management flow.
+- Quiz/exam preview links now pass prefetched payload state for deterministic deep-preview context.
+
+4. Deep topic wildcard preview now shows section-specific mock cards:
+- [src/pages/ThemePreview/ThemePreview.tsx](src/pages/ThemePreview/ThemePreview.tsx#L1)
+- Added tailored mock screens for `resumen`, `formulas`, `quiz`, `exam`, and `assignments` paths.
+
+### Follow-up validation
+- Diagnostics checked with `get_errors`:
+  - [src/pages/Topic/Topic.tsx](src/pages/Topic/Topic.tsx)
+  - [src/pages/Topic/components/TopicContent.tsx](src/pages/Topic/components/TopicContent.tsx)
+  - [src/utils/previewMockData.ts](src/utils/previewMockData.ts)
+  - [src/pages/ThemePreview/ThemePreview.tsx](src/pages/ThemePreview/ThemePreview.tsx)
+- Result: No errors found.
+
+- Focused tests passed:
+  - `npm run test -- tests/unit/hooks/useSubjectManager.test.js tests/unit/hooks/useTopicLogic.test.js tests/unit/pages/topic/Topic.realtimeFeedback.test.jsx tests/unit/pages/theme-preview/ThemePreview.test.jsx`
+  - Result: 32/32 tests passed.

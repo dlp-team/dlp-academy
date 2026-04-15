@@ -243,7 +243,7 @@ const TopicContent = ({
                                 return (
                                     <div
                                         key={exam.id}
-                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`)}
+                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`, user?.__previewMockData === true ? { state: { prefetchedExam: exam } } : undefined)}
                                         className="group cursor-pointer relative overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.01]"
                                     >
                                         <div className={`absolute inset-0 ${subjectGradient} opacity-90 group-hover:opacity-100 transition-opacity`} />
@@ -561,7 +561,7 @@ const TopicContent = ({
                                 return (
                                     <div
                                         key={exam.id || `generated-exam-${idx}`}
-                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`)}
+                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`, user?.__previewMockData === true ? { state: { prefetchedExam: exam } } : undefined)}
                                         className="group cursor-pointer relative overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.01]"
                                     >
                                         <div className={`absolute inset-0 ${subjectGradient} opacity-90 group-hover:opacity-100 transition-opacity`} />
@@ -907,7 +907,10 @@ const TopicContent = ({
                                 const quizTitle = quiz.title || quiz.name || 'Test Práctico';
                                 const modeLabel = isAssignment ? 'Actividad evaluable' : 'Práctica autocorregible';
                                 const canOpenFromCard = !shouldEditPrimary && !isCompleted && canStartAssignment;
-                                const openQuizSession = () => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`);
+                                const openQuizSession = () => navigate(
+                                    `/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`,
+                                    user?.__previewMockData === true ? { state: { prefetchedQuiz: quiz } } : undefined
+                                );
                                 const quizCardHeightClass = canManageQuiz
                                     ? 'min-h-[22rem] md:min-h-[23rem]'
                                     : isCompleted
@@ -1139,7 +1142,7 @@ const TopicContent = ({
                                                     )}
                                                 </button>
 
-                                                {isCompleted && (
+                                                {isCompleted && !user?.__previewMockData && (
                                                     <button
                                                         onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}/review`)}
                                                         className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wide bg-white/85 dark:bg-slate-700 border border-slate-200/80 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-600 shadow-sm hover:shadow-md transition-colors"
@@ -1233,6 +1236,80 @@ const TopicContent = ({
     }
 
     if (activeTab === 'assignments') {
+        if (user?.__previewMockData === true) {
+            const mockAssignments = topic.assignments || [];
+            return (
+                <div className="space-y-6">
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1 tracking-tight">Tareas del tema</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Vista previa con entregables y fechas simuladas</p>
+                    </div>
+
+                    {mockAssignments.length === 0 ? (
+                        <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40 p-8 text-center">
+                            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">No hay tareas simuladas para este tema.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {mockAssignments.map((assignment: any) => {
+                                const dueDate = assignment?.dueAt ? new Date(assignment.dueAt) : null;
+                                const dueLabel = dueDate && !Number.isNaN(dueDate.getTime())
+                                    ? dueDate.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+                                    : 'Sin fecha limite';
+
+                                return (
+                                    <article
+                                        key={assignment.id}
+                                        className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm"
+                                    >
+                                        <div className="flex items-start justify-between gap-3 mb-3">
+                                            <h4 className="text-lg font-black text-slate-900 dark:text-white leading-tight">{assignment.title || 'Tarea'}</h4>
+                                            <div className="flex flex-wrap justify-end gap-1.5">
+                                                {assignment.visibleToStudents !== false ? (
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-emerald-100 text-emerald-700 dark:bg-emerald-900/25 dark:text-emerald-300">Visible</span>
+                                                ) : (
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300">Oculta</span>
+                                                )}
+                                                {assignment.allowLateDelivery ? (
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 dark:bg-amber-900/25 dark:text-amber-300">Fuera de plazo</span>
+                                                ) : null}
+                                            </div>
+                                        </div>
+
+                                        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 min-h-[2.5rem]">
+                                            {assignment.description || 'Sin descripcion.'}
+                                        </p>
+
+                                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-3">
+                                            <CalendarDays className="w-4 h-4" />
+                                            <span>Entrega: {dueLabel}</span>
+                                        </div>
+
+                                        {(assignment.instructionFiles || []).length > 0 && (
+                                            <div className="space-y-2">
+                                                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Archivos de instrucciones</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {(assignment.instructionFiles || []).map((file: any, index: any) => (
+                                                        <span
+                                                            key={`${assignment.id}-instruction-${index}`}
+                                                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                                                        >
+                                                            <FileText className="w-3.5 h-3.5" />
+                                                            {file?.name || `Archivo ${index + 1}`}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </article>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         return (
             <TopicAssignmentsSection
                 assignments={topic.assignments || []}
