@@ -8,6 +8,7 @@ const isValidHexColor = (value: any) => /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.t
 
 const ColorField = ({ token, label, description, icon, value, onChange, onFocus, onBlur, isActive }: any) => {
   const inputRef = useRef<any>(null);
+  const pickerBlurTimestampRef = useRef(0);
   const [hexInputValue, setHexInputValue] = useState(() => normalizeHexColorInput(value));
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
@@ -81,11 +82,11 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
                 inputRef.current?.blur();
                 return;
               }
-              // Activate the card if not already active.
-              if (!isActive) {
-                onFocus(token);
+              // If the picker just closed (blur races ahead of click), don't reopen.
+              if (Date.now() - pickerBlurTimestampRef.current < 300) {
+                return;
               }
-              // Open the native color picker.
+              // Open the native color picker (card activation is handled by the container click).
               try {
                 if (typeof inputRef.current?.showPicker === 'function') {
                   inputRef.current.showPicker();
@@ -112,7 +113,7 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
             type="color"
             value={value}
             onFocus={() => setIsPickerOpen(true)}
-            onBlur={() => setIsPickerOpen(false)}
+            onBlur={() => { pickerBlurTimestampRef.current = Date.now(); setIsPickerOpen(false); }}
             onInput={(event) => handleNativeColorInput((event.target as HTMLInputElement).value)}
             onChange={(event) => handleNativeColorInput((event.target as HTMLInputElement).value)}
             onClick={(event) => event.stopPropagation()}
