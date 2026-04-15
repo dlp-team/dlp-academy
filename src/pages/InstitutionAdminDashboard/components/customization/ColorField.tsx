@@ -8,9 +8,9 @@ const isValidHexColor = (value: any) => /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.t
 
 const ColorField = ({ token, label, description, icon, value, onChange, onFocus, onBlur, isActive }: any) => {
   const inputRef = useRef<any>(null);
-  const wasPickerOpenOnMouseDownRef = useRef(false);
+  const pickerBlurTimestampRef = useRef(0);
+  const pickerOpenRef = useRef(false);
   const [hexInputValue, setHexInputValue] = useState(() => normalizeHexColorInput(value));
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => {
     setHexInputValue(normalizeHexColorInput(value));
@@ -77,12 +77,19 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
             aria-label={`Abrir selector de color para ${label}`}
             onClick={(event) => {
               event.stopPropagation();
-              // If the picker was open when mousedown fired, this click is a close gesture.
-              if (wasPickerOpenOnMouseDownRef.current) {
-                wasPickerOpenOnMouseDownRef.current = false;
+              // If the picker is tracked as open, close it by blurring the input.
+              if (pickerOpenRef.current) {
+                pickerOpenRef.current = false;
                 inputRef.current?.blur();
                 return;
               }
+              // If the picker just closed (blur races ahead of click), don't reopen.
+              if (Date.now() - pickerBlurTimestampRef.current < 300) {
+                return;
+              }
+              // Mark picker as open BEFORE calling showPicker so the ref is set
+              // even if onFocus doesn't fire (showPicker doesn't always trigger it).
+              pickerOpenRef.current = true;
               // Open the native color picker (card activation is handled by the container click).
               try {
                 if (typeof inputRef.current?.showPicker === 'function') {
@@ -95,10 +102,7 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
 
               inputRef.current?.click();
             }}
-            onMouseDown={(event) => {
-              event.stopPropagation();
-              wasPickerOpenOnMouseDownRef.current = isPickerOpen;
-            }}
+            onMouseDown={(event) => event.stopPropagation()}
             className="w-11 h-11 rounded-xl shadow-md border-2 border-white dark:border-slate-700 transition-all duration-200"
             style={{ backgroundColor: value }}
           />
@@ -112,8 +116,8 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
             ref={inputRef}
             type="color"
             value={value}
-            onFocus={() => setIsPickerOpen(true)}
-            onBlur={() => setIsPickerOpen(false)}
+            onFocus={() => { pickerOpenRef.current = true; }}
+            onBlur={() => { pickerOpenRef.current = false; pickerBlurTimestampRef.current = Date.now(); }}
             onInput={(event) => handleNativeColorInput((event.target as HTMLInputElement).value)}
             onChange={(event) => handleNativeColorInput((event.target as HTMLInputElement).value)}
             onClick={(event) => event.stopPropagation()}

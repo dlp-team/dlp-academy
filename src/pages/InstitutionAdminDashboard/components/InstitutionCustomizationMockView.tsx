@@ -92,10 +92,14 @@ const InstitutionCustomizationMockView = ({
   const initialValuesKey = useMemo(() => JSON.stringify(initialValues || {}), [initialValues]);
   const resolvedThemeSets = useMemo(() => (Array.isArray(themeSets) ? themeSets : []), [themeSets]);
 
+  // Depend only on the JSON-serialised key, not the object reference, so that a
+  // parent re-render that produces a new object with the same values does NOT
+  // reset in-progress colour edits the user has made.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const next = buildSafeForm({ ...DEFAULTS, ...(initialValues || {}) });
     setForm(next);
-  }, [initialValuesKey, initialValues]);
+  }, [initialValuesKey]);
 
   useEffect(() => {
     if (!previewPaletteApply?.token || !previewPaletteApply?.color) return;

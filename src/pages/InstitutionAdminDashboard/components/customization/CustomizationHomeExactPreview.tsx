@@ -57,6 +57,15 @@ const PREVIEW_FOLDERS = [
     parentId: 'preview-folder-1',
     color: 'from-emerald-400 to-emerald-600',
   },
+  {
+    id: 'preview-folder-ciencias',
+    name: 'Departamento de Ciencias',
+    tags: ['ciencias'],
+    ownerId: 'preview-teacher',
+    institutionId: 'preview-institution',
+    parentId: null,
+    color: 'from-teal-400 to-teal-600',
+  },
 ];
 
 const PREVIEW_SUBJECTS = [
@@ -104,7 +113,7 @@ const PREVIEW_SUBJECTS = [
     course: '2º ESO',
     level: 'ESO',
     grade: '2º',
-    tags: ['laboratorio'],
+    tags: ['laboratorio', 'ciencias'],
     ownerId: 'preview-teacher',
     institutionId: 'preview-institution',
     color: 'from-emerald-400 to-emerald-600',
@@ -112,7 +121,7 @@ const PREVIEW_SUBJECTS = [
     cardStyle: 'default',
     modernFillColor: '#10b981',
     completed: false,
-    folderId: 'preview-folder-3',
+    folderId: 'preview-folder-ciencias',
     academicYear: '2025-2026',
     isCurrent: true,
     lastActivityAt: '2026-03-18',
