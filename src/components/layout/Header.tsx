@@ -429,9 +429,14 @@ const Header = ({ user }: any) => {
             {/* 3. DASHBOARD BUTTON (Role-based) */}
             {dashboardRoute && (
                 <button
-                onClick={() => previewSafeNavigate(dashboardRoute)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all duration-200 cursor-pointer"
-                title={dashboardLabel ?? undefined}
+                onClick={userData?.__previewLock ? undefined : () => previewSafeNavigate(dashboardRoute)}
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      userData?.__previewLock
+                        ? 'text-gray-400 dark:text-slate-500 cursor-not-allowed opacity-60'
+                        : 'text-gray-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer'
+                    }`}
+                title={userData?.__previewLock ? 'No disponible en vista previa' : (dashboardLabel ?? undefined)}
+                disabled={!!userData?.__previewLock}
                 >
                     <LayoutDashboard size={18} />
                     <span className="hidden md:inline">{dashboardLabel}</span>
