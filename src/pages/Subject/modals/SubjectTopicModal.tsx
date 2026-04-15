@@ -110,7 +110,7 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }: any) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto" style={OVERLAY_TOP_OFFSET_STYLE}>
+        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto clean-scrollbar" style={OVERLAY_TOP_OFFSET_STYLE}>
             <div
                 onClick={onClose}
                 className="flex min-h-full items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
@@ -144,7 +144,7 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }: any) => {
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto min-h-[300px] bg-slate-50 dark:bg-slate-950/50">
+                <div className="p-6 overflow-y-auto min-h-[300px] bg-slate-50 dark:bg-slate-950/50 minimal-scrollbar">
                     {loading ? (
                         <div className="flex h-full items-center justify-center py-12">
                             <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />

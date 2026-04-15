@@ -53,6 +53,12 @@ Replace all non-standard scrollbars across the app with the modern global scroll
 - [x] No scrollbar overlaps the page header
 - [x] Scrollbar style is consistent across light/dark mode
 
+## Completion Notes
+- Applied `minimal-scrollbar` to all previously unthemed inner scrollable panels (StudyGuide, ExamCorrectionTool, QuizClassResultsModal, SubjectHeader member list dropdowns, SubjectTopicModal content, TopicModal wrapper, SubjectFormModal inner lists).
+- Fixed legacy `custom-scrollbar` class in StudyGuide.tsx (class was undefined globally — only inline-scoped in Exam.tsx).
+- Applied `clean-scrollbar` to modal overlay wrappers missing it (TopicFormModal, SubjectTopicModal, EditTopicModal, SubjectFormModal root) to be consistent with other modal overlays (FolderManager, FolderDeleteModal, FolderTreeModal).
+- `Exam.tsx` and `Formula.tsx` horizontal math-content scrollbars intentionally left as-is (inline-defined custom style for math UX).
+
 ## Validation
 - [x] `get_errors` clean on all 14 touched files (0 errors)
 - [ ] Visual check across major pages: Home, Settings, Admin Dashboard, Profile

@@ -371,7 +371,7 @@ const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, i
 
                 {isOpen && (
                     <div className="mt-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl p-5 border-2 border-white dark:border-slate-700 shadow-xl dark:shadow-slate-900/50 animate-in slide-in-from-top-4 duration-500 overflow-hidden">
-                        <div className="space-y-2 max-h-[32rem] overflow-y-auto overflow-x-hidden custom-scrollbar">
+                        <div className="space-y-2 max-h-[32rem] overflow-y-auto overflow-x-hidden minimal-scrollbar">
                             {sections.map((section, idx: any) => {
                                 const isActive = activeSection === idx;
                                 return (

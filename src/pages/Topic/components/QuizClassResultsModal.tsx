@@ -221,7 +221,7 @@ const QuizClassResultsModal = ({
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] min-h-0 flex-1">
-                    <aside className="border-r border-slate-200 dark:border-slate-700 overflow-y-auto">
+                    <aside className="border-r border-slate-200 dark:border-slate-700 overflow-y-auto minimal-scrollbar">
                         <div className="p-4 space-y-2">
                             {completedStudents.map((student: any) => {
                                 const isActive = selectedStudentId === student.userId;
@@ -259,7 +259,7 @@ const QuizClassResultsModal = ({
                         </div>
                     </aside>
 
-                    <section className="overflow-y-auto p-6">
+                    <section className="overflow-y-auto p-6 minimal-scrollbar">
                         {selectedStudent ? (
                             <div className="space-y-5">
                                 <div className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50/70 dark:bg-slate-800/40">

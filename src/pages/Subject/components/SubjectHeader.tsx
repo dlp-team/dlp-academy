@@ -275,7 +275,7 @@ const SubjectHeader = ({
                                 <div className="mx-4 border-t border-gray-100 dark:border-slate-800" />
 
                                 {/* Member list */}
-                                <div className="p-2 max-h-72 overflow-y-auto">
+                                <div className="p-2 max-h-72 overflow-y-auto minimal-scrollbar">
                                     {membersLoading ? (
                                         <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
                                             Cargando miembros...
@@ -336,7 +336,7 @@ const SubjectHeader = ({
                                 <div className="mx-6 border-t border-gray-100 dark:border-slate-800" />
 
                                 {/* Scrollable member list */}
-                                <div className="flex-1 overflow-y-auto p-3">
+                                <div className="flex-1 overflow-y-auto p-3 minimal-scrollbar">
                                     {membersLoading ? (
                                         <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                                             Cargando miembros...
