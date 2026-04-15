@@ -1,6 +1,6 @@
 # Phase 2 — App-Wide UX: Settings, Bin, Profile
 
-## Status: TODO
+## Status: IN PROGRESS
 
 ## Objectives
 
@@ -20,11 +20,14 @@ For users with role `admin` or `institutionadmin`, the Profile page should show 
 - `src/hooks/useUserSettings.ts` or similar — default value
 
 ## Acceptance Criteria
-- [ ] New users see "Mostrar selector de tema" defaulting to OFF
-- [ ] Existing users' theme selector preference is unchanged
-- [ ] Bin selection-mode toggle/counter/buttons visually match other sections of Home
-- [ ] Admin/institution admin Profile shows statistics instead of badge/notes stats
-- [ ] Teacher/student Profile is unchanged
+- [x] New users see "Mostrar selector de tema" defaulting to OFF — **DONE** (`f5d0e8b`)
+- [x] Existing users' theme selector preference is unchanged — **DONE** (`f5d0e8b`)
+- [x] Bin selection-mode toggle/counter/buttons visually match other sections of Home — **DONE** (structural card-below-header fix applied after `f5d0e8b`)
+- [x] Admin/institution admin Profile shows statistics instead of badge/notes stats — **DONE** (`f5d0e8b`)
+- [x] Teacher/student Profile is unchanged — **DONE** (`f5d0e8b`)
+
+### 2B Detail
+The first commit (`f5d0e8b`) fixed CSS/styles only. A structural fix was applied afterward to move the selection toolbar out of the top header row and into a standalone card-style `div` below the main toolbar — matching `HomeSelectionToolbar`'s exact position and container pattern. "Vaciar papelera" now always visible in the top header row.
 
 ## Validation
 - [ ] `npm run test` passes

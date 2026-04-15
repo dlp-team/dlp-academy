@@ -731,23 +731,42 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                     </p>
                 </div>
 
-                <div className="flex flex-col items-start lg:items-end gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide" htmlFor="bin-sort-select">
-                            Ordenar
-                        </label>
-                        <select
-                            id="bin-sort-select"
-                            value={sortMode}
-                            onChange={(event) => setSortMode(event.target.value)}
-                            className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-700 dark:text-gray-200"
-                            aria-label="Ordenar elementos de la papelera"
-                        >
-                            {BIN_SORT_OPTIONS.map((option: any) => (
-                                <option key={option.id} value={option.id}>{option.label}</option>
-                            ))}
-                        </select>
+                <div className="flex flex-wrap items-center gap-2">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide" htmlFor="bin-sort-select">
+                        Ordenar
+                    </label>
+                    <select
+                        id="bin-sort-select"
+                        value={sortMode}
+                        onChange={(event) => setSortMode(event.target.value)}
+                        className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-700 dark:text-gray-200"
+                        aria-label="Ordenar elementos de la papelera"
+                    >
+                        {BIN_SORT_OPTIONS.map((option: any) => (
+                            <option key={option.id} value={option.id}>{option.label}</option>
+                        ))}
+                    </select>
 
+                    <button
+                        onClick={() => setEmptyConfirmOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
+                    >
+                        <Trash2 size={16} />
+                        {activeFolderBinId ? 'Vaciar vista actual' : 'Vaciar papelera'}
+                    </button>
+                </div>
+            </div>
+
+            {/* Selection toolbar — matches HomeSelectionToolbar position and style */}
+            <div className={`mt-4 mb-6 rounded-xl border p-3 flex flex-col gap-3 ${
+                selectionMode && selectedBulkCount > 0
+                    ? 'border-sky-300 dark:border-sky-700 bg-sky-50/70 dark:bg-sky-950/25'
+                    : selectionMode
+                        ? 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/80'
+                        : 'border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70'
+            }`}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={toggleBulkSelectionMode}
@@ -771,20 +790,10 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 {selectedBulkCount} seleccionados
                             </span>
                         )}
-
-                        {!selectionMode && (
-                            <button
-                                onClick={() => setEmptyConfirmOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
-                            >
-                                <Trash2 size={16} />
-                                {activeFolderBinId ? 'Vaciar vista actual' : 'Vaciar papelera'}
-                            </button>
-                        )}
                     </div>
 
                     {selectionMode && (
-                        <div className="flex flex-wrap items-center justify-end gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <button
                                 type="button"
                                 onClick={handleSelectAllVisible}
@@ -823,13 +832,13 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                             </button>
                         </div>
                     )}
-
-                    {selectionMode && (
-                        <p className="text-xs text-amber-700 dark:text-amber-300">
-                            Modo seguro: selecciona elementos y confirma antes de eliminar permanentemente.
-                        </p>
-                    )}
                 </div>
+
+                {selectionMode && (
+                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                        Modo seguro: selecciona elementos y confirma antes de eliminar permanentemente.
+                    </p>
+                )}
             </div>
 
             {/* Grid / List */}

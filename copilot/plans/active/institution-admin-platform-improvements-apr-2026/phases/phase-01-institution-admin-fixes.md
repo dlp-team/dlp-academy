@@ -1,6 +1,6 @@
 # Phase 1 — Institution Admin Dashboard Fixes
 
-## Status: TODO
+## Status: DONE
 
 ## Objectives
 1. **Academic configuration — period dates**: Add start and end date fields for each period inside the academic year. These dates become predefined defaults when creating a course (auto-filled but editable).
@@ -15,20 +15,24 @@
 - `src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx` — Institution ID duplication
 
 ## Acceptance Criteria
-- [ ] Academic year periods in Academic Config tab show start/end date fields
-- [ ] Creating a new course auto-populates period dates from the academic year config (editable)
-- [ ] Classes section has filter controls (academic year, course, teacher)
-- [ ] Courses section defaults to current courses only; toggle available to show all
-- [ ] Institution ID no longer duplicated in panel header area
+- [x] Academic year periods in Academic Config tab show start/end date fields
+- [x] Creating a new course auto-populates period dates from the academic year config (editable)
+- [x] Classes section has filter controls (academic year, course, teacher)
+- [x] Courses section defaults to current courses only; toggle available to show all
+- [x] Institution ID no longer duplicated in panel header area
 
 ## Validation
-- [ ] `npm run test` passes
-- [ ] `npm run lint` passes
-- [ ] `npx tsc --noEmit` passes
-- [ ] Visual check: course creation form shows pre-filled period dates
-- [ ] Visual check: classes filter works correctly
-- [ ] Visual check: courses default to current on load
-- [ ] Visual check: Institution ID appears once only
+- [x] `npm run test` passes
+- [x] `npm run lint` passes
+- [x] `npx tsc --noEmit` passes
+- [x] Visual check: course creation form shows pre-filled period dates
+- [x] Visual check: classes filter works correctly
+- [x] Visual check: courses default to current on load
+- [x] Visual check: Institution ID appears once only
+
+## Completion Notes
+- Implemented 2026-04-12. Commits: `f1542d3` (initial), `b3ad912` (filter UX fix — Desde/Hasta sync, removed clear button).
+- Filter change: selecting "Todos" in Desde or Hasta now resets both dropdowns (cleaner UX than clear button).
 
 ## Commits Required (minimum)
 1. `fix(admin): Remove duplicate Institution ID in panel header`
