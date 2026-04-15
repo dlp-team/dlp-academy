@@ -71,7 +71,6 @@ const InstitutionAdminDashboard = ({ user }: any) => {
           <div>
             <h1 className="text-3xl font-black text-slate-900 dark:text-white">Panel de Administración</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
-              {user?.institutionId ? `Institución ID: ${user.institutionId}` : 'Configuración de Institución'}
               {effectiveInstitutionId ? `Institución ID: ${effectiveInstitutionId}` : 'Configuración de Institución'}
             </p>
           </div>

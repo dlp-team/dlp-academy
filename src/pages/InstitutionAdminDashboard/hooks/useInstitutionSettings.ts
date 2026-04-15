@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS_FORM = {
   extraordinaryEndDate: '',
   periodMode: DEFAULT_PERIOD_MODE,
   customPeriodLabel: '',
+  periodDates: [] as Array<{ periodIndex: number; periodStartAt: string; periodEndAt: string }>,
   postCoursePolicy: DEFAULT_POST_COURSE_POLICY,
   coursePromotionOrder: [] as string[],
   transferPromotionEnabled: true,
@@ -121,6 +122,13 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
         extraordinaryEndDate: academicCalendar.extraordinaryEndDate || '',
         periodMode: normalizePeriodMode(periodization.mode),
         customPeriodLabel: periodization.customLabel || '',
+        periodDates: Array.isArray(periodization.periodDates)
+          ? periodization.periodDates.map((entry: any) => ({
+              periodIndex: Number(entry.periodIndex),
+              periodStartAt: String(entry.periodStartAt || '').trim(),
+              periodEndAt: String(entry.periodEndAt || '').trim(),
+            })).filter((entry: any) => Number.isFinite(entry.periodIndex))
+          : [],
         postCoursePolicy: normalizePostCoursePolicy(courseLifecycle.postCoursePolicy),
         coursePromotionOrder,
         transferPromotionEnabled: normalizedAutomationSettings.transferPromotionEnabled,
@@ -193,6 +201,7 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
           periodization: {
             mode: normalizePeriodMode(settingsForm.periodMode),
             customLabel: settingsForm.periodMode === 'custom' ? settingsForm.customPeriodLabel.trim() : '',
+            periodDates: Array.isArray(settingsForm.periodDates) ? settingsForm.periodDates : [],
           },
         },
         courseLifecycle: nextCourseLifecycle,
