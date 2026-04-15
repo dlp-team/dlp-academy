@@ -751,15 +751,15 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                         <button
                             type="button"
                             onClick={toggleBulkSelectionMode}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                                 selectionMode && selectedBulkCount > 0
-                                    ? 'bg-sky-600 hover:bg-sky-700 text-white'
-                                    : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
-                            }`}
+                                    ? 'bg-sky-600 hover:bg-sky-700 text-white border border-sky-600'
+                                    : 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            } ${selectionMode ? 'border-2 border-[var(--color-primary-600)] dark:border-[var(--color-primary-400)]' : ''}`}
                             aria-pressed={selectionMode}
                         >
                             {selectionMode ? <CheckSquare size={16} /> : <Square size={16} />}
-                            {selectionMode ? 'Salir de la selección' : 'Modo selección'}
+                            <span>{selectionMode ? 'Salir de la selección' : 'Modo selección'}</span>
                         </button>
 
                         {selectionMode && (
@@ -789,7 +789,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 type="button"
                                 onClick={handleSelectAllVisible}
                                 disabled={visibleTrashedItems.length === 0}
-                                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
                             >
                                 {selectedBulkCount === visibleTrashedItems.length && visibleTrashedItems.length > 0
                                     ? 'Quitar todo'
@@ -799,7 +799,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 type="button"
                                 onClick={clearBulkSelection}
                                 disabled={selectedBulkCount === 0}
-                                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
                             >
                                 Limpiar
                             </button>
@@ -807,7 +807,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 type="button"
                                 onClick={handleBulkRestore}
                                 disabled={selectedBulkCount === 0 || bulkActionLoading}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white rounded-xl text-sm font-medium transition-colors"
+                                className="inline-flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white rounded-lg text-sm font-medium transition-colors"
                             >
                                 {bulkActionLoading ? <Loader2 className="animate-spin" size={16} /> : <RotateCcw size={16} />}
                                 Restaurar selección
@@ -816,7 +816,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 type="button"
                                 onClick={() => setBulkDeleteConfirmOpen(true)}
                                 disabled={selectedBulkCount === 0 || bulkActionLoading}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-xl text-sm font-medium transition-colors"
+                                className="inline-flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white rounded-lg text-sm font-medium transition-colors"
                             >
                                 {bulkActionLoading ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                                 Eliminar selección
