@@ -12,6 +12,10 @@ import {
     DEFAULT_TOPIC_CASCADE_COLLECTIONS,
     cascadeDeleteTopicResources,
 } from '../../../utils/topicDeletionUtils';
+import {
+    getPreviewMockSubjectById,
+    getPreviewMockTopicsBySubjectId,
+} from '../../../utils/previewMockData';
 
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
 const MAX_IN_QUERY_VALUES = 10;
@@ -35,10 +39,27 @@ export const useSubjectManager = (user: any, subjectId: any) => {
     const [topics, setTopics] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [fileCache, setFileCache] = useState<any>({});
+    const isPreviewMockMode = user?.__previewMockData === true;
 
     // 1. Fetch Data
     useEffect(() => {
         if (!user || !subjectId) return;
+
+        if (isPreviewMockMode) {
+            const previewSubject = getPreviewMockSubjectById(subjectId);
+            if (!previewSubject) {
+                setSubject(null);
+                setTopics([]);
+                setLoading(false);
+                navigate('/home');
+                return;
+            }
+
+            setSubject(previewSubject);
+            setTopics(getPreviewMockTopicsBySubjectId(subjectId));
+            setLoading(false);
+            return;
+        }
 
         const fetchSubject = async () => {
             try {
@@ -96,7 +117,7 @@ export const useSubjectManager = (user: any, subjectId: any) => {
         });
 
         return () => unsubscribe();
-    }, [user, subjectId, navigate]);
+    }, [user, subjectId, navigate, isPreviewMockMode]);
 
     // Auto-detect: escuchar subcolección "resumen" de topics en estado 'generating'
     const generatingIds = useMemo(() =>
@@ -143,6 +164,12 @@ export const useSubjectManager = (user: any, subjectId: any) => {
     // 2. Actions for Subject
     const updateSubject = async (data: any) => {
         if (!subject) return;
+
+        if (isPreviewMockMode) {
+            setSubject((prev: any) => ({ ...prev, ...data }));
+            return;
+        }
+
         try {
             await updateDoc(doc(db, "subjects", subject.id), data);
             setSubject(prev => ({ ...prev, ...data }));
@@ -153,6 +180,12 @@ export const useSubjectManager = (user: any, subjectId: any) => {
 
     const deleteSubject = async () => {
         if (!subject) return;
+
+        if (isPreviewMockMode) {
+            navigate('/home');
+            return;
+        }
+
         try {
             // Soft delete: mark as trashed instead of deleting
             await updateDoc(doc(db, "subjects", subject.id), {
@@ -191,6 +224,27 @@ export const useSubjectManager = (user: any, subjectId: any) => {
 
     // 4. Create or Retry Topic
     const createTopic = async (data: any, files: any) => {
+        if (isPreviewMockMode) {
+            const nextOrder = topics.length + 1;
+            const nextTopic = {
+                id: `preview-topic-${Date.now()}`,
+                subjectId,
+                name: data?.name || 'Nuevo tema',
+                title: data?.name || 'Nuevo tema',
+                prompt: data?.prompt || '',
+                status: 'completed',
+                color: subject?.color || 'from-sky-400 to-sky-600',
+                createdAt: new Date().toISOString(),
+                order: nextOrder,
+                number: String(nextOrder).padStart(2, '0'),
+                ownerId: subject?.ownerId || user?.uid,
+                institutionId: subject?.institutionId || user?.institutionId || null,
+                isVisible: true,
+            };
+            setTopics((previous: any[]) => [...previous, nextTopic]);
+            return;
+        }
+
         const filesToSend = files.length > 0 ? files : (fileCache[data.retryId] || []);
         let topicId = data.retryId;
 
@@ -247,6 +301,13 @@ export const useSubjectManager = (user: any, subjectId: any) => {
 
     // 5. Update Topic (NEW)
     const updateTopic = async (topicId: any, data: any) => {
+        if (isPreviewMockMode) {
+            setTopics((previous: any[]) => previous.map((topic: any) => (
+                topic.id === topicId ? { ...topic, ...data } : topic
+            )));
+            return;
+        }
+
         try {
             await updateDoc(doc(db, "topics", topicId), data);
         } catch (error) {
@@ -257,6 +318,11 @@ export const useSubjectManager = (user: any, subjectId: any) => {
 
     // 6. Delete Topic
     const deleteTopic = async (topicId: any) => {
+        if (isPreviewMockMode) {
+            setTopics((previous: any[]) => previous.filter((topic: any) => topic.id !== topicId));
+            return;
+        }
+
         // Confirmation is handled in UI now, but safety check remains
         try {
             await cascadeDeleteTopicResources({
@@ -292,6 +358,15 @@ export const useSubjectManager = (user: any, subjectId: any) => {
         currentTopics.splice(targetIndex, 0, draggedItem);
 
         setTopics(currentTopics);
+
+        if (isPreviewMockMode) {
+            setTopics(currentTopics.map((topic: any, index: any) => ({
+                ...topic,
+                order: index + 1,
+                number: String(index + 1).padStart(2, '0'),
+            })));
+            return;
+        }
 
         try {
             const batch = writeBatch(db);

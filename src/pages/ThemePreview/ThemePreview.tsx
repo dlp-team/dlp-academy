@@ -1,28 +1,73 @@
 // src/pages/ThemePreview/ThemePreview.tsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import Home from '../Home/Home';
 import Subject from '../Subject/Subject';
 import Topic from '../Topic/Topic';
-import Quizzes from '../Quizzes/Quizzes';
-import EditQuiz from '../Quizzes/QuizEdit';
-import QuizReviewPage from '../Quizzes/QuizReviewPage';
-import QuizRepaso from '../Quizzes/QuizRepaso';
-import StudyGuide from '../Content/StudyGuide';
-import StudyGuideEditor from '../Content/StudyGuideEditor';
-import Formula from '../Content/Formula';
-import Exam from '../Content/Exam';
 import Profile from '../Profile/Profile';
 import Settings from '../Settings/Settings';
 import Notifications from '../Notifications/Notifications';
-import TeacherDashboard from '../TeacherDashboard/TeacherDashboard';
-import StudentDashboard from '../StudentDashboard/StudentDashboard';
 import { isInstitutionPreviewThemeMessage } from '../../utils/institutionPreviewProtocol';
 
 const THEME_PREVIEW_SESSION_KEY = 'dlp_theme_preview_active';
 
 const PREVIEW_ROLE_KEYS = new Set(['teacher', 'student']);
 const USER_ROLE_KEYS = new Set(['teacher', 'student', 'institutionadmin', 'admin']);
+
+const MockDashboardPreview = ({ role = 'teacher' }: any) => {
+  const isStudentRole = role === 'student';
+  return (
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 p-4 sm:p-6">
+      <div className="max-w-5xl mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          {isStudentRole ? 'Panel de estudiante (mock preview)' : 'Panel de docente (mock preview)'}
+        </h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Vista simulada para revisar tema, estructura y estilos sin usar datos reales.
+        </p>
+        <div className="mt-4">
+          <Link
+            to="/theme-preview/home"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold"
+          >
+            Volver al inicio
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MockTopicContentPreview = () => {
+  const { subjectId, topicId } = useParams();
+  const location = useLocation();
+  const section = location.pathname.split('/').filter(Boolean).slice(-1)[0] || 'contenido';
+
+  return (
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 p-4 sm:p-6">
+      <div className="max-w-5xl mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Contenido de tema (mock preview)</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Seccion simulada: {section}. Esta ruta usa datos mock para vista previa.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            to={`/theme-preview/home/subject/${subjectId || ''}/topic/${topicId || ''}`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold"
+          >
+            Volver al tema
+          </Link>
+          <Link
+            to="/theme-preview/home"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold"
+          >
+            Volver a inicio
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const normalizePreviewRole = (value: any) => {
   const normalized = String(value || '').trim().toLowerCase();
@@ -102,6 +147,7 @@ const buildPreviewUserWithRole = (baseUser: any, previewRole: any) => {
     availableRoles: lockedRoles,
     rememberSort: false,
     __previewLock: true,
+    __previewMockData: true,
   };
 };
 
@@ -214,21 +260,12 @@ const ThemePreview = () => {
       <Route path="home" element={<Home user={resolvedPreviewUser} />} />
       <Route path="home/subject/:subjectId" element={<Subject user={resolvedPreviewUser} />} />
       <Route path="home/subject/:subjectId/topic/:topicId" element={<Topic user={resolvedPreviewUser} />} />
-      <Route path="home/subject/:subjectId/topic/:topicId/quiz/:quizId" element={<Quizzes user={resolvedPreviewUser} />} />
-      <Route path="home/subject/:subjectId/topic/:topicId/resumen/:guideId/edit" element={<StudyGuideEditor user={resolvedPreviewUser} />} />
-      <Route path="home/subject/:subjectId/topic/:topicId/quiz/:quizId/edit" element={<EditQuiz user={resolvedPreviewUser} />} />
-      <Route path="home/subject/:subjectId/topic/:topicId/quiz/:quizId/review" element={<QuizReviewPage user={resolvedPreviewUser} />} />
-      <Route path="home/subject/:subjectId/topic/:topicId/quizzes/repaso" element={<QuizRepaso user={resolvedPreviewUser} />} />
-      <Route path="home/subject/:subjectId/topic/:topicId/resumen/:fileId" element={<StudyGuide user={resolvedPreviewUser} />} />
-      <Route path="home/subject/:subjectId/topic/:topicId/resource/:fileId" element={<StudyGuide user={resolvedPreviewUser} />} />
-      <Route path="home/subject/:subjectId/topic/:topicId/guide/:guideId" element={<StudyGuide user={resolvedPreviewUser} />} />
-      <Route path="home/subject/:subjectId/topic/:topicId/formulas/:fileId" element={<Formula user={resolvedPreviewUser} />} />
-      <Route path="home/subject/:subjectId/topic/:topicId/exam/:examId" element={<Exam user={resolvedPreviewUser} />} />
+      <Route path="home/subject/:subjectId/topic/:topicId/*" element={<MockTopicContentPreview />} />
       <Route path="profile" element={<Profile user={resolvedPreviewUser} />} />
       <Route path="settings" element={<Settings user={resolvedPreviewUser} />} />
       <Route path="notifications" element={<Notifications user={resolvedPreviewUser} />} />
-      <Route path="teacher-dashboard" element={<TeacherDashboard user={resolvedPreviewUser} />} />
-      <Route path="student-dashboard" element={<StudentDashboard user={resolvedPreviewUser} />} />
+      <Route path="teacher-dashboard" element={<MockDashboardPreview role="teacher" />} />
+      <Route path="student-dashboard" element={<MockDashboardPreview role="student" />} />
       <Route path="*" element={<Navigate to="/theme-preview/home" replace />} />
     </Routes>
   );

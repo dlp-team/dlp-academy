@@ -14,6 +14,10 @@ import {
 } from '../../../utils/topicDeletionUtils';
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildUserScopedPersistenceKey } from '../../../utils/pagePersistence';
+import {
+    getPreviewMockSubjectById,
+    getPreviewMockTopicDetail,
+} from '../../../utils/previewMockData';
 
 const EMPTY_CONFIRM_DIALOG = {
     isOpen: false,
@@ -61,6 +65,7 @@ export const useTopicLogic = (user: any) => {
     const normalizedProfileRole = getNormalizedRole(user);
     const activeRole = getActiveRole(user);
     const isStudentRole = normalizedProfileRole === 'student' && activeRole === 'student';
+    const isPreviewMockMode = user?.__previewMockData === true;
     
     // Notificaciones
     const [toast, setToast] = useState({ show: false, message: '' });
@@ -141,6 +146,23 @@ export const useTopicLogic = (user: any) => {
 
     // --- CARGA DE DATOS ---
     useEffect(() => {
+        if (isPreviewMockMode) {
+            const previewSubject = getPreviewMockSubjectById(subjectId);
+            const previewTopic = getPreviewMockTopicDetail(topicId, subjectId);
+
+            if (!previewSubject || !previewTopic) {
+                setLoading(false);
+                navigate('/home');
+                return () => {};
+            }
+
+            setSubject(previewSubject);
+            setTopic(previewTopic);
+            setLoading(false);
+
+            return () => {};
+        }
+
         let unsubscribeTopic = () => {};
         let unsubscribeDocs = () => {};
         let unsubscribeQuizzes = () => {};
@@ -353,7 +375,7 @@ export const useTopicLogic = (user: any) => {
             if (unsubscribeExamns) unsubscribeExamns();
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         };
-    }, [user, subjectId, topicId, navigate, isStudentRole]);
+    }, [user, subjectId, topicId, navigate, isStudentRole, isPreviewMockMode]);
 
     // --- HELPERS VISUALES ---
     const getFileVisuals = (type: any) => {

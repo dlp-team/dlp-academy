@@ -61,6 +61,19 @@ Date: 2026-04-15
 12. Fixed preview route fallback recursion and added missing topic-content preview routes:
 - [src/pages/ThemePreview/ThemePreview.tsx](src/pages/ThemePreview/ThemePreview.tsx#L217)
 
+13. Re-aligned preview architecture to keep real Home/Subject/Topic pages and mock only data sources:
+- Added centralized preview mock dataset and helpers:
+  - [src/utils/previewMockData.ts](src/utils/previewMockData.ts#L1)
+- Home data hooks now switch to preview mocks when `__previewMockData` is active:
+  - [src/hooks/useSubjects.ts](src/hooks/useSubjects.ts#L1)
+  - [src/hooks/useFolders.ts](src/hooks/useFolders.ts#L1)
+  - [src/hooks/useShortcuts.tsx](src/hooks/useShortcuts.tsx#L1)
+- Subject/Topic hooks now hydrate preview mock subject/topic payloads in preview mode:
+  - [src/pages/Subject/hooks/useSubjectManager.ts](src/pages/Subject/hooks/useSubjectManager.ts#L1)
+  - [src/pages/Topic/hooks/useTopicLogic.ts](src/pages/Topic/hooks/useTopicLogic.ts#L1)
+- Theme preview user now carries `__previewMockData`; deep topic-content routes use stable mock preview screens:
+  - [src/pages/ThemePreview/ThemePreview.tsx](src/pages/ThemePreview/ThemePreview.tsx#L1)
+
 ## Preserved behavior
 - Standard app routing for non-preview users remains unchanged.
 - Preview user lock behavior remains active.
@@ -82,6 +95,10 @@ Date: 2026-04-15
   - [src/pages/Subject/hooks/useSubjectManager.ts](src/pages/Subject/hooks/useSubjectManager.ts)
   - [src/pages/Topic/hooks/useTopicLogic.ts](src/pages/Topic/hooks/useTopicLogic.ts)
   - [src/pages/ThemePreview/ThemePreview.tsx](src/pages/ThemePreview/ThemePreview.tsx)
+  - [src/hooks/useSubjects.ts](src/hooks/useSubjects.ts)
+  - [src/hooks/useFolders.ts](src/hooks/useFolders.ts)
+  - [src/hooks/useShortcuts.tsx](src/hooks/useShortcuts.tsx)
+  - [src/utils/previewMockData.ts](src/utils/previewMockData.ts)
 - Result: No errors found.
 
 ## Residual risk

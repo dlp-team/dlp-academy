@@ -32,6 +32,7 @@ export const useShortcuts = (user: any) => {
     const promotingShortcutIdsRef = useRef(new Set());
     const activeRole = getActiveRole(user);
     const canReadHomeData = Boolean(activeRole && user?.displayName);
+    const isPreviewMockMode = user?.__previewMockData === true;
 
     const buildAppearanceFromTargetData = useCallback((targetType: any, targetData: any = {}) => {
         if (targetType === 'folder') {
@@ -86,6 +87,13 @@ export const useShortcuts = (user: any) => {
     }, [buildAppearanceFromTargetData]);
 
     useEffect(() => {
+        if (isPreviewMockMode) {
+            setShortcuts([]);
+            setResolvedShortcuts([]);
+            setLoading(false);
+            return;
+        }
+
         if (!user || !canReadHomeData) {
             setShortcuts([]);
             setResolvedShortcuts([]);
@@ -134,7 +142,7 @@ export const useShortcuts = (user: any) => {
         );
 
         return () => unsubscribe();
-    }, [user, currentInstitutionId, canReadHomeData, activeRole]);
+    }, [user, currentInstitutionId, canReadHomeData, activeRole, isPreviewMockMode]);
 
     useEffect(() => {
         if (!user || !canReadHomeData) return;
