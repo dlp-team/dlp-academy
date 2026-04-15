@@ -1,6 +1,6 @@
 # Phase 4 — Sign-In Email Verification
 
-## Status: TODO
+## Status: DONE (pre-existing)
 
 ## Objective
 Enforce email verification before a new user can access the web app. After registration, the user must verify their email address before the account is created/activated and before they can log in.
@@ -25,11 +25,20 @@ Enforce email verification before a new user can access the web app. After regis
 - Possibly Firebase Functions if server-side verification is needed
 
 ## Acceptance Criteria
-- [ ] New user registration triggers email verification email
-- [ ] Unverified users cannot access the app; they see a verification prompt
-- [ ] Resend verification email button available
-- [ ] Verified users experience no change
-- [ ] No lockout of existing users
+- [x] New user registration triggers email verification email — `sendEmailVerification()` in `useRegister.ts`
+- [x] Unverified users cannot access the app; they see a verification prompt — App.tsx guard L184 + `useLogin.ts` check
+- [x] Resend verification email button available — `EmailVerificationPage.tsx` with 60s cooldown
+- [x] Verified users experience no change
+- [x] No lockout of existing users — Firebase Auth `emailVerified` is authoritative
+
+## Completion Notes
+- Fully implemented prior to this plan phase. Verified by code audit on 2026-04-12.
+- `useRegister.ts`: calls `sendEmailVerification(user)` after account creation, redirects to `/verify-email?registered=true`
+- `useLogin.ts`: checks `result.user.emailVerified`, redirects to `/verify-email` if not verified
+- `App.tsx` L184 guard: `if (!user.emailVerified) return <Navigate to="/verify-email" />`
+- `EmailVerificationPage.tsx`: resend with 60s cooldown, reload-and-check flow via `currentUser.reload()`, sign-out option
+- Routes: `/login`, `/register`, root all redirect correctly based on `emailVerified`
+- No code changes required.
 
 ## Validation
 - [ ] Test with Firebase emulator using new account
