@@ -225,7 +225,7 @@ const InstitutionCustomizationView = ({
         </div>
 
         {/* Scrollable controls */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden clean-scrollbar">
           {sidebarOpen ? (
             <div className="px-4 py-4 space-y-4">
               {/* Identity */}
@@ -400,7 +400,7 @@ const InstitutionCustomizationView = ({
         )}
 
         {/* Iframe stage */}
-        <div className="flex-1 overflow-auto flex items-start justify-center p-4 bg-slate-200 dark:bg-slate-950">
+        <div className="flex-1 overflow-auto flex items-start justify-center p-4 bg-slate-200 dark:bg-slate-950 clean-scrollbar">
           <div className="relative shadow-2xl rounded-xl overflow-hidden transition-[width] duration-500 bg-white" style={{ width: currentVP.width, minWidth: viewport === 'desktop' ? '100%' : undefined, height: '100%', minHeight: 600, ...(activeToken ? { outline: `3px solid ${form[activeToken]}`, outlineOffset: '3px', boxShadow: `0 0 0 6px ${hexToRgba(form[activeToken], 0.12)}, 0 20px 60px rgba(0,0,0,0.18)` } : { boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }) }}>
             {!iframeReady && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white dark:bg-slate-950 gap-4">

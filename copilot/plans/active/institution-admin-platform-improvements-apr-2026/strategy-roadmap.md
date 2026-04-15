@@ -18,7 +18,7 @@ Deliver all user-requested improvements from AUTOPILOT_PLAN.md (April 2026) acro
 |-------|-------|--------|--------|--------|
 | 1 | Institution Admin Dashboard fixes | TODO | feature/new-features-2026-04-12 | — |
 | 2 | App-wide UX: Settings, Bin, Profile | TODO | feature/new-features-2026-04-12 | — |
-| 3 | Scrollbars modernization | TODO | feature/new-features-2026-04-12 | — |
+| 3 | Scrollbars modernization | ✅ DONE | feature/new-features-2026-04-12 | pending commit |
 | 4 | Sign-in email verification | TODO | feature/new-features-2026-04-12 | — |
 | 5 | Selection mode drag bug fix | TODO | feature/new-features-2026-04-12 | — |
 | 6 | Copilot documentation system | TODO | feature/new-features-2026-04-12 | — |

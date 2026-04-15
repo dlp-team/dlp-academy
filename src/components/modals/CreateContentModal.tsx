@@ -458,7 +458,7 @@ const CreateContentModal = ({
             </div>
 
             {/* CONTENT */}
-            <div className="overflow-y-auto flex-1 custom-scrollbar">
+            <div className="overflow-y-auto flex-1 clean-scrollbar">
 
                     {/* STEP 1: TYPE SELECTION */}
                     {step === 1 && (

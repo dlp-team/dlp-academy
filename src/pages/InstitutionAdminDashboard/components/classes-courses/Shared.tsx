@@ -76,7 +76,7 @@ export const Modal = ({
     contentClassName="animate-in fade-in zoom-in-95 duration-200"
   >
     {({ requestClose }: any) => (
-      <div className="p-6 max-h-[calc(100vh-8rem)] overflow-y-auto">
+      <div className="p-6 max-h-[calc(100vh-8rem)] overflow-y-auto clean-scrollbar">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
           <button onClick={requestClose} className="text-gray-400 hover:text-gray-600 transition-colors">

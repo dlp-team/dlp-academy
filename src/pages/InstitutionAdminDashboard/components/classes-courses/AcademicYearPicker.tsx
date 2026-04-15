@@ -75,7 +75,7 @@ const AcademicYearPicker = ({
               Usar año actual
             </button>
           </div>
-          <div className="grid max-h-48 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
+          <div className="grid max-h-48 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3 minimal-scrollbar">
             {yearOptions.map((yearOption) => {
               const isSelected = yearOption === value;
 

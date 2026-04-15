@@ -8,6 +8,14 @@ _None at this time._
 
 ## Processed Updates
 
+### 2026-04-16 — Phase 3 DONE
+**Phase 3 — Scrollbars Modernization — DONE**
+- Audited 24 overflow containers across 13 files in `modals/`, `Home/`, `InstitutionAdminDashboard/`, `Profile/`.
+- Applied `clean-scrollbar` to content panels, modal bodies, overlay containers (15 elements).
+- Applied `minimal-scrollbar` to small inline list/pickers (9 elements).
+- Replaced legacy `custom-scrollbar` (3 instances) and `scrollbar-thin scrollbar-thumb-*` (1 instance).
+- All 14 files clean (`get_errors` = 0). Commit pending.
+
 ### 2026-04-12 — Phase 1 completed; Phase 2 in progress
 
 **Phase 1 — DONE (all 4 items)**

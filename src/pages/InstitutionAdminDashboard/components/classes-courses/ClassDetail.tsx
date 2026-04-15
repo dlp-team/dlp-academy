@@ -46,7 +46,7 @@ const PersonPicker = ({
     <div className="space-y-2">
       <SearchInput value={q} onChange={setQ} placeholder={placeholder} />
 
-      <div className="max-h-52 overflow-y-auto border border-gray-200 dark:border-slate-700 rounded-xl divide-y divide-gray-100 dark:divide-slate-700">
+      <div className="max-h-52 overflow-y-auto border border-gray-200 dark:border-slate-700 rounded-xl divide-y divide-gray-100 dark:divide-slate-700 minimal-scrollbar">
         {singleSelect && (
           <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
             <input

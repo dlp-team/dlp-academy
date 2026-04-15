@@ -283,7 +283,7 @@ const InstitutionCustomizationMockView = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 clean-scrollbar">
           {sidebarOpen ? (
             <div className="space-y-4">
               <section>
@@ -344,7 +344,7 @@ const InstitutionCustomizationMockView = ({
                   <p className="mt-2 text-[11px] font-medium text-red-600 dark:text-red-300">{themeSetError}</p>
                 )}
 
-                <div className="mt-3 space-y-2 max-h-40 overflow-y-auto pr-1" data-testid="theme-set-list">
+                <div className="mt-3 space-y-2 max-h-40 overflow-y-auto pr-1 minimal-scrollbar" data-testid="theme-set-list">
                   {resolvedThemeSets.length === 0 ? (
                     <p className="text-[11px] text-slate-400">Aún no hay temas guardados.</p>
                   ) : (
@@ -538,7 +538,7 @@ const InstitutionCustomizationMockView = ({
       closeOnBackdropClick={!saving}
       maxWidth="md"
       contentClassName="p-0"
-      rootClassName={fullscreen ? 'fixed inset-x-0 bottom-0 z-[10100] overflow-y-auto' : undefined}
+      rootClassName={fullscreen ? 'fixed inset-x-0 bottom-0 z-[10100] overflow-y-auto clean-scrollbar' : undefined}
       rootStyle={fullscreen ? { top: 0 } : undefined}
     >
       <div className="p-6">
@@ -574,7 +574,7 @@ const InstitutionCustomizationMockView = ({
       closeOnBackdropClick={!saving}
       maxWidth="md"
       contentClassName="p-0"
-      rootClassName={fullscreen ? 'fixed inset-x-0 bottom-0 z-[10100] overflow-y-auto' : undefined}
+      rootClassName={fullscreen ? 'fixed inset-x-0 bottom-0 z-[10100] overflow-y-auto clean-scrollbar' : undefined}
       rootStyle={fullscreen ? { top: 0 } : undefined}
     >
       <div className="p-6">

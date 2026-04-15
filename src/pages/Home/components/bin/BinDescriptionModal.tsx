@@ -44,7 +44,7 @@ const BinDescriptionModal = ({
                 </div>
 
                 {/* Body */}
-                <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
+                <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)] clean-scrollbar">
                     {loadingDescription ? (
                         <div className="flex items-center justify-center py-12">
                             <Loader2 className="animate-spin text-blue-600" size={32} />

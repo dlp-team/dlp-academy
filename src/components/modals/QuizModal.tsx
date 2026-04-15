@@ -130,7 +130,7 @@ const QuizModal = ({
             </div>
 
             {/* FORM CONTENT */}
-            <div className="overflow-y-auto flex-1 p-8 space-y-5 bg-white dark:bg-slate-900 custom-scrollbar">
+            <div className="overflow-y-auto flex-1 p-8 space-y-5 bg-white dark:bg-slate-900 clean-scrollbar">
                     <form id="quiz-form" onSubmit={handleInternalSubmit} className="space-y-5">
                         
                         <div className="space-y-2 group">
