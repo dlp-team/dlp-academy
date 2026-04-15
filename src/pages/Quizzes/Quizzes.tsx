@@ -46,6 +46,12 @@ const useQuizData = (user: any, subjectId: any, topicId: any, quizId: any, navig
             // Preview mode: use prefetched quiz data instead of Firestore
             const prefetchedQuiz = location?.state?.prefetchedQuiz;
             if (prefetchedQuiz) {
+                const stateSubjectColor = location?.state?.subjectColor;
+                if (stateSubjectColor) {
+                    setTopicGradient(stateSubjectColor);
+                    const extracted = extractColorFromGradient(stateSubjectColor);
+                    if (extracted) setAccentColor(extracted);
+                }
                 setQuizData({
                     title: prefetchedQuiz.name || prefetchedQuiz.title || "Test Generado",
                     subtitle: prefetchedQuiz.level || "Repaso",

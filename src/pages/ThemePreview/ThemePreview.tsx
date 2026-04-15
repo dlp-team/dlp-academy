@@ -277,8 +277,17 @@ const buildPreviewUserWithRole = (baseUser: any, previewRole: any) => {
 const ThemePreview = () => {
   const [searchParams] = useSearchParams();
   const [previewRole, setPreviewRole] = useState(() => normalizePreviewRole(searchParams.get('role')));
-  const [previewUser, setPreviewUser] = useState<any>(null);
-  const [waitingForContext, setWaitingForContext] = useState(true);
+  const [previewUser, setPreviewUser] = useState<any>(() => {
+    try {
+      const stored = window.sessionStorage.getItem('__dlp_preview_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch { return null; }
+  });
+  const [waitingForContext, setWaitingForContext] = useState(() => {
+    try {
+      return !window.sessionStorage.getItem('__dlp_preview_user');
+    } catch { return true; }
+  });
 
   useEffect(() => {
     setPreviewRole(normalizePreviewRole(searchParams.get('role')));
@@ -334,6 +343,7 @@ const ThemePreview = () => {
       const nextPreviewUser = sanitizePreviewUser(payload.previewUser);
       if (nextPreviewUser) {
         setPreviewUser(nextPreviewUser);
+        try { window.sessionStorage.setItem('__dlp_preview_user', JSON.stringify(nextPreviewUser)); } catch {}
       }
 
       const highlightMessage = typeof payload.highlightMessage === 'string'

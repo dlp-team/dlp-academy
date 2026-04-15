@@ -597,7 +597,10 @@ const StudyGuide = ({ user }: any) => {
                 setLoading(true);
 
                 // 1. OBTENER EL COLOR DE LA ASIGNATURA (SUBJECT)
-                try {
+                const stateSubjectColor = (location?.state as any)?.subjectColor;
+                if (stateSubjectColor) {
+                    setTopicGradient(stateSubjectColor);
+                } else try {
                     if (subjectId) {
                         const subjectRef = doc(db, "subjects", subjectId);
                         const subjectSnap = await getDoc(subjectRef);

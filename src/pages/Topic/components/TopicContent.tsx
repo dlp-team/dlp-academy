@@ -144,7 +144,7 @@ const TopicContent = ({
                     {/* LEFT: Guía Completa */}
                     <button
                         onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${mainGuide.id}`, {
-                            state: { prefetchedGuide: mainGuide }
+                            state: { prefetchedGuide: mainGuide, subjectColor }
                         })}
                         className="flex-1 group relative overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.01] text-left"
                     >
@@ -173,7 +173,9 @@ const TopicContent = ({
                     {/* RIGHT: Calculadora (solo si hay fórmulas) */}
                     {hasFormulas && (
                         <button
-                            onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/formulas/${mainGuide.id}`)}
+                            onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/formulas/${mainGuide.id}`, {
+                                state: { prefetchedGuide: mainGuide, subjectColor }
+                            })}
                             className="group relative w-40 shrink-0 overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.03]"
                         >
                             <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-90 group-hover:opacity-100 transition-opacity`} />
@@ -243,7 +245,7 @@ const TopicContent = ({
                                 return (
                                     <div
                                         key={exam.id}
-                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`, user?.__previewMockData === true ? { state: { prefetchedExam: exam } } : undefined)}
+                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`, user?.__previewMockData === true ? { state: { prefetchedExam: exam, subjectColor } } : undefined)}
                                         className="group cursor-pointer relative overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.01]"
                                     >
                                         <div className={`absolute inset-0 ${subjectGradient} opacity-90 group-hover:opacity-100 transition-opacity`} />
@@ -395,7 +397,7 @@ const TopicContent = ({
                                         onClick={() => {
                                             if (isStudyGuideRecord(mainGuide)) {
                                                 navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${mainGuide.id}`, {
-                                                    state: { prefetchedGuide: mainGuide }
+                                                    state: { prefetchedGuide: mainGuide, subjectColor }
                                                 });
                                                 return;
                                             }
@@ -432,7 +434,9 @@ const TopicContent = ({
                                     <button
                                         onClick={() => {
                                             if (!hasFormulas) return;
-                                            navigate(`/home/subject/${subjectId}/topic/${topicId}/formulas/${mainGuide.id}`);
+                                            navigate(`/home/subject/${subjectId}/topic/${topicId}/formulas/${mainGuide.id}`, {
+                                                state: { prefetchedGuide: mainGuide, subjectColor }
+                                            });
                                         }}
                                         className={`group relative overflow-hidden rounded-3xl shadow-sm min-h-[16rem] transition-all duration-500 ${hasFormulas ? 'hover:shadow-md hover:scale-[1.03]' : 'opacity-70 cursor-not-allowed'}`}
                                     >
@@ -561,7 +565,7 @@ const TopicContent = ({
                                 return (
                                     <div
                                         key={exam.id || `generated-exam-${idx}`}
-                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`, user?.__previewMockData === true ? { state: { prefetchedExam: exam } } : undefined)}
+                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`, user?.__previewMockData === true ? { state: { prefetchedExam: exam, subjectColor } } : undefined)}
                                         className="group cursor-pointer relative overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.01]"
                                     >
                                         <div className={`absolute inset-0 ${subjectGradient} opacity-90 group-hover:opacity-100 transition-opacity`} />
@@ -909,7 +913,7 @@ const TopicContent = ({
                                 const canOpenFromCard = !shouldEditPrimary && !isCompleted && canStartAssignment;
                                 const openQuizSession = () => navigate(
                                     `/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`,
-                                    user?.__previewMockData === true ? { state: { prefetchedQuiz: quiz } } : undefined
+                                    user?.__previewMockData === true ? { state: { prefetchedQuiz: quiz, subjectColor } } : undefined
                                 );
                                 const quizCardHeightClass = canManageQuiz
                                     ? 'min-h-[22rem] md:min-h-[23rem]'

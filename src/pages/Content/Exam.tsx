@@ -403,11 +403,12 @@ const Exam = ({ user }) => {
 
                 // Preview mode: use prefetched exam data instead of Firestore
                 const prefetchedExam = (location?.state as any)?.prefetchedExam;
+                const stateSubjectColor = (location?.state as any)?.subjectColor;
                 if (prefetchedExam) {
                     const questions = prefetchedExam.questions || [];
                     setExamData({ ...prefetchedExam, questions });
-                    if (prefetchedExam.subjectColor) {
-                        setTopicGradient(prefetchedExam.subjectColor);
+                    if (stateSubjectColor) {
+                        setTopicGradient(stateSubjectColor);
                     }
                     setLoading(false);
                     return;
