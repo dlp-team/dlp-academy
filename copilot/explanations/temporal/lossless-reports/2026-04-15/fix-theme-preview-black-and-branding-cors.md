@@ -122,8 +122,14 @@ Date: 2026-04-15
 2. Memoized preview-safe navigation callback in topic logic:
 - [src/pages/Topic/hooks/useTopicLogic.ts](src/pages/Topic/hooks/useTopicLogic.ts#L1)
 
+3. Preserved navigate argument shape expected by existing tests:
+- Navigation now omits the options argument when it is `undefined`, keeping call signatures stable while preserving preview-safe rewrites.
+
 ### Follow-up validation
 - Diagnostics checked with `get_errors`:
   - [src/pages/Subject/hooks/useSubjectManager.ts](src/pages/Subject/hooks/useSubjectManager.ts)
   - [src/pages/Topic/hooks/useTopicLogic.ts](src/pages/Topic/hooks/useTopicLogic.ts)
 - Result: No errors found.
+- Focused hook tests passed:
+  - `npm run test -- tests/unit/hooks/useSubjectManager.test.js tests/unit/hooks/useTopicLogic.test.js`
+  - Result: 26/26 tests passed.

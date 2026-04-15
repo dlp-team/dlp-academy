@@ -40,7 +40,18 @@ export const useTopicLogic = (user: any) => {
             && to.startsWith('/')
             && !to.startsWith('/theme-preview')
         ) {
-            routerNavigate(`/theme-preview${to}`, options);
+            const previewTarget = `/theme-preview${to}`;
+            if (options === undefined) {
+                routerNavigate(previewTarget);
+                return;
+            }
+
+            routerNavigate(previewTarget, options);
+            return;
+        }
+
+        if (options === undefined) {
+            routerNavigate(to);
             return;
         }
 
