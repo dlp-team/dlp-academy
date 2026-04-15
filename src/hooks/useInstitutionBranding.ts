@@ -9,10 +9,11 @@ import {
 
 const useInstitutionBranding = (user: any) => {
     const institutionId = user?.institutionId || null;
+    const isPreviewMock = !!user?.__previewMockData;
     const [branding, setBranding] = React.useState(GLOBAL_BRAND_DEFAULTS);
 
     React.useEffect(() => {
-        if (!institutionId) {
+        if (!institutionId || isPreviewMock) {
             setBranding(GLOBAL_BRAND_DEFAULTS);
             return;
         }
@@ -34,7 +35,7 @@ const useInstitutionBranding = (user: any) => {
         );
 
         return () => unsubscribe();
-    }, [institutionId]);
+    }, [institutionId, isPreviewMock]);
 
     React.useEffect(() => {
         const root = document.documentElement;

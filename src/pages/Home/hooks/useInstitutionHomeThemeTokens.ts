@@ -11,6 +11,7 @@ import {
 
 export const useInstitutionHomeThemeTokens = (user: any) => {
     const institutionId = user?.institutionId || null;
+    const isPreviewMock = !!user?.__previewMockData;
     const [themeOverrides, setThemeOverrides] = React.useState<any>(null);
     const [themeColorOverrides, setThemeColorOverrides] = React.useState<any>(null);
 
@@ -18,7 +19,7 @@ export const useInstitutionHomeThemeTokens = (user: any) => {
         let isMounted = true;
 
         const loadInstitutionTheme = async () => {
-            if (!institutionId) {
+            if (!institutionId || isPreviewMock) {
                 if (isMounted) {
                     setThemeOverrides(null);
                     setThemeColorOverrides(null);
@@ -56,7 +57,7 @@ export const useInstitutionHomeThemeTokens = (user: any) => {
         return () => {
             isMounted = false;
         };
-    }, [institutionId]);
+    }, [institutionId, isPreviewMock]);
 
     return React.useMemo(() => {
         const tokens = getEffectiveHomeThemeTokens(themeOverrides);
