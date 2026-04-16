@@ -1,4 +1,4 @@
-// tests/e2e/helpers/e2e-firebase-admin.js
+// tests/e2e/helpers/e2e-firebase-admin.ts
 import admin from 'firebase-admin';
 
 /**
@@ -6,10 +6,10 @@ import admin from 'firebase-admin';
  * Parses FIREBASE_SERVICE_ACCOUNT_JSON env var and returns a Firestore instance.
  * Returns null if the env var is missing or invalid (tests continue without Admin SDK).
  */
-let _db = null;
+let _db: FirebaseFirestore.Firestore | null = null;
 let _initialized = false;
 
-export const ensureAdmin = () => {
+export const ensureAdmin = (): FirebaseFirestore.Firestore | null => {
   if (_initialized) return _db;
   _initialized = true;
 
@@ -33,7 +33,7 @@ export const ensureAdmin = () => {
 
 export const getAdminAuth = () => admin.auth();
 
-export const resolveUidByEmail = async (email) => {
+export const resolveUidByEmail = async (email: string | undefined): Promise<string | null> => {
   if (!email) return null;
   try {
     const authUser = await admin.auth().getUserByEmail(String(email).trim().toLowerCase());
@@ -43,7 +43,7 @@ export const resolveUidByEmail = async (email) => {
   }
 };
 
-export const adminGetDoc = async (collection, docId) => {
+export const adminGetDoc = async (collection: string, docId: string): Promise<Record<string, any> | null> => {
   const db = ensureAdmin();
   if (!db) return null;
   try {
@@ -54,7 +54,7 @@ export const adminGetDoc = async (collection, docId) => {
   }
 };
 
-export const adminSetDoc = async (collection, docId, data, options = { merge: true }) => {
+export const adminSetDoc = async (collection: string, docId: string, data: Record<string, any>, options: { merge: boolean } = { merge: true }): Promise<boolean> => {
   const db = ensureAdmin();
   if (!db) return false;
   try {
@@ -65,7 +65,7 @@ export const adminSetDoc = async (collection, docId, data, options = { merge: tr
   }
 };
 
-export const adminDeleteDoc = async (collection, docId) => {
+export const adminDeleteDoc = async (collection: string, docId: string): Promise<boolean> => {
   const db = ensureAdmin();
   if (!db) return false;
   try {
@@ -76,7 +76,7 @@ export const adminDeleteDoc = async (collection, docId) => {
   }
 };
 
-export const adminQueryDocs = async (collection, fieldPath, op, value) => {
+export const adminQueryDocs = async (collection: string, fieldPath: string, op: FirebaseFirestore.WhereFilterOp, value: any): Promise<Record<string, any>[]> => {
   const db = ensureAdmin();
   if (!db) return [];
   try {
@@ -87,7 +87,7 @@ export const adminQueryDocs = async (collection, fieldPath, op, value) => {
   }
 };
 
-export const adminDeleteByQuery = async (collection, fieldPath, op, value) => {
+export const adminDeleteByQuery = async (collection: string, fieldPath: string, op: FirebaseFirestore.WhereFilterOp, value: any): Promise<number> => {
   const db = ensureAdmin();
   if (!db) return 0;
   try {
@@ -101,7 +101,7 @@ export const adminDeleteByQuery = async (collection, fieldPath, op, value) => {
   }
 };
 
-export const runBestEffortWithTimeout = async (task, timeoutMs = 12000) => {
+export const runBestEffortWithTimeout = async (task: () => Promise<void>, timeoutMs = 12000): Promise<void> => {
   await Promise.race([
     task(),
     new Promise((resolve) => {
@@ -113,6 +113,6 @@ export const runBestEffortWithTimeout = async (task, timeoutMs = 12000) => {
 };
 
 export const serverTimestamp = () => admin.firestore.FieldValue.serverTimestamp();
-export const arrayUnion = (...elements) => admin.firestore.FieldValue.arrayUnion(...elements);
-export const arrayRemove = (...elements) => admin.firestore.FieldValue.arrayRemove(...elements);
-export const increment = (n) => admin.firestore.FieldValue.increment(n);
+export const arrayUnion = (...elements: any[]) => admin.firestore.FieldValue.arrayUnion(...elements);
+export const arrayRemove = (...elements: any[]) => admin.firestore.FieldValue.arrayRemove(...elements);
+export const increment = (n: number) => admin.firestore.FieldValue.increment(n);

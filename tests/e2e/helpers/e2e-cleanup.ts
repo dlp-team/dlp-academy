@@ -1,32 +1,40 @@
-// tests/e2e/helpers/e2e-cleanup.js
-import { ensureAdmin, adminDeleteDoc, adminDeleteByQuery } from './e2e-firebase-admin.js';
+// tests/e2e/helpers/e2e-cleanup.ts
+import { ensureAdmin, adminDeleteDoc, adminDeleteByQuery } from './e2e-firebase-admin';
+
+interface CleanupDoc {
+  collection: string;
+  docId: string;
+}
 
 class CleanupRegistry {
+  private _docs: CleanupDoc[] = [];
+  private _storagePaths: string[] = [];
+
   constructor() {
     this._docs = [];
     this._storagePaths = [];
   }
 
-  register(collection, docId) {
+  register(collection: string, docId: string): void {
     if (collection && docId) {
       this._docs.push({ collection, docId });
     }
   }
 
-  registerBatch(collection, docIds) {
+  registerBatch(collection: string, docIds: string[]): void {
     if (!Array.isArray(docIds)) return;
     for (const docId of docIds) {
       this.register(collection, docId);
     }
   }
 
-  registerStoragePath(path) {
+  registerStoragePath(path: string): void {
     if (path) {
       this._storagePaths.push(path);
     }
   }
 
-  async executeAll() {
+  async executeAll(): Promise<void> {
     const db = ensureAdmin();
     if (!db) return;
 
@@ -60,19 +68,19 @@ class CleanupRegistry {
     this.reset();
   }
 
-  reset() {
+  reset(): void {
     this._docs = [];
     this._storagePaths = [];
   }
 
-  get pendingCount() {
+  get pendingCount(): number {
     return this._docs.length + this._storagePaths.length;
   }
 }
 
 export const cleanup = new CleanupRegistry();
 
-export const sweepE2eSeedData = async (collections = ['subjects', 'folders', 'studyTopics', 'notifications', 'shortcuts']) => {
+export const sweepE2eSeedData = async (collections: string[] = ['subjects', 'folders', 'studyTopics', 'notifications', 'shortcuts']): Promise<number> => {
   let totalDeleted = 0;
   for (const collection of collections) {
     const deleted = await adminDeleteByQuery(collection, 'e2eSeed', '==', true);
@@ -81,4 +89,4 @@ export const sweepE2eSeedData = async (collections = ['subjects', 'folders', 'st
   return totalDeleted;
 };
 
-export const createCleanupScope = () => new CleanupRegistry();
+export const createCleanupScope = (): CleanupRegistry => new CleanupRegistry();

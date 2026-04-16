@@ -1,4 +1,4 @@
-// tests/e2e/home-sharing-operations.spec.js
+// tests/e2e/home-sharing-operations.spec.ts
 import { test, expect } from '@playwright/test';
 import {
   ensureAdmin,
@@ -8,7 +8,7 @@ import {
   arrayUnion,
   arrayRemove,
   runBestEffortWithTimeout,
-} from './helpers/e2e-firebase-admin.js';
+} from './helpers/e2e-firebase-admin';
 import {
   loginAsOwner,
   loginAsEditor,
@@ -16,7 +16,7 @@ import {
   hasCredentials,
   isMutationEnabled,
   navigateToHome,
-} from './helpers/e2e-auth-helpers.js';
+} from './helpers/e2e-auth-helpers';
 import {
   buildSubjectId,
   buildSubjectData,
@@ -24,8 +24,8 @@ import {
   buildFolderData,
   buildShortcutId,
   buildShortcutData,
-} from './helpers/e2e-data-factories.js';
-import { cleanup } from './helpers/e2e-cleanup.js';
+} from './helpers/e2e-data-factories';
+import { cleanup } from './helpers/e2e-cleanup';
 
 const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL;
 const EDITOR_EMAIL = process.env.E2E_EDITOR_EMAIL;

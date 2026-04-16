@@ -1,4 +1,4 @@
-// tests/e2e/home-folder-crud.spec.js
+// tests/e2e/home-folder-crud.spec.ts
 import { test, expect } from '@playwright/test';
 import {
   ensureAdmin,
@@ -8,21 +8,21 @@ import {
   adminDeleteDoc,
   serverTimestamp,
   runBestEffortWithTimeout,
-} from './helpers/e2e-firebase-admin.js';
+} from './helpers/e2e-firebase-admin';
 import {
   loginAsOwner,
   hasCredentials,
   isMutationEnabled,
   navigateToHome,
-} from './helpers/e2e-auth-helpers.js';
+} from './helpers/e2e-auth-helpers';
 import {
   buildFolderId,
   buildFolderData,
   buildSubjectId,
   buildSubjectData,
   buildTrashedFolderData,
-} from './helpers/e2e-data-factories.js';
-import { cleanup } from './helpers/e2e-cleanup.js';
+} from './helpers/e2e-data-factories';
+import { cleanup } from './helpers/e2e-cleanup';
 
 const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL;
 

@@ -1,4 +1,4 @@
-// tests/e2e/home-advanced-operations.spec.js
+// tests/e2e/home-advanced-operations.spec.ts
 import { test, expect } from '@playwright/test';
 import {
   ensureAdmin,
@@ -8,14 +8,14 @@ import {
   serverTimestamp,
   arrayUnion,
   runBestEffortWithTimeout,
-} from './helpers/e2e-firebase-admin.js';
+} from './helpers/e2e-firebase-admin';
 import {
   loginAsOwner,
   loginAsEditor,
   hasCredentials,
   isMutationEnabled,
   navigateToHome,
-} from './helpers/e2e-auth-helpers.js';
+} from './helpers/e2e-auth-helpers';
 import {
   buildSubjectId,
   buildSubjectData,
@@ -25,8 +25,8 @@ import {
   buildNotificationData,
   buildShortcutId,
   buildShortcutData,
-} from './helpers/e2e-data-factories.js';
-import { cleanup } from './helpers/e2e-cleanup.js';
+} from './helpers/e2e-data-factories';
+import { cleanup } from './helpers/e2e-cleanup';
 
 const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL;
 const EDITOR_EMAIL = process.env.E2E_EDITOR_EMAIL;

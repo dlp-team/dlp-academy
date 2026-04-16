@@ -1,4 +1,4 @@
-// tests/e2e/home-subject-crud.spec.js
+// tests/e2e/home-subject-crud.spec.ts
 import { test, expect } from '@playwright/test';
 import {
   ensureAdmin,
@@ -8,7 +8,7 @@ import {
   adminDeleteDoc,
   serverTimestamp,
   runBestEffortWithTimeout,
-} from './helpers/e2e-firebase-admin.js';
+} from './helpers/e2e-firebase-admin';
 import {
   login,
   loginAsOwner,
@@ -17,13 +17,13 @@ import {
   isMutationEnabled,
   navigateToHome,
   navigateToBin,
-} from './helpers/e2e-auth-helpers.js';
+} from './helpers/e2e-auth-helpers';
 import {
   buildSubjectId,
   buildSubjectData,
   buildTrashedSubjectData,
-} from './helpers/e2e-data-factories.js';
-import { cleanup } from './helpers/e2e-cleanup.js';
+} from './helpers/e2e-data-factories';
+import { cleanup } from './helpers/e2e-cleanup';
 
 const E2E_EMAIL = process.env.E2E_EMAIL;
 const E2E_PASSWORD = process.env.E2E_PASSWORD;
