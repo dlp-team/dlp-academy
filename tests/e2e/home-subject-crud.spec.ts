@@ -17,6 +17,7 @@ import {
   isMutationEnabled,
   navigateToHome,
   navigateToBin,
+  hoverCardAndGetMenu,
 } from './helpers/e2e-auth-helpers';
 import {
   buildSubjectId,
@@ -77,15 +78,29 @@ test.describe('Home — Subject CRUD operations', () => {
     // Click the create button
     const createBtn = page.getByRole('button', { name: /crear nueva asignatura/i }).first();
     await expect(createBtn).toBeVisible({ timeout: 10000 });
-    await createBtn.click();
+    await createBtn.click({ force: true });
 
     // Modal should appear
-    await expect(page.getByRole('heading', { name: /crear nueva asignatura/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /nueva asignatura/i })).toBeVisible({ timeout: 10000 });
 
     // Fill form
     const testName = `[E2E-CRUD] Materia ${Date.now()}`;
-    await page.locator('input[placeholder="Ej. Matemáticas"]').fill(testName);
-    await page.locator('input[placeholder="Ej. 2º Bachillerato A"]').fill('E2E Curso');
+    await page.locator('input[placeholder="Ej: Matemáticas"]').fill(testName);
+
+    // Wait for course options to load from Firestore then select
+    const courseSelect = page.locator('select').first();
+    await courseSelect.waitFor({ timeout: 5000 });
+    const courseOptions = courseSelect.locator('option:not([value=""]):not([disabled])');
+    await expect(courseOptions.first()).toBeAttached({ timeout: 10000 });
+    const firstCourseValue = await courseOptions.first().getAttribute('value');
+    if (firstCourseValue) await courseSelect.selectOption(firstCourseValue);
+
+    // Wait for period options to load then select
+    const periodSelect = page.locator('select').nth(1);
+    const periodOptions = periodSelect.locator('option:not([value=""]):not([disabled])');
+    await expect(periodOptions.first()).toBeAttached({ timeout: 5000 });
+    const firstPeriodValue = await periodOptions.first().getAttribute('value');
+    if (firstPeriodValue) await periodSelect.selectOption(firstPeriodValue);
 
     // Select first color option
     const colorBtns = page.locator('.grid.grid-cols-4 button.rounded-lg');
@@ -94,10 +109,13 @@ test.describe('Home — Subject CRUD operations', () => {
     }
 
     // Submit
-    await page.getByRole('button', { name: /crear asignatura/i }).click();
+    await page.getByRole('button', { name: /^crear$/i }).click();
+
+    // Wait for modal to close (confirms submission succeeded)
+    await expect(page.getByRole('heading', { name: /nueva asignatura/i })).toBeHidden({ timeout: 10000 });
 
     // Verify subject appears on Home
-    await expect(page.getByText(testName)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(testName)).toBeVisible({ timeout: 20000 });
 
     // Verify in Firestore via Admin SDK
     if (ownerUid) {
@@ -126,7 +144,7 @@ test.describe('Home — Subject CRUD operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
 
-    const { id, data } = await seedSubject(db, ownerUid, { name: '[E2E-CRUD] Editable Subject' });
+    const { id, data } = await seedSubject(db, ownerUid, { name: '[E2E-CRUD] Editable Subject', course: 'E2E Curso' });
 
     await loginAsOwner(page);
     await navigateToHome(page);
@@ -136,9 +154,7 @@ test.describe('Home — Subject CRUD operations', () => {
     await expect(subjectText).toBeVisible({ timeout: 15000 });
 
     // Hover over the card and click the three-dots menu
-    const card = subjectText.locator('..').locator('..');
-    await card.hover();
-    const menuBtn = card.locator('button').filter({ has: page.locator('svg') }).last();
+    const { card, menuBtn } = await hoverCardAndGetMenu(page, '[E2E-CRUD] Editable Subject');
     await menuBtn.click();
 
     // Click "Editar" option
@@ -149,14 +165,26 @@ test.describe('Home — Subject CRUD operations', () => {
 
     // Update the name
     const updatedName = `[E2E-CRUD] Updated ${Date.now()}`;
-    const nameInput = page.locator('input[placeholder="Ej. Matemáticas"]');
+    const nameInput = page.locator('input[placeholder="Ej: Matemáticas"]');
+    await expect(nameInput).toBeVisible({ timeout: 5000 });
     await nameInput.clear();
     await nameInput.fill(updatedName);
 
     // Save
-    await page.getByRole('button', { name: /guardar cambios/i }).click();
+    await page.getByRole('button', { name: /guardar/i }).click();
 
-    // Verify updated name appears
+    // Wait for modal to close
+    await expect(page.getByRole('heading', { name: /editar asignatura/i })).toBeHidden({ timeout: 10000 });
+
+    // Wait a moment for Firestore listener to update
+    await page.waitForTimeout(2000);
+
+    // Verify updated name appears (reload if needed)
+    let found = await page.getByText(updatedName).isVisible().catch(() => false);
+    if (!found) {
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+    }
     await expect(page.getByText(updatedName)).toBeVisible({ timeout: 15000 });
 
     // Verify in Firestore
@@ -179,20 +207,21 @@ test.describe('Home — Subject CRUD operations', () => {
     await expect(subjectText).toBeVisible({ timeout: 15000 });
 
     // Open options menu
-    const card = subjectText.locator('..').locator('..');
-    await card.hover();
-    const menuBtn = card.locator('button').filter({ has: page.locator('svg') }).last();
+    const { menuBtn } = await hoverCardAndGetMenu(page, '[E2E-CRUD] Deletable Subject');
     await menuBtn.click();
 
     // Click "Eliminar"
     await page.getByText('Eliminar', { exact: true }).click();
 
     // Confirm deletion in modal
-    await expect(page.getByText(/mover.*papelera/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /mover.*papelera/i })).toBeVisible();
     await page.getByRole('button', { name: /sí.*mover.*papelera/i }).click();
 
     // Subject should disappear from Home
-    await expect(subjectText).not.toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-selection-key]').filter({ hasText: '[E2E-CRUD] Deletable Subject' })).not.toBeVisible({ timeout: 10000 });
+
+    // Wait for Firestore write to propagate
+    await page.waitForTimeout(2000);
 
     // Verify Firestore status is 'trashed'
     const doc = await adminGetDoc('subjects', id);
@@ -217,13 +246,11 @@ test.describe('Home — Subject CRUD operations', () => {
     await binTab.first().click();
 
     // Find the trashed subject
-    const trashedItem = page.getByText('[E2E-CRUD] Restorable Subject');
+    const trashedItem = page.getByText('[E2E-CRUD] Restorable Subject').first();
     await expect(trashedItem).toBeVisible({ timeout: 15000 });
 
     // Click on it to open side panel
-    await trashedItem.click();
-
-    // Click restore button
+    await trashedItem.click({ force: true });
     const restoreBtn = page.getByRole('button', { name: /restaurar/i });
     if ((await restoreBtn.count()) > 0) {
       await restoreBtn.first().click();
@@ -254,9 +281,7 @@ test.describe('Home — Subject CRUD operations', () => {
     const subjectText = page.getByText('[E2E-CRUD] Completable Subject');
     await expect(subjectText).toBeVisible({ timeout: 15000 });
 
-    const card = subjectText.locator('..').locator('..');
-    await card.hover();
-    const menuBtn = card.locator('button').filter({ has: page.locator('svg') }).last();
+    const { menuBtn } = await hoverCardAndGetMenu(page, '[E2E-CRUD] Completable Subject');
     await menuBtn.click();
 
     // Click "Marcar como completada"

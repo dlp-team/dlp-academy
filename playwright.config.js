@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
+  globalSetup: './tests/e2e/global-setup.ts',
   testDir: './tests/e2e',
   fullyParallel: true,
   reporter: 'html', // Generates a nice webpage with test results

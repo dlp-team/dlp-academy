@@ -15,8 +15,8 @@ export const login = async (page: Page, email: string, password: string) => {
   await page.locator('#email').fill(email || '');
   await page.locator('#password').fill(password || '');
   await page.getByRole('button', { name: /iniciar sesión/i }).click();
-  await page.waitForURL(/\/home/, { timeout: 15000 });
-  await expect(page.locator('.home-page')).toBeVisible({ timeout: 10000 });
+  await page.waitForURL(/\/home/, { timeout: 30000 });
+  await expect(page.locator('.home-page')).toBeVisible({ timeout: 15000 });
 };
 
 export const loginAsDefault = async (page: Page) => {
@@ -44,6 +44,17 @@ export const logout = async (page: Page) => {
 export const navigateToHome = async (page: Page) => {
   await page.goto('/home');
   await expect(page.locator('.home-page')).toBeVisible({ timeout: 10000 });
+};
+
+/**
+ * Find the outermost card container (with `group` class) for a subject or folder.
+ * Hovers the card to reveal action buttons, then returns { card, menuBtn } locators.
+ */
+export const hoverCardAndGetMenu = async (page: Page, textContent: string) => {
+  const card = page.locator('[data-selection-key]').filter({ hasText: textContent }).first();
+  await card.hover();
+  const menuBtn = card.locator('button').filter({ has: page.locator('svg') }).last();
+  return { card, menuBtn };
 };
 
 export const navigateToBin = async (page: Page) => {

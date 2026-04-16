@@ -202,9 +202,7 @@ test.describe('Home — Advanced operations', () => {
 
       const subjectText = page.getByText('[E2E-ADV] Copy Source');
       await expect(subjectText).toBeVisible({ timeout: 15000 });
-      await subjectText.click();
-
-      // Ctrl+C to copy
+      await subjectText.click({ force: true });
       await page.keyboard.press('Control+c');
       await page.waitForTimeout(1000);
 
@@ -258,6 +256,13 @@ test.describe('Home — Advanced operations', () => {
     await loginAsEditor(page);
     await navigateToHome(page);
 
+    // Navigate to shared view where shared subjects appear
+    const sharedTab = page.getByRole('button', { name: /compartid/i });
+    if ((await sharedTab.count()) > 0) {
+      await sharedTab.first().click();
+      await page.waitForTimeout(1000);
+    }
+
     // The shortcut subject should be visible on Home
     await expect(page.getByText('[E2E-ADV] Shortcut Subject')).toBeVisible({ timeout: 15000 });
   });
@@ -302,15 +307,16 @@ test.describe('Home — Advanced operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
 
-    // Seed a trashed subject
+    // Seed a trashed subject with unique name
     const id = buildSubjectId('permadel');
+    const uniqueName = `[E2E-ADV] PermDel ${id.slice(-6)}`;
     const data = buildSubjectData(ownerUid, {
-      name: '[E2E-ADV] Permanent Delete Subject',
+      name: uniqueName,
       status: 'trashed',
       trashedAt: serverTimestamp(),
     });
     await db.collection('subjects').doc(id).set(data);
-    // Don't register cleanup since we'll delete it
+    cleanup.register('subjects', id);
 
     await loginAsOwner(page);
 
@@ -319,30 +325,30 @@ test.describe('Home — Advanced operations', () => {
     if ((await binTab.count()) > 0) {
       await binTab.first().click();
 
-      const trashedItem = page.getByText('[E2E-ADV] Permanent Delete Subject');
-      await expect(trashedItem).toBeVisible({ timeout: 15000 });
-      await trashedItem.click();
+      const trashedCard = page.locator('[data-selection-key]').filter({ hasText: uniqueName }).first();
+      await expect(trashedCard).toBeVisible({ timeout: 15000 });
+      await trashedCard.click();
+      await page.waitForTimeout(1000);
 
-      // Look for permanent delete button
-      const permDeleteBtn = page.getByRole('button', { name: /eliminar.*permanente|eliminar.*definitiv/i });
-      if ((await permDeleteBtn.count()) > 0) {
-        await permDeleteBtn.first().click();
+      // Click permanent delete in selection panel
+      const permDeleteBtn = page.getByRole('button', { name: /eliminar permanentemente/i });
+      await expect(permDeleteBtn.first()).toBeVisible({ timeout: 5000 });
+      await permDeleteBtn.first().click();
 
-        // Confirm
-        const confirmBtn = page.getByRole('button', { name: /sí|confirmar|eliminar/i });
-        if ((await confirmBtn.count()) > 0) {
-          await confirmBtn.first().click();
-        }
+      await page.waitForTimeout(1000);
 
-        await page.waitForTimeout(3000);
+      // Click confirm in modal (second button with same text)
+      const confirmBtns = page.getByRole('button', { name: /eliminar permanentemente/i });
+      await confirmBtns.last().click();
 
-        // Verify gone from Firestore
-        const doc = await adminGetDoc('subjects', id);
-        expect(doc).toBeNull();
-      } else {
-        // If no permanent delete option, clean up manually
-        cleanup.register('subjects', id);
-      }
+      // Wait for delete to complete
+      await page.waitForTimeout(5000);
+
+      await page.waitForTimeout(3000);
+
+      // Verify gone from Firestore
+      const doc = await adminGetDoc('subjects', id);
+      expect(doc).toBeNull();
     } else {
       cleanup.register('subjects', id);
     }

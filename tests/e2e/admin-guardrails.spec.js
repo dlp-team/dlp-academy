@@ -105,7 +105,7 @@ test.describe('Admin guardrails', () => {
 
     await customizationTab.click();
     await expect(page.getByText(/nombre de la institución/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /guardar cambios|guardar/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /guardar cambios|guardar/i }).first()).toBeVisible();
   });
 
   test('institution admin cannot access global admin dashboard', async ({ page }) => {

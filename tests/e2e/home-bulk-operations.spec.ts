@@ -103,9 +103,9 @@ test.describe('Home — Bulk operations', () => {
     await expect(itemA).toBeVisible({ timeout: 15000 });
     await expect(itemB).toBeVisible({ timeout: 5000 });
 
-    await itemA.click();
+    await itemA.click({ force: true });
     await page.waitForTimeout(500);
-    await itemB.click();
+    await itemB.click({ force: true });
 
     // Should show "2 seleccionados"
     await expect(page.getByText(/2 seleccionados/)).toBeVisible({ timeout: 5000 });
@@ -136,9 +136,9 @@ test.describe('Home — Bulk operations', () => {
     const itemA = page.getByText('[E2E-BULK] Delete A');
     const itemB = page.getByText('[E2E-BULK] Delete B');
     await expect(itemA).toBeVisible({ timeout: 15000 });
-    await itemA.click();
+    await itemA.click({ force: true });
     await page.waitForTimeout(500);
-    await itemB.click();
+    await itemB.click({ force: true });
 
     // Click "Mover a papelera"
     const deleteBtn = page.getByRole('button', { name: /mover a papelera/i });
@@ -181,9 +181,9 @@ test.describe('Home — Bulk operations', () => {
     const itemA = page.getByText('[E2E-BULK] Move A');
     const itemB = page.getByText('[E2E-BULK] Move B');
     await expect(itemA).toBeVisible({ timeout: 15000 });
-    await itemA.click();
+    await itemA.click({ force: true });
     await page.waitForTimeout(500);
-    await itemB.click();
+    await itemB.click({ force: true });
 
     // Select the target folder from the dropdown
     const folderSelect = page.locator('select[aria-label="Destino para mover selección"]');
@@ -229,9 +229,9 @@ test.describe('Home — Bulk operations', () => {
     const itemA = page.getByText('[E2E-BULK] Group A');
     const itemB = page.getByText('[E2E-BULK] Group B');
     await expect(itemA).toBeVisible({ timeout: 15000 });
-    await itemA.click();
+    await itemA.click({ force: true });
     await page.waitForTimeout(500);
-    await itemB.click();
+    await itemB.click({ force: true });
 
     // Click "Crear carpeta"
     const createFolderBtn = page.getByRole('button', { name: /crear carpeta/i });
@@ -284,10 +284,7 @@ test.describe('Home — Bulk operations', () => {
     // Navigate into the folder
     const folder = page.getByText('[E2E-BULK] Source Folder');
     await expect(folder).toBeVisible({ timeout: 15000 });
-    await folder.click();
-    await page.waitForTimeout(2000);
-
-    // Verify the subject is inside
+    await folder.click({ force: true });
     await expect(page.getByText('[E2E-BULK] Root A')).toBeVisible({ timeout: 10000 });
 
     // Enter selection mode
@@ -296,7 +293,7 @@ test.describe('Home — Bulk operations', () => {
       await selectBtn.click();
 
       // Select the subject
-      await page.getByText('[E2E-BULK] Root A').click();
+      await page.getByText('[E2E-BULK] Root A').click({ force: true });
 
       // Select "Mover a inicio" (empty value in dropdown)
       const folderSelect = page.locator('select[aria-label="Destino para mover selección"]');

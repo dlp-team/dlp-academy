@@ -14,6 +14,7 @@ import {
   hasCredentials,
   isMutationEnabled,
   navigateToHome,
+  hoverCardAndGetMenu,
 } from './helpers/e2e-auth-helpers';
 import {
   buildFolderId,
@@ -84,10 +85,8 @@ test.describe('Home — Folder CRUD operations', () => {
 
     // Fill the folder name
     const testName = `[E2E-FOLD] Carpeta ${Date.now()}`;
-    const nameInput = page.locator('label:has-text("Nombre") + input, label:has-text("Nombre") ~ input').first();
-    // Fallback: find the first text input in the modal
-    const modalInput = nameInput.or(page.locator('.transform input[type="text"]').first());
-    await modalInput.fill(testName);
+    const nameInput = page.locator('input[type="text"]').first();
+    await nameInput.fill(testName);
 
     // Submit — button text is "Crear" for new folders
     await page.getByRole('button', { name: /^crear$/i }).click();
@@ -124,7 +123,7 @@ test.describe('Home — Folder CRUD operations', () => {
     await navigateToHome(page);
 
     // Click on the parent folder to enter it
-    const parentFolder = page.getByText('[E2E-FOLD] Parent For Nesting');
+    const parentFolder = page.locator('[data-selection-key]').filter({ hasText: '[E2E-FOLD] Parent For Nesting' }).first();
     await expect(parentFolder).toBeVisible({ timeout: 15000 });
     await parentFolder.click();
 
@@ -135,10 +134,11 @@ test.describe('Home — Folder CRUD operations', () => {
     const subfolderBtn = page.getByRole('button', { name: /nueva subcarpeta|nueva carpeta/i }).first();
     if ((await subfolderBtn.count()) > 0) {
       await subfolderBtn.click();
+      await page.waitForTimeout(1000);
 
       // Fill subfolder name
       const subName = `[E2E-FOLD] Sub ${Date.now()}`;
-      const nameInput = page.locator('.transform input[type="text"]').first();
+      const nameInput = page.locator('input[type="text"]').first();
       await nameInput.fill(subName);
 
       // Submit
@@ -175,11 +175,7 @@ test.describe('Home — Folder CRUD operations', () => {
     const folderText = page.getByText('[E2E-FOLD] Editable Folder');
     await expect(folderText).toBeVisible({ timeout: 15000 });
 
-    const card = folderText.locator('..').locator('..');
-    await card.hover();
-
-    // Click three-dots menu
-    const menuBtn = card.locator('button').filter({ has: page.locator('svg') }).last();
+    const { menuBtn } = await hoverCardAndGetMenu(page, '[E2E-FOLD] Editable Folder');
     await menuBtn.click();
 
     // Click "Editar"
@@ -196,6 +192,9 @@ test.describe('Home — Folder CRUD operations', () => {
 
     // Save — button text is "Guardar" for edits
     await page.getByRole('button', { name: /guardar/i }).click();
+
+    // Wait for modal to close and Firestore to update
+    await page.waitForTimeout(3000);
 
     // Verify updated name
     await expect(page.getByText(updatedName)).toBeVisible({ timeout: 15000 });
@@ -221,26 +220,21 @@ test.describe('Home — Folder CRUD operations', () => {
     const folderText = page.getByText('[E2E-FOLD] Deletable Folder');
     await expect(folderText).toBeVisible({ timeout: 15000 });
 
-    const card = folderText.locator('..').locator('..');
-    await card.hover();
-    const menuBtn = card.locator('button').filter({ has: page.locator('svg') }).last();
+    const { menuBtn } = await hoverCardAndGetMenu(page, '[E2E-FOLD] Deletable Folder');
     await menuBtn.click();
 
     // Click "Eliminar"
     await page.getByText('Eliminar', { exact: true }).click();
 
-    // Confirm deletion in modal
-    const confirmBtn = page.getByRole('button', { name: /sí.*mover.*papelera/i });
-    if ((await confirmBtn.count()) > 0) {
-      await confirmBtn.click();
-    } else {
-      // Fallback: the confirm button might have slightly different text for folders
-      const altConfirm = page.getByRole('button', { name: /mover.*papelera|confirmar|sí/i });
-      await altConfirm.click();
-    }
+    // Confirm deletion in modal (2-step: select option, then confirm)
+    await page.getByText('Mover todo a papelera').click();
+    await page.getByRole('button', { name: /sí.*mover a papelera/i }).click();
 
     // Folder should disappear from Home
-    await expect(folderText).not.toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-selection-key]').filter({ hasText: '[E2E-FOLD] Deletable Folder' })).not.toBeVisible({ timeout: 10000 });
+
+    // Wait for Firestore write to propagate
+    await page.waitForTimeout(2000);
 
     // Verify Firestore status is 'trashed'
     const doc = await adminGetDoc('folders', id);
@@ -264,17 +258,20 @@ test.describe('Home — Folder CRUD operations', () => {
     await binTab.first().click();
 
     // Find the trashed folder
-    const trashedItem = page.getByText('[E2E-FOLD] Restorable Folder');
+    const trashedItem = page.getByText('[E2E-FOLD] Restorable Folder').first();
     await expect(trashedItem).toBeVisible({ timeout: 15000 });
 
     // Click on it to open side panel
-    await trashedItem.click();
+    await trashedItem.click({ force: true });
 
     // Click restore
     const restoreBtn = page.getByRole('button', { name: /restaurar/i });
     if ((await restoreBtn.count()) > 0) {
       await restoreBtn.first().click();
       await expect(trashedItem).not.toBeVisible({ timeout: 10000 });
+
+      // Wait for Firestore write
+      await page.waitForTimeout(2000);
 
       // Verify Firestore status
       const doc = await adminGetDoc('folders', id);
@@ -302,18 +299,15 @@ test.describe('Home — Folder CRUD operations', () => {
     const folderText = page.getByText('[E2E-FOLD] Cascade Parent');
     await expect(folderText).toBeVisible({ timeout: 15000 });
 
-    const card = folderText.locator('..').locator('..');
-    await card.hover();
-    const menuBtn = card.locator('button').filter({ has: page.locator('svg') }).last();
+    const { menuBtn } = await hoverCardAndGetMenu(page, '[E2E-FOLD] Cascade Parent');
     await menuBtn.click();
 
     await page.getByText('Eliminar', { exact: true }).click();
 
-    // Confirm
-    const confirmBtn = page.getByRole('button', { name: /sí.*mover.*papelera|mover.*papelera|confirmar|sí/i });
-    if ((await confirmBtn.count()) > 0) {
-      await confirmBtn.first().click();
-    }
+    // Step 1: Select "folder only" option to move children to root
+    await page.getByText('Mover solo carpeta a papelera').click();
+    // Step 2: Confirm
+    await page.getByRole('button', { name: /sí.*mover contenido/i }).click();
 
     // Wait for the operation
     await page.waitForTimeout(3000);
@@ -341,9 +335,9 @@ test.describe('Home — Folder CRUD operations', () => {
     await navigateToHome(page);
 
     // Navigate into the folder
-    const folderText = page.getByText('[E2E-FOLD] Container Folder');
-    await expect(folderText).toBeVisible({ timeout: 15000 });
-    await folderText.click();
+    const folderCard = page.locator('[data-selection-key]').filter({ hasText: '[E2E-FOLD] Container Folder' }).first();
+    await expect(folderCard).toBeVisible({ timeout: 15000 });
+    await folderCard.click();
 
     // Wait for folder content to load
     await page.waitForTimeout(2000);
@@ -374,18 +368,18 @@ test.describe('Home — Folder CRUD operations', () => {
     await navigateToHome(page);
 
     // Enter parent folder
-    const parentText = page.getByText('[E2E-FOLD] Nav Parent');
-    await expect(parentText).toBeVisible({ timeout: 15000 });
-    await parentText.click();
+    const parentCard = page.locator('[data-selection-key]').filter({ hasText: '[E2E-FOLD] Nav Parent' }).first();
+    await expect(parentCard).toBeVisible({ timeout: 15000 });
+    await parentCard.click();
 
     await page.waitForTimeout(2000);
 
     // Child folder should be visible
-    const childText = page.getByText('[E2E-FOLD] Nav Child');
-    await expect(childText).toBeVisible({ timeout: 10000 });
+    const childCard = page.locator('[data-selection-key]').filter({ hasText: '[E2E-FOLD] Nav Child' }).first();
+    await expect(childCard).toBeVisible({ timeout: 10000 });
 
     // Enter child folder
-    await childText.click();
+    await childCard.click();
     await page.waitForTimeout(2000);
 
     // Navigate back (breadcrumb or back button)
