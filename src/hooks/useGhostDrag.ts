@@ -116,7 +116,7 @@ export const useGhostDrag = ({
         stagedLeadNodeRef.current = null;
     };
 
-    const resolveSelectedCompanionNodes = (leadSelectionKey: any) => {
+    const resolveSelectedCompanionNodes = (leadSelectionKey: any, maxNodes: number | null = MAX_MULTI_GHOST_PREVIEW - 1) => {
         if (!(selectedItemKeys instanceof Set) || selectedItemKeys.size === 0) {
             return [];
         }
@@ -138,7 +138,7 @@ export const useGhostDrag = ({
             if (!targetNode || companionNodes.includes(targetNode)) continue;
 
             companionNodes.push(targetNode);
-            if (companionNodes.length >= MAX_MULTI_GHOST_PREVIEW - 1) break;
+            if (maxNodes !== null && companionNodes.length >= maxNodes) break;
         }
 
         return companionNodes;
@@ -296,13 +296,18 @@ export const useGhostDrag = ({
                 ? Number(multiDragCount)
                 : 1;
             const normalizedMultiDragCount = Math.max(1, resolvedMultiDragCount);
+            // Ghost preview: capped at MAX_MULTI_GHOST_PREVIEW for visual stack rendering
             const selectedCompanionNodes = normalizedMultiDragCount > 1
                 ? resolveSelectedCompanionNodes(selectionKey)
                 : [];
+            // All companions: no cap — all selected items must enter ghost/staging mode
+            const allCompanionNodes = normalizedMultiDragCount > 1
+                ? resolveSelectedCompanionNodes(selectionKey, null)
+                : [];
 
-            if (normalizedMultiDragCount > 1 && selectedCompanionNodes.length > 0) {
+            if (normalizedMultiDragCount > 1 && allCompanionNodes.length > 0) {
                 stageLeadNodeAsTopLayer(cardNode);
-                stageCompanionNodesTowardLead(cardNode, rect, selectedCompanionNodes);
+                stageCompanionNodesTowardLead(cardNode, rect, allCompanionNodes);
             }
 
             const ghost = normalizedMultiDragCount > 1

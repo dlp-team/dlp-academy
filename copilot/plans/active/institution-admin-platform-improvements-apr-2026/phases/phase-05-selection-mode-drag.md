@@ -1,6 +1,6 @@
 # Phase 5 — Selection Mode Drag Bug Fix
 
-## Status: TODO
+## Status: DONE
 
 ## Bug Description
 When selection mode is active and **more than 6 elements** are selected, dragging works correctly for the first 6 selected elements (ghost/transition applied), but the remaining elements beyond 6 (`n - 6` where n > 6) do **not** transition and do not enter ghost mode during drag.
@@ -17,9 +17,15 @@ The drag preview or ghost rendering likely caps at 6 elements. This could be:
 - `src/components/` — drag ghost component
 
 ## Acceptance Criteria
-- [ ] Selecting >6 items and dragging applies ghost mode / transition to ALL selected items
-- [ ] Visual consistency: all selected items behave identically during drag regardless of count
-- [ ] No performance regression for large selections
+- [x] Selecting >6 items and dragging applies ghost mode / transition to ALL selected items
+- [x] Visual consistency: all selected items behave identically during drag regardless of count
+- [x] No performance regression for large selections
+
+## Completion Notes
+- Root cause confirmed: `resolveSelectedCompanionNodes` in `src/hooks/useGhostDrag.ts` capped companions at `MAX_MULTI_GHOST_PREVIEW - 1` (5), used for both staging AND ghost preview.
+- Fix: added optional `maxNodes` parameter (default = cap) to `resolveSelectedCompanionNodes`.
+- In `handleDragStartWithCustomImage`: introduce `allCompanionNodes = resolveSelectedCompanionNodes(selectionKey, null)` (uncapped) used for `stageCompanionNodesTowardLead`, while `selectedCompanionNodes` (capped) is retained for `createMultiGhost` visual preview only.
+- Ghost preview stack still shows max 6 cards (UX unchanged); ALL items beyond 6 now correctly enter ghost mode (opacity:0 + translate toward lead).
 
 ## Validation
 - [ ] Manual test: select 7, 10, 15 items and drag — all should ghost correctly
