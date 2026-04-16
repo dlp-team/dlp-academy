@@ -2,7 +2,6 @@
 import 'dotenv/config';
 import admin from 'firebase-admin';
 import { seedFirestoreEmulator } from './seed/firestore-seed';
-import { seedFirestoreEmulator } from './seed/firestore-seed';
 
 const isEmulatorMode = (): boolean =>
   process.env.VITE_USE_EMULATORS === 'true' ||
