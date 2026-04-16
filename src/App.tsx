@@ -13,6 +13,7 @@ import Register from './pages/Auth/Register';
 import Profile from './pages/Profile/Profile';
 import OnboardingWizard from './pages/Onboarding/components/OnboardingWizard';
 import AdminPasswordWizard from './pages/Auth/components/AdminPasswordWizard';
+import EmailVerificationPage from './pages/Auth/EmailVerificationPage';
 import Settings from './pages/Settings/Settings';
 import Notifications from './pages/Notifications/Notifications';
 
@@ -178,6 +179,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   
   // 2. Not Logged In? -> Login
   if (!user) return <Navigate to="/login" />;
+
+  // 2.5. Email verification gate: redirect email/password users who haven't verified
+  const hasPasswordProvider = Array.isArray(user.providerData)
+    && user.providerData.some((p: any) => p?.providerId === 'password');
+  const hasOnlySocialProviders = Array.isArray(user.providerData)
+    && user.providerData.length > 0
+    && user.providerData.every((p: any) => p?.providerId !== 'password');
+  if (hasPasswordProvider && !hasOnlySocialProviders && user.emailVerified === false) {
+    return <Navigate to="/verify-email" />;
+  }
 
   if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
     const activeRole = getActiveRole(user);
@@ -386,6 +397,8 @@ body[data-dlp-preview-highlight]::after {
         const baseUser = {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
+          emailVerified: firebaseUser.emailVerified,
+          providerData: firebaseUser.providerData,
           photoURL: firebaseUser.photoURL,
           displayName: firebaseUser.displayName || ''
         };
@@ -472,6 +485,7 @@ body[data-dlp-preview-highlight]::after {
         {/* Public Routes */}
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" />} />
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/home" />} />
+        <Route path="/verify-email" element={user ? <EmailVerificationPage /> : <Navigate to="/login" />} />
         <Route path="/theme-preview/*" element={<ThemePreviewPage />} />
         <Route path="/" element={<Navigate to={user ? "/home" : "/login"} />} />
 

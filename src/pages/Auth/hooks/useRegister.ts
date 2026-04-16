@@ -1,7 +1,7 @@
 // src/pages/Auth/hooks/useRegister.js
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase/config';
 import { validateInstitutionalAccessCode } from '../../../services/accessCodeService';
@@ -124,13 +124,19 @@ export const useRegister = () => {
                             throw new Error('invalid-verification-code');
                         }
 
-                        resolvedRole = formData.userType;
+                        // SECURITY: Use server-authoritative role, not client-selected userType
+                        resolvedRole = validationResult.role || (formData.userType === 'student' ? 'student' : 'teacher');
                         institutionId = validationResult.institutionId;
                     } else {
                         throw new Error('invalid-verification-code');
                     }
                 }
             }
+
+            // SECURITY: Cap resolvedRole to non-privileged values on client-side create.
+            // Admin/institutionadmin roles require server-side promotion after profile creation.
+            const SAFE_CREATE_ROLES = ['student', 'teacher'];
+            const safeRole = SAFE_CREATE_ROLES.includes(resolvedRole) ? resolvedRole : 'teacher';
 
             // 3. Create Auth User 
             const userCredential = await createUserWithEmailAndPassword(
@@ -151,7 +157,7 @@ export const useRegister = () => {
                 lastName: formData.lastName,
                 displayName,
                 email: normalizedEmail,
-                role: resolvedRole,
+                role: safeRole,
                 institutionId,
                 createdAt: serverTimestamp(),
                 settings: {
@@ -171,8 +177,13 @@ export const useRegister = () => {
                 }
             }
 
-            // 7. Redirect
-            navigate('/home');
+            // 7. Send verification email and redirect to verification page
+            try {
+                await sendEmailVerification(userCredential.user);
+            } catch (verificationErr: any) {
+                console.warn('Email verification send failed:', verificationErr?.code || verificationErr?.message);
+            }
+            navigate('/verify-email?registered=true');
 
         } catch (err: any) {
             console.error(err);

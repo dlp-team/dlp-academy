@@ -457,6 +457,109 @@ describe('Firestore rules integration', () => {
   });
 
   // ===============================================
+  // ADVERSARIAL SCENARIOS — USER PROFILE CREATE PRIVILEGE ESCALATION
+  // ===============================================
+  // Auth-hardening Phase 02: self-create must be restricted to student/teacher roles
+
+  describe('User profile self-create role restriction', () => {
+    it('denies self-create with admin role', async () => {
+      const newUserDb = testEnv.authenticatedContext('new-user-admin-attempt').firestore();
+
+      await assertFails(
+        setDoc(doc(newUserDb, 'users', 'new-user-admin-attempt'), {
+          uid: 'new-user-admin-attempt',
+          email: 'hacker@test.com',
+          displayName: 'Hacker',
+          role: 'admin',
+          institutionId: null,
+          createdAt: new Date(),
+          settings: { theme: 'system', language: 'es', viewMode: 'grid' },
+        })
+      );
+    });
+
+    it('denies self-create with institutionadmin role', async () => {
+      const newUserDb = testEnv.authenticatedContext('new-user-instadmin-attempt').firestore();
+
+      await assertFails(
+        setDoc(doc(newUserDb, 'users', 'new-user-instadmin-attempt'), {
+          uid: 'new-user-instadmin-attempt',
+          email: 'hacker2@test.com',
+          displayName: 'Hacker 2',
+          role: 'institutionadmin',
+          institutionId: 'inst-1',
+          createdAt: new Date(),
+          settings: { theme: 'system', language: 'es', viewMode: 'grid' },
+        })
+      );
+    });
+
+    it('denies self-create with mismatched uid field', async () => {
+      const newUserDb = testEnv.authenticatedContext('new-user-uid-spoof').firestore();
+
+      await assertFails(
+        setDoc(doc(newUserDb, 'users', 'new-user-uid-spoof'), {
+          uid: 'someone-else',
+          email: 'spoof@test.com',
+          displayName: 'Spoof',
+          role: 'student',
+          institutionId: null,
+          createdAt: new Date(),
+          settings: { theme: 'system', language: 'es', viewMode: 'grid' },
+        })
+      );
+    });
+
+    it('allows self-create with student role (regression)', async () => {
+      const newUserDb = testEnv.authenticatedContext('new-student-valid').firestore();
+
+      await assertSucceeds(
+        setDoc(doc(newUserDb, 'users', 'new-student-valid'), {
+          uid: 'new-student-valid',
+          email: 'student@test.com',
+          displayName: 'Student',
+          role: 'student',
+          institutionId: null,
+          createdAt: new Date(),
+          settings: { theme: 'system', language: 'es', viewMode: 'grid' },
+        })
+      );
+    });
+
+    it('allows self-create with teacher role (regression)', async () => {
+      const newUserDb = testEnv.authenticatedContext('new-teacher-valid').firestore();
+
+      await assertSucceeds(
+        setDoc(doc(newUserDb, 'users', 'new-teacher-valid'), {
+          uid: 'new-teacher-valid',
+          email: 'teacher@test.com',
+          displayName: 'Teacher',
+          role: 'teacher',
+          institutionId: 'inst-1',
+          createdAt: new Date(),
+          settings: { theme: 'system', language: 'es', viewMode: 'grid' },
+        })
+      );
+    });
+
+    it('denies self-create with unknown/fabricated role', async () => {
+      const newUserDb = testEnv.authenticatedContext('new-user-fake-role').firestore();
+
+      await assertFails(
+        setDoc(doc(newUserDb, 'users', 'new-user-fake-role'), {
+          uid: 'new-user-fake-role',
+          email: 'faker@test.com',
+          displayName: 'Faker',
+          role: 'superadmin',
+          institutionId: null,
+          createdAt: new Date(),
+          settings: { theme: 'system', language: 'es', viewMode: 'grid' },
+        })
+      );
+    });
+  });
+
+  // ===============================================
   // ADVERSARIAL SCENARIOS — PRIVILEGE ESCALATION PREVENTION
   // ===============================================
   // Phase 4: Test suite validating all 9 vulnerabilities are fixed

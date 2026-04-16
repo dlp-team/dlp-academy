@@ -269,7 +269,12 @@ service cloud.firestore {
       allow read: if isSignedIn();
 
       // Self bootstrap/create profile
-      allow create: if isSignedIn() && request.auth.uid == userId;
+      // SECURITY: Only student/teacher allowed on self-create; admin/institutionadmin
+      // require server-side promotion via admin update path.
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role in ['student', 'teacher']
+        && request.resource.data.uid == request.auth.uid;
 
       // Update rules:
       // - Global admin: full control
