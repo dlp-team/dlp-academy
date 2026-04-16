@@ -1,4 +1,15 @@
 <!-- copilot/explanations/codebase/src/pages/Topic/hooks/useTopicLogic.md -->
+## [2026-04-15] Preview Topic Entry Loop Hardening
+### Context
+- Preview mock mode performs local state hydration inside the main loading effect.
+- The hook used a non-memoized `navigate` callback in that effect dependency list, causing repeated re-execution and render-loop risk.
+
+### Change
+- Memoized preview-safe `navigate` with `useCallback` so the effect dependency is stable across renders unless preview lock state changes.
+
+### Validation
+- Diagnostics check on [src/pages/Topic/hooks/useTopicLogic.ts](src/pages/Topic/hooks/useTopicLogic.ts): no errors.
+
 ## [2026-04-08] Topic Role and Permission Recovery for Create-Action Visibility
 ### Context
 - Topic create controls could disappear in mixed-role sessions and in legacy topics missing owner/share metadata.
@@ -175,6 +186,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-04-15: Memoized preview-safe `navigate` callback (`useCallback`) to stabilize loading-effect dependencies in preview mock mode and prevent topic-entry render loops.
 - 2026-04-08: Topic student-role short-circuiting now requires both profile role and active role to be `student`, and permission checks inherit missing topic ownership/share metadata from subject context.
 - 2026-04-07: Restored explicit topic create handlers for study-guide and exam generation, and preserved existing `handleCreateCustomPDF` compatibility as study-guide alias.
 - 2026-04-02: Role-sensitive topic logic now resolves student/viewer context via `getActiveRole(user)` for exam-load and permission-branch checks, keeping switched role sessions deterministic.

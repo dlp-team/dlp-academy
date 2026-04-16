@@ -20,7 +20,7 @@ const ProfileSubjects = ({ subjects }: any) => {
             {subjects.length > 0 ? (
                 /* Scroll container: max height for 2 rows of cards (~2 × ~130px + gap), scrollable */
                 <div
-                    className="overflow-y-auto pr-1"
+                    className="overflow-y-auto pr-1 clean-scrollbar"
                     style={{ maxHeight: '390px' }}
                 >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

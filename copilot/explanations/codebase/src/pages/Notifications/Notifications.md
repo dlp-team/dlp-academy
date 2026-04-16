@@ -20,3 +20,9 @@
 
 ## Exports
 - `default Notifications`
+
+## Changelog
+### 2026-04-09
+- Updated notification history cards to match the cleaner dropdown visual language.
+- Added shared type-based icon and tone mapping for share/assignment/shortcut and fallback events.
+- Switched unread-dot tone to neutral slate and softened hover/background treatment for reduced visual noise.

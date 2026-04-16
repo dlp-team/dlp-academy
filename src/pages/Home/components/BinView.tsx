@@ -48,6 +48,12 @@ const BIN_SORT_DESCRIPTIONS = {
 
 const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
     const navigate = useNavigate();
+    const getPreviewSafePath = (path: any) => {
+        if (user?.__previewLock === true && typeof path === 'string' && path.startsWith('/home')) {
+            return `/theme-preview${path}`;
+        }
+        return path;
+    };
     const isStudent = getActiveRole(user) === 'student';
 
     const [trashedItems, setTrashedItems] = useState<any[]>([]);
@@ -569,7 +575,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
 
     const handleOpenReadOnlySubject = (subjectId: any) => {
         if (!subjectId) return;
-        navigate(`/home/subject/${subjectId}?mode=readonly&source=bin`);
+        navigate(getPreviewSafePath(`/home/subject/${subjectId}?mode=readonly&source=bin`));
     };
 
     const handleSelectItem = (itemId: any, itemType: any) => {
@@ -725,35 +731,54 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                     </p>
                 </div>
 
-                <div className="flex flex-col items-start lg:items-end gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide" htmlFor="bin-sort-select">
-                            Ordenar
-                        </label>
-                        <select
-                            id="bin-sort-select"
-                            value={sortMode}
-                            onChange={(event) => setSortMode(event.target.value)}
-                            className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-700 dark:text-gray-200"
-                            aria-label="Ordenar elementos de la papelera"
-                        >
-                            {BIN_SORT_OPTIONS.map((option: any) => (
-                                <option key={option.id} value={option.id}>{option.label}</option>
-                            ))}
-                        </select>
+                <div className="flex flex-wrap items-center gap-2">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide" htmlFor="bin-sort-select">
+                        Ordenar
+                    </label>
+                    <select
+                        id="bin-sort-select"
+                        value={sortMode}
+                        onChange={(event) => setSortMode(event.target.value)}
+                        className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-700 dark:text-gray-200"
+                        aria-label="Ordenar elementos de la papelera"
+                    >
+                        {BIN_SORT_OPTIONS.map((option: any) => (
+                            <option key={option.id} value={option.id}>{option.label}</option>
+                        ))}
+                    </select>
 
+                    <button
+                        onClick={() => setEmptyConfirmOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
+                    >
+                        <Trash2 size={16} />
+                        {activeFolderBinId ? 'Vaciar vista actual' : 'Vaciar papelera'}
+                    </button>
+                </div>
+            </div>
+
+            {/* Selection toolbar — matches HomeSelectionToolbar position and style */}
+            <div className={`mt-4 mb-6 rounded-xl border p-3 flex flex-col gap-3 ${
+                selectionMode && selectedBulkCount > 0
+                    ? 'border-sky-300 dark:border-sky-700 bg-sky-50/70 dark:bg-sky-950/25'
+                    : selectionMode
+                        ? 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/80'
+                        : 'border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70'
+            }`}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={toggleBulkSelectionMode}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                                 selectionMode && selectedBulkCount > 0
-                                    ? 'bg-sky-600 hover:bg-sky-700 text-white'
-                                    : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
-                            }`}
+                                    ? 'bg-sky-600 hover:bg-sky-700 text-white border border-sky-600'
+                                    : 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            } ${selectionMode ? 'border-2 border-[var(--color-primary-600)] dark:border-[var(--color-primary-400)]' : ''}`}
                             aria-pressed={selectionMode}
                         >
                             {selectionMode ? <CheckSquare size={16} /> : <Square size={16} />}
-                            {selectionMode ? 'Salir de la selección' : 'Modo selección'}
+                            <span>{selectionMode ? 'Salir de la selección' : 'Modo selección'}</span>
                         </button>
 
                         {selectionMode && (
@@ -765,25 +790,15 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 {selectedBulkCount} seleccionados
                             </span>
                         )}
-
-                        {!selectionMode && (
-                            <button
-                                onClick={() => setEmptyConfirmOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
-                            >
-                                <Trash2 size={16} />
-                                {activeFolderBinId ? 'Vaciar vista actual' : 'Vaciar papelera'}
-                            </button>
-                        )}
                     </div>
 
                     {selectionMode && (
-                        <div className="flex flex-wrap items-center justify-end gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <button
                                 type="button"
                                 onClick={handleSelectAllVisible}
                                 disabled={visibleTrashedItems.length === 0}
-                                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
                             >
                                 {selectedBulkCount === visibleTrashedItems.length && visibleTrashedItems.length > 0
                                     ? 'Quitar todo'
@@ -793,7 +808,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 type="button"
                                 onClick={clearBulkSelection}
                                 disabled={selectedBulkCount === 0}
-                                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
                             >
                                 Limpiar
                             </button>
@@ -801,7 +816,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 type="button"
                                 onClick={handleBulkRestore}
                                 disabled={selectedBulkCount === 0 || bulkActionLoading}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white rounded-xl text-sm font-medium transition-colors"
+                                className="inline-flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white rounded-lg text-sm font-medium transition-colors"
                             >
                                 {bulkActionLoading ? <Loader2 className="animate-spin" size={16} /> : <RotateCcw size={16} />}
                                 Restaurar selección
@@ -810,20 +825,20 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 type="button"
                                 onClick={() => setBulkDeleteConfirmOpen(true)}
                                 disabled={selectedBulkCount === 0 || bulkActionLoading}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-xl text-sm font-medium transition-colors"
+                                className="inline-flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white rounded-lg text-sm font-medium transition-colors"
                             >
                                 {bulkActionLoading ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                                 Eliminar selección
                             </button>
                         </div>
                     )}
-
-                    {selectionMode && (
-                        <p className="text-xs text-amber-700 dark:text-amber-300">
-                            Modo seguro: selecciona elementos y confirma antes de eliminar permanentemente.
-                        </p>
-                    )}
                 </div>
+
+                {selectionMode && (
+                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                        Modo seguro: selecciona elementos y confirma antes de eliminar permanentemente.
+                    </p>
+                )}
             </div>
 
             {/* Grid / List */}
@@ -835,7 +850,10 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                             : (selectedItemId === item.id && selectedItemType === item.itemType);
                         const hasSelection = selectionMode
                             ? selectedBulkCount > 0
-                            : Boolean(selectedItemId);
+                            : false;
+                        const hideCardBehindOverlay = !selectionMode
+                            && selectedItemId === item.id
+                            && selectedItemType === item.itemType;
 
                         return (
                             <BinGridItem
@@ -848,6 +866,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 isSelected={isSelected}
                                 hasSelection={hasSelection}
                                 selectionMode={selectionMode}
+                                overlayHidden={hideCardBehindOverlay}
                                 onSelect={() => handleSelectItem(item.id, item.itemType)}
                             />
                         );
@@ -877,12 +896,14 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                             isSelected,
                             isFolderLike: isFolderItem,
                         });
+                        const showPressedState = !selectionMode && isSelected;
                         const actionKey = buildActionKey(item.id, item.itemType);
 
                         return (
                             <div
                                 key={`${item.itemType}-${item.id}`}
-                                className={`rounded-xl transition-all duration-200 ease-out ${!isSelected ? dimmingClass : ''} ${isSelected && !selectionMode ? 'scale-[1.01]' : ''}`}
+                                data-testid={`bin-list-wrapper-${item.itemType}-${item.id}`}
+                                className={`rounded-xl transition-all duration-200 ease-out ${!isSelected ? dimmingClass : ''} ${showPressedState ? 'relative scale-[1.01] shadow-[0_14px_30px_rgba(15,23,42,0.18)]' : ''}`}
                             >
                                 <ListViewItemComponent
                                     user={user}

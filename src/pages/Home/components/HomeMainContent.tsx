@@ -32,7 +32,9 @@ type HomeMainContentProps = {
     canCreateInManualContext: boolean;
     selectMode: boolean;
     selectedItemKeys: Set<string>;
-    toggleSelectItem: (item: any, type: any) => void;
+    toggleSelectItem: (item: any, type: any, options?: any) => void;
+    startSelectionWithItem: (item: any, type: any) => void;
+    selectRangeToItem: (item: any, type: any, orderedEntries: any[], options?: any) => void;
     runBulkMoveToFolder: (targetFolderId: any) => void;
     handleSetCurrentFolder: (folder: any) => void;
     handleBreadcrumbDrop: any;
@@ -72,6 +74,8 @@ const HomeMainContent = ({
     selectMode,
     selectedItemKeys,
     toggleSelectItem,
+    startSelectionWithItem,
+    selectRangeToItem,
     runBulkMoveToFolder,
     handleSetCurrentFolder,
     handleBreadcrumbDrop,
@@ -264,6 +268,8 @@ const HomeMainContent = ({
                             selectMode={selectMode}
                             selectedItemKeys={selectedItemKeys}
                             onToggleSelectItem={toggleSelectItem}
+                            onStartSelectionWithItem={startSelectionWithItem}
+                            onSelectRangeToItem={selectRangeToItem}
                             onDropSelectedItems={runBulkMoveToFolder}
                             navigate={logic.navigate}
                         />
@@ -290,6 +296,7 @@ const HomeMainContent = ({
                             viewMode={logic.viewMode}
                             layoutMode={logic.layoutMode}
                             canCreateSubject={canCreateInManualContext && !selectMode}
+                            selectMode={selectMode}
                             cardScale={logic.cardScale || 100}
                             currentFolder={logic.currentFolder}
                         />

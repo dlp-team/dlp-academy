@@ -361,7 +361,7 @@ const FolderTreeModal = ({
     };
 
     return (
-        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto animate-in fade-in duration-200" style={OVERLAY_TOP_OFFSET_STYLE}>
+        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto animate-in fade-in duration-200 clean-scrollbar" style={OVERLAY_TOP_OFFSET_STYLE}>
             <div className="flex min-h-full items-center justify-center p-4 text-center" onClick={onClose}>
                 <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" />
                 <div 
@@ -407,7 +407,7 @@ const FolderTreeModal = ({
                 </div>
 
                 {/* Content */}
-                <div ref={contentRef} className="flex-1 overflow-y-auto min-h-[300px] custom-scrollbar bg-slate-50/50 dark:bg-slate-950/30 p-4 flex flex-col">
+                <div ref={contentRef} className="flex-1 overflow-y-auto min-h-[300px] clean-scrollbar bg-slate-50/50 dark:bg-slate-950/30 p-4 flex flex-col">
                     
                     {/* MOVE TO ROOT ZONE */}
                     <div 

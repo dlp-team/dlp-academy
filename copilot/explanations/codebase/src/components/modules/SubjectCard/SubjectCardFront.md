@@ -1,6 +1,7 @@
 # SubjectCardFront.jsx
 
 ## Changelog
+- **2026-04-12:** Subject card front click now forwards native click events in `onSelect(subject.id, event)` so Home can apply modifier-aware selection/open shortcuts without losing existing click behavior.
 - **2026-04-07:** Replaced direct `createPortal` menu shell duplication with shared [ContextActionMenuPortal](../../shared/ContextActionMenuPortal.md) and centralized menu position calculations with [menuPositionUtils](../../shared/menuPositionUtils.md).
 - **2026-04-02:** Added top-left ended lifecycle bookmark badge rendering (`endedBadge`) for role-aware Home subject status visibility.
 - **2026-04-01:** Added subject completion menu action (`Marcar como completada` / `Marcar como activa`) and close-menu-on-toggle behavior.

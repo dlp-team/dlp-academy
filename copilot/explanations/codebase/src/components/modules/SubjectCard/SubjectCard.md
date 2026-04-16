@@ -1,6 +1,7 @@
 # SubjectCard.jsx
 
 ## Changelog
+- **2026-04-10:** Subject cards now pass selection-aware multi-drag counts into `useGhostDrag` and expose a `data-selection-key` marker to support grouped drag ghost rendering when dragging selected items.
 - **2026-04-04:** Selection ring classes now resolve from shared utility constants so manual and bin selection visuals stay aligned.
 - **2026-04-02:** Added role-aware ended-subject badge wiring (`endedBadge`) via shared lifecycle utility, with pass-shortcut precedence to avoid duplicate status badges.
 - **2026-04-01:** Added completion-state passthrough (`isCompleted`, `onToggleCompletion`) from `SubjectCard` to `SubjectCardFront`.

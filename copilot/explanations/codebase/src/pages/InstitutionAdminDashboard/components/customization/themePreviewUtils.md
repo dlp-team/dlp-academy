@@ -13,6 +13,10 @@
 - Exposes helpers for iframe/theme injection and postMessage payload construction.
 
 ## Changelog
+### 2026-04-10
+- Extended `buildInstitutionPreviewThemeMessage(...)` with sanitized `previewUser` context payload to support real-Home rendering in `theme-preview` route.
+- Added payload sanitization guardrails for user identity/role fields before cross-window messaging.
+
 ### 2026-04-08
 - Extended `buildInstitutionPreviewThemeMessage(...)` payload with normalized `colors` object for `theme-preview` route consumers.
 - Preserved existing `themeCss`/`highlightCss` payload structure for backward-compatible iframe preview listeners.

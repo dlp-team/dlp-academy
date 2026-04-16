@@ -1,22 +1,98 @@
-// src/components/ui/AppToast.jsx
-import React from 'react';
-import { Brain, X } from 'lucide-react';
+// src/components/ui/AppToast.tsx
+import React, { useEffect } from 'react';
+import {
+    AlertCircle,
+    Bell,
+    BookOpen,
+    CheckCircle2,
+    FolderSync,
+    Share2,
+    TriangleAlert,
+    Users,
+    X,
+} from 'lucide-react';
+import {
+    getNotificationVisualClasses,
+    resolveNotificationVisualKind,
+} from '../../utils/notificationVisualUtils';
 
-const AppToast = ({ show, message, onClose }: any) => {
+const ICON_BY_VISUAL_KIND: Record<string, any> = {
+    info: Bell,
+    share: Share2,
+    assignment: Users,
+    shortcut: FolderSync,
+    success: CheckCircle2,
+    warning: TriangleAlert,
+    error: AlertCircle,
+};
+
+const AppToast = ({
+    show,
+    title,
+    message,
+    type,
+    variant,
+    durationMs = 10000,
+    positionClassName = 'bottom-5 left-5',
+    onClose,
+}: any) => {
+    useEffect(() => {
+        if (!show || typeof onClose !== 'function') return undefined;
+
+        const timeoutDuration = Number.isFinite(durationMs)
+            ? Math.max(0, Number(durationMs))
+            : 10000;
+
+        if (timeoutDuration === 0) return undefined;
+
+        const timerId = window.setTimeout(() => {
+            onClose();
+        }, timeoutDuration);
+
+        return () => {
+            window.clearTimeout(timerId);
+        };
+    }, [show, durationMs, message, title, type, variant, onClose]);
+
     if (!show) return null;
+
+    const visualKind = resolveNotificationVisualKind({ type, variant });
+    const visualClasses = getNotificationVisualClasses(visualKind);
+    const IconComponent = ICON_BY_VISUAL_KIND[visualKind] || BookOpen;
+
     return (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300 w-full max-w-sm px-4">
-            <div className="bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10">
-                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20 shrink-0">
-                    <Brain className="w-6 h-6 text-white" />
+        <div
+            data-testid="app-toast"
+            className={`fixed z-[100] w-[min(92vw,420px)] animate-in slide-in-from-bottom-4 fade-in duration-300 ${positionClassName}`}
+        >
+            <div
+                className={`rounded-xl border px-4 py-3 shadow-lg backdrop-blur-sm ${visualClasses.toastSurface} ${visualClasses.toastBorder}`}
+            >
+                <div className="flex items-start gap-3">
+                    <div className={`mt-0.5 rounded-lg p-2 ${visualClasses.iconContainer}`}>
+                        <IconComponent className={`h-4 w-4 ${visualClasses.iconColor}`} />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            {title || 'Notificacion'}
+                        </p>
+                        <p className="mt-0.5 text-xs leading-snug text-slate-600 dark:text-slate-300">
+                            {message}
+                        </p>
+                    </div>
+
+                    {typeof onClose === 'function' && (
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                            aria-label="Cerrar notificacion"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
-                <div className="flex-1">
-                    <h4 className="font-bold text-sm tracking-tight">IA Trabajando</h4>
-                    <p className="text-xs text-slate-300 font-medium mt-0.5">{message}</p>
-                </div>
-                <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white">
-                    <X className="w-4 h-4" />
-                </button>
             </div>
         </div>
     );

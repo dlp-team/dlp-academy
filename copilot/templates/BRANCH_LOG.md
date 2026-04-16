@@ -1,3 +1,4 @@
+<!-- copilot/templates/BRANCH_LOG.md -->
 # {{BRANCH_NAME}} – Branch Log
 
 **For multi-agent coordination and work progress tracking**
@@ -6,12 +7,58 @@
 
 ## Metadata
 
+- **Current Branch:** {{BRANCH_NAME}}
 - **Created:** {{DATE_CREATED}}
 - **Owner:** {{OWNER_ID}} (e.g., `pc<id>`)
 - **Parent Branch:** {{PARENT_BRANCH}} (main | development | feature/...)
+- **Derived From Branch:** {{DERIVED_FROM_BRANCH or "none"}}
+- **Owner Validation:** `COPILOT_PC_ID` must equal `Owner` before any file edit
+- **Permission Gate:** pass | fail (if fail, STOP and do not edit)
 - **Status:** active | paused | blocked | ready-for-merge | testing
+- **Autopilot Active:** true | false
 - **Related Plan:** {{PLAN_FILE or "None"}} (e.g., `copilot/plans/active/my-plan/README.md`)
 - **Last Updated:** {{DATE_UPDATED}}
+
+---
+
+## Autopilot Status
+
+- **Autopilot Active:** true | false
+- **Trigger Source:** AUTOPILOT_PLAN.md | manual | other
+- **Current Checklist Step:** {{STEP_NUMBER}}
+
+---
+
+## Branch Identity
+
+- **Current Branch:** {{BRANCH_NAME}}
+- **Parent Branch:** {{PARENT_BRANCH}} (MANDATORY for every branch; merge target must match this value)
+- **Derived From Branch:** {{DERIVED_FROM_BRANCH or "none"}}
+- **Derived Branch Rule:** If this branch was created from another branch, parent branch must be explicitly recorded and preserved.
+- **Lineage Policy:** Preserve all related plans from current or ancestor branch lineage. Do not delete prior lineage plan entries when adding a new plan.
+
+---
+
+## Related Plans (Lineage Registry)
+
+Track all plans associated with this branch lineage.
+
+| Plan Path | Lifecycle | Origin Branch | Relationship | Notes |
+|---|---|---|---|---|
+| {{copilot/plans/active/example-plan/}} | active | {{BRANCH_NAME}} | current-branch | {{current executing plan}} |
+| {{copilot/plans/finished/previous-plan/}} | finished | {{BRANCH_NAME}} | current-branch | {{predecessor plan preserved for traceability}} |
+| {{copilot/plans/active/ancestor-plan/}} | active | {{PARENT_BRANCH}} | ancestor-branch | {{if inherited from parent branch}} |
+
+---
+
+## Merge Status
+
+- **Merge Permission:** pending-human-approval | approved | denied
+- **Merge Target Branch:** {{PARENT_BRANCH}} (MUST match Branch Identity parent branch)
+- **Approved By (Human):** {{NAME_OR_ID}}
+- **Approval Date:** {{YYYY-MM-DD}}
+- **Approval Evidence:** {{PR comment / note / link}}
+- **Policy:** If Autopilot Active is true, do not use vscode/askQuestions to request merge authorization.
 
 ---
 
@@ -127,6 +174,7 @@ When ready for merge:
 - [ ] All commits pushed
 - [ ] All blockers resolved
 - [ ] Code review approved
+- [ ] Merge permission approved by real human in Merge Status
 - [ ] BRANCHES_STATUS.md updated with status: "ready-for-merge"
 - [ ] Lossless reports created in `copilot/explanations/temporal/lossless-reports/`
 

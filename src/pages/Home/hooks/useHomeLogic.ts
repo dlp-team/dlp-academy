@@ -12,7 +12,20 @@ import { isReadOnlyRole } from '../../../utils/permissionUtils';
 
 
 export const useHomeLogic = (user: any, searchQuery = '', rememberOrganization = true, onHomeFeedback: any = null) => {
-    const navigate = useNavigate();
+    const routerNavigate = useNavigate();
+    const isPreviewLocked = user?.__previewLock === true;
+    const navigate = (to: any, options: any = undefined) => {
+        if (
+            isPreviewLocked
+            && typeof to === 'string'
+            && to.startsWith('/')
+            && !to.startsWith('/theme-preview')
+        ) {
+            routerNavigate(`/theme-preview${to}`, options);
+            return;
+        }
+        routerNavigate(to, options);
+    };
     const studentShortcutTagOnlyMode = isReadOnlyRole(user);
     
     // Data Logic

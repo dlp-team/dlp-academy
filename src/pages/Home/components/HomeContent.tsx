@@ -1,6 +1,6 @@
 // src/pages/Home/components/HomeContent.jsx
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle, CalendarRange
 } from 'lucide-react';
@@ -15,6 +15,7 @@ import { isShortcutItem, getPermissionLevel, isSharedForCurrentUser as isSharedF
 import { mergeSourceAndShortcutItems } from '../../../utils/mergeUtils';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 import { getHomeUnselectedDimmingClass } from '../../../utils/selectionVisualUtils';
+import { getDraggedSelectionKeyFromDropArgs, shouldHandleSelectionDrop } from '../utils/homeSelectionDropUtils';
 
 const FolderCardComponent: any = FolderCard;
 const SubjectCardComponent: any = SubjectCard;
@@ -78,6 +79,8 @@ const HomeContent = ({
     selectMode = false,
     selectedItemKeys = new Set(),
     onToggleSelectItem = () => {},
+    onStartSelectionWithItem = () => {},
+    onSelectRangeToItem = () => {},
     onDropSelectedItems = null,
 }: any) => {
     const contentRef = useRef<any>(null);
@@ -91,7 +94,7 @@ const HomeContent = ({
     const disableFolderDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder || studentMode;
     const disableSubjectDeleteActionsInShared = isViewerInSharedFolder || studentMode;
     const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared;
-    const canCreateInCurrentContext = !disableAllActionsInShared && !studentMode && !selectMode;
+    const canCreateInCurrentContext = !disableAllActionsInShared && !studentMode;
 
     // Auto-scroll is always enabled for both grid and list modes
     (useAutoScrollOnDrag as any)({
@@ -301,6 +304,59 @@ const HomeContent = ({
         return Boolean(collapsedGroups[groupKey]);
     };
 
+    const handleSelectionAwareDropOnFolder = (
+        targetFolderId: any,
+        subjectId: any,
+        typeOrSourceFolderId: any,
+        sourceFolderIdMaybe: any,
+        shortcutIdMaybe: any
+    ) => {
+        const draggedType = typeOrSourceFolderId === 'folder' ? 'folder' : 'subject';
+        const draggedSelectionKey = getDraggedSelectionKeyFromDropArgs(
+            draggedType === 'folder'
+                ? {
+                    folderId: subjectId,
+                    folderShortcutId: shortcutIdMaybe,
+                }
+                : {
+                    subjectId,
+                    subjectShortcutId: shortcutIdMaybe,
+                }
+        );
+
+        if (
+            shouldHandleSelectionDrop({ selectMode, selectedItemKeys, draggedSelectionKey })
+            && typeof onDropSelectedItems === 'function'
+        ) {
+            onDropSelectedItems(targetFolderId || null);
+            return 'moved';
+        }
+
+        return handleDropOnFolder(targetFolderId, subjectId, typeOrSourceFolderId, sourceFolderIdMaybe, shortcutIdMaybe);
+    };
+
+    const handleSelectionAwareNestFolder = (
+        targetFolderId: any,
+        droppedFolderId: any,
+        droppedFolderShortcutId: any,
+        ...rest: any[]
+    ) => {
+        const draggedSelectionKey = getDraggedSelectionKeyFromDropArgs({
+            folderId: droppedFolderId,
+            folderShortcutId: droppedFolderShortcutId,
+        });
+
+        if (
+            shouldHandleSelectionDrop({ selectMode, selectedItemKeys, draggedSelectionKey })
+            && typeof onDropSelectedItems === 'function'
+        ) {
+            onDropSelectedItems(targetFolderId || null);
+            return 'moved';
+        }
+
+        return handleNestFolder(targetFolderId, droppedFolderId, droppedFolderShortcutId, ...rest);
+    };
+
     const getCourseLabelForCreation = (groupLabel: any) => {
         const normalizedLabel = String(groupLabel || '').trim();
         return normalizedLabel.replace(/\s\((\d{4}-\d{4}|Sin año académico)\)$/i, '').trim();
@@ -346,6 +402,105 @@ const HomeContent = ({
             subjectsCountByYear
         };
     }, [groupedEntries, viewMode]);
+
+    const getOrderedSelectionEntries = useCallback(() => {
+        const orderedEntries: any[] = [];
+        const seenKeys = new Set<string>();
+
+        const appendEntry = (item: any, type: any) => {
+            if (!item?.id || !type) return;
+            const key = getSelectionKey(item, type);
+            if (seenKeys.has(key)) return;
+            seenKeys.add(key);
+            orderedEntries.push({ key, type, item });
+        };
+
+        groupedEntries.forEach(([groupName, groupSubjects]: any) => {
+            const isCollapsed = isGroupCollapsed(groupName);
+            const displayedGroupSubjects = getFilteredSubjectsForGroup(groupSubjects);
+            const yearLabel = coursesYearWrappers.yearByGroup.get(groupName) || '';
+            const yearWrapperKey = yearLabel ? `courses-year:${yearLabel}` : '';
+            const isYearCollapsed = coursesYearWrappers.enabled && yearWrapperKey
+                ? isGroupCollapsed(yearWrapperKey)
+                : false;
+
+            if (coursesYearWrappers.enabled && isYearCollapsed) {
+                return;
+            }
+
+            if (showCollapsibleGroups && isCollapsed) {
+                return;
+            }
+
+            if (layoutMode === 'grid') {
+                if (!studentMode && viewMode === 'grid' && activeFilter !== 'subjects') {
+                    filteredFolders.forEach((folder: any) => appendEntry(folder, 'folder'));
+                }
+
+                if (activeFilter !== 'folders') {
+                    displayedGroupSubjects.forEach((subject: any) => appendEntry(subject, 'subject'));
+                }
+                return;
+            }
+
+            if (!studentMode && viewMode === 'grid') {
+                filteredFolders.forEach((folder: any) => appendEntry(folder, 'folder'));
+            }
+            displayedGroupSubjects.forEach((subject: any) => appendEntry(subject, 'subject'));
+        });
+
+        return orderedEntries;
+    }, [
+        groupedEntries,
+        coursesYearWrappers,
+        showCollapsibleGroups,
+        layoutMode,
+        studentMode,
+        viewMode,
+        activeFilter,
+        filteredFolders,
+        getFilteredSubjectsForGroup,
+        getSelectionKey
+    ]);
+
+    const handleSelectionAwareInteraction = useCallback(({
+        item,
+        type,
+        event,
+        onOpen,
+    }: any) => {
+        if (!item?.id || !type) {
+            if (typeof onOpen === 'function') onOpen();
+            return;
+        }
+
+        const hasModifier = Boolean(event?.ctrlKey || event?.metaKey);
+        const isRangeSelection = hasModifier && Boolean(event?.shiftKey);
+
+        if (isRangeSelection) {
+            onSelectRangeToItem(item, type, getOrderedSelectionEntries(), { replaceSelection: !selectMode });
+            return;
+        }
+
+        if (selectMode) {
+            if (hasModifier) {
+                if (typeof onOpen === 'function') onOpen();
+                return;
+            }
+
+            onToggleSelectItem(item, type, { ensureSelectMode: true });
+            return;
+        }
+
+        if (hasModifier) {
+            onStartSelectionWithItem(item, type);
+            return;
+        }
+
+        if (typeof onOpen === 'function') {
+            onOpen();
+        }
+    }, [getOrderedSelectionEntries, onSelectRangeToItem, onStartSelectionWithItem, onToggleSelectItem, selectMode]);
 
     
     return (
@@ -423,6 +578,7 @@ const HomeContent = ({
                                             {(viewMode === 'courses' || viewMode === 'tags') && canCreateInCurrentContext && (
                                                 <button
                                                     onClick={() => {
+                                                        if (selectMode) return;
                                                         let data: any = null;
                                                         if (viewMode === 'courses') {
                                                             data = { course: getCourseLabelForCreation(groupName) };
@@ -478,7 +634,10 @@ const HomeContent = ({
                                                         </div>
                                                     ) : (
                                                         <button
-                                                            onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder })}
+                                                            onClick={() => {
+                                                                if (selectMode) return;
+                                                                setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder });
+                                                            }}
                                                             className={homeThemeTokens.dashedCreateCardIndigoClass}
                                                             style={{ aspectRatio: '16 / 10', gap: `${16 * (cardScale / 100)}px` }}
                                                         >
@@ -516,12 +675,13 @@ const HomeContent = ({
                                                         isSelected={isSelected}
                                                         allFolders={allFoldersForTree}
                                                         allSubjects={allSubjectsForTree}
-                                                        onOpen={(targetFolder: any) => {
-                                                            if (selectMode) {
-                                                                onToggleSelectItem(targetFolder, 'folder');
-                                                                return;
-                                                            }
-                                                            handleOpenFolder(targetFolder);
+                                                        onOpen={(targetFolder: any, event: any) => {
+                                                            handleSelectionAwareInteraction({
+                                                                item: targetFolder,
+                                                                type: 'folder',
+                                                                event,
+                                                                onOpen: () => handleOpenFolder(targetFolder)
+                                                            });
                                                         }}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
@@ -553,8 +713,8 @@ const HomeContent = ({
                                                         onShowContents={handleShowFolderContents}
                                                         onGoToFolder={handleGoToFolderFromGhost}
                                                         cardScale={cardScale}
-                                                        onDrop={handleDropOnFolder}
-                                                        onDropFolder={handleNestFolder}
+                                                        onDrop={handleSelectionAwareDropOnFolder}
+                                                        onDropFolder={handleSelectionAwareNestFolder}
                                                         canDrop={dndEnabledInContext}
                                                         draggable={dndEnabledInContext}
                                                         onDragStart={handleDragStartFolder}
@@ -568,6 +728,8 @@ const HomeContent = ({
                                                         disableAllActions={disableAllActionsInShared}
                                                         disableDeleteActions={disableFolderDeleteActionsInShared}
                                                         disableUnshareActions={isInsideSharedFolderForItem(folder, 'folder')}
+                                                        selectMode={selectMode}
+                                                        selectedItemKeys={selectedItemKeys}
                                                     />
                                                 </div>
                                             );
@@ -594,12 +756,13 @@ const HomeContent = ({
                                                         isSelected={isSelected}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
-                                                        onSelect={(subjectId: any) => {
-                                                            if (selectMode) {
-                                                                onToggleSelectItem(subject, 'subject');
-                                                                return;
-                                                            }
-                                                            handleSelectSubject(subjectId);
+                                                        onSelect={(subjectId: any, event: any) => {
+                                                            handleSelectionAwareInteraction({
+                                                                item: subject,
+                                                                type: 'subject',
+                                                                event,
+                                                                onOpen: () => handleSelectSubject(subjectId)
+                                                            });
                                                         }}
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s: any) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
@@ -650,6 +813,8 @@ const HomeContent = ({
                                                         disableDeleteActions={disableSubjectDeleteActionsInShared}
                                                         disableUnshareActions={isInsideSharedFolderForItem(subject, 'subject')}
                                                         hideSharedIndicator={studentMode}
+                                                        selectMode={selectMode}
+                                                        selectedItemKeys={selectedItemKeys}
                                                     />
                                                 </div>
                                             );
@@ -669,6 +834,9 @@ const HomeContent = ({
                                                 onDragLeave={() => setIsRootZoneHovered(false)}
                                                 onDrop={handleRootZoneDrop}
                                                 onClick={() => { 
+                                                    if (selectMode || draggedItem) {
+                                                        return;
+                                                    }
                                                     if (!draggedItem) {
                                                         let data: any = null;
                                                         if (viewMode === 'courses') {
@@ -735,22 +903,27 @@ const HomeContent = ({
                                                 parentId={currentFolder ? currentFolder.id : null}
                                                 allFolders={allFoldersForTree}
                                                 allSubjects={allSubjectsForTree}
-                                                onNavigate={(targetFolder: any) => {
-                                                    if (selectMode) {
-                                                        onToggleSelectItem(targetFolder, 'folder');
-                                                        return;
-                                                    }
-                                                    handleOpenFolder(targetFolder);
+                                                onNavigate={(targetFolder: any, event: any) => {
+                                                    handleSelectionAwareInteraction({
+                                                        item: targetFolder,
+                                                        type: 'folder',
+                                                        event,
+                                                        onOpen: () => handleOpenFolder(targetFolder)
+                                                    });
                                                 }}
-                                                onNavigateSubject={(subjectId: any) => {
-                                                    if (selectMode) {
-                                                        const selectedSubject = (allSubjectsForTree || []).find((entry: any) => entry?.id === subjectId);
-                                                        if (selectedSubject) {
-                                                            onToggleSelectItem(selectedSubject, 'subject');
-                                                        }
+                                                onNavigateSubject={(subjectId: any, event: any) => {
+                                                    const selectedSubject = (allSubjectsForTree || []).find((entry: any) => entry?.id === subjectId);
+                                                    if (!selectedSubject) {
+                                                        handleSelectSubject(subjectId);
                                                         return;
                                                     }
-                                                    handleSelectSubject(subjectId);
+
+                                                    handleSelectionAwareInteraction({
+                                                        item: selectedSubject,
+                                                        type: 'subject',
+                                                        event,
+                                                        onOpen: () => handleSelectSubject(subjectId)
+                                                    });
                                                 }}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
@@ -809,12 +982,13 @@ const HomeContent = ({
                                                     parentId={currentFolder ? currentFolder.id : null}
                                                     allFolders={allFoldersForTree}
                                                     allSubjects={allSubjectsForTree}
-                                                    onNavigateSubject={(subjectId: any) => {
-                                                        if (selectMode) {
-                                                            onToggleSelectItem(subject, 'subject');
-                                                            return;
-                                                        }
-                                                        handleSelectSubject(subjectId);
+                                                    onNavigateSubject={(subjectId: any, event: any) => {
+                                                        handleSelectionAwareInteraction({
+                                                            item: subject,
+                                                            type: 'subject',
+                                                            event,
+                                                            onOpen: () => handleSelectSubject(subjectId)
+                                                        });
                                                     }}
                                                     onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {

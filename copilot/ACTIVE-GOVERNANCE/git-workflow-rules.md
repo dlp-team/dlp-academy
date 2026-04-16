@@ -1,3 +1,4 @@
+<!-- copilot/ACTIVE-GOVERNANCE/git-workflow-rules.md -->
 # Autopilot Git Workflow Rules (Required for All Autopilot Tasks)
 
 ## 🚫 CRITICAL GIT RESTRICTIONS
@@ -7,17 +8,42 @@
 - **NEVER commit directly to `main` - Always use a feature branch**
 - If autopilot detects it is on `main`, STOP and create a new branch immediately
 
+### Branch Ownership Protection (ABSOLUTE)
+- **ALWAYS resolve `COPILOT_PC_ID` before any file change**
+- **ALWAYS verify the current branch owner matches `COPILOT_PC_ID`** in both:
+   - `copilot/BRANCHES_STATUS.md` (global registry)
+   - `BRANCH_LOG.md` (branch-local ownership)
+- If `COPILOT_PC_ID` is missing/empty, **STOP IMMEDIATELY**
+- If owner mismatch is detected, **STOP IMMEDIATELY** (no edits, no commits)
+
 ---
 
 ## 🔄 Git Workflow for Autopilot (MANDATORY)
 
-### Step 1: Branch Status Check (BEFORE ANY COMMIT)
+### Step 1: Branch & Permission Gate (BEFORE ANY FILE CHANGE)
 ```bash
 git branch --show-current
 ```
-**Purpose**: Determine current branch name and decide workflow:
+**Purpose**: Determine current branch, identity, and write permission before work starts:
+- Resolve `COPILOT_PC_ID` from local environment
+- If missing/empty → STOP
+- Verify branch owner in `copilot/BRANCHES_STATUS.md` matches `COPILOT_PC_ID`
+- Verify owner in `BRANCH_LOG.md` matches `COPILOT_PC_ID` (if file exists)
+- If any mismatch → STOP
 - If on `main` → **CREATE NEW BRANCH** (see Step 2)
-- If on feature branch → **UPDATE EXISTING BRANCH** (see Step 3)
+- If on feature branch and ownership matches → continue
+
+### Step 1b: Plan Isolation Gate (MANDATORY)
+**When to use**:
+- Current branch is a feature branch
+- Current branch parent is `development`
+- A new plan (new package under `copilot/plans/`) is requested
+
+**Rule**:
+- Do NOT execute the new plan on the current branch
+- Create a child branch from the current branch and run the new plan there
+- Record the current branch as `parent-branch` in the child `BRANCH_LOG.md`
+- Merge child branch back into the parent branch when complete
 
 ### Step 2: Creating a New Branch (When on Main or Starting Fresh)
 **When to use**: 
@@ -43,6 +69,8 @@ git checkout -b feature/<task-name>
 
 **CRITICAL:** After creating a new branch, immediately register it in the global branch registry for multi-agent coordination.
 
+**HARD GATE:** No implementation edits are allowed until this registration is committed and pushed to `development`.
+
 **Procedure**:
 ```bash
 # 1. Check out the branch that hosts BRANCHES_STATUS.md (usually development or main)
@@ -55,6 +83,7 @@ git checkout development  # or main, depending on your setup
 # 3. Add a new row with these columns:
 #    Branch Name | Owner (pc<id>) | Type (feature|fix|chore) | Status (active) | 
 #    Summary | Related Plan URL | Key Files | Date Created | Notes
+#    - Summary is mandatory and must describe branch objective clearly
 
 # 4. Commit ONLY the registry update
 git add copilot/BRANCHES_STATUS.md
@@ -91,6 +120,7 @@ git checkout feature/<task-name>
 - Task is small or related to existing branch
 - Continuing work on same branch
 - Branch was already registered in BRANCHES_STATUS.md
+- Branch owner matches `COPILOT_PC_ID`
 
 **Procedure**:
 ```bash
@@ -101,6 +131,15 @@ git push origin <current-branch-name>
 
 **Before Returning to Work:**
 If you created a new branch in this session, ensure you completed Step 2b (register in BRANCHES_STATUS.md) first.
+
+---
+
+## 🔀 Merge Target Rule (MANDATORY)
+
+- Always merge a branch into its `parent-branch` from `BRANCH_LOG.md`
+- Never merge directly into `development` unless `parent-branch` is `development`
+- If PR base branch does not match `parent-branch`, STOP and correct the PR target
+- For child branches created for plan isolation, merge child -> parent branch only
 
 ---
 

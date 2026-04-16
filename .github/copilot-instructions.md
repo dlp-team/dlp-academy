@@ -147,10 +147,14 @@ ANY time you are operating in autopilot mode, you MUST follow these rules with Z
    - ✅ If you deviate from the checklist, you violate this directive
 
 2. **AUTOPILOT_PLAN INTAKE RULE (MANDATORY)**
+   - ✅ **AUTO-DETECT in Step 0.5:** The checklist automatically checks for `copilot/plans/AUTOPILOT_PLAN.md` and `AUTOPILOT_PLAN.md` if no plan exists
+   - ✅ If prompt/chat mentions "autopilot plan" or references `AUTOPILOT_PLAN.md`, treat it as an explicit intake trigger and execute via checklist
    - ✅ If the request references `AUTOPILOT_PLAN.md` (including `#file:AUTOPILOT_PLAN.md`), you MUST execute using [`copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`](copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md)
-   - ✅ After creating the plan package (`README.md`, `strategy-roadmap.md`, `phases/`, `reviewing/`, `working/`, `subplans/`, `user-updates.md`), move `copilot/plans/AUTOPILOT_PLAN.md` into that plan folder
-   - ✅ Rename the moved source file using the same source-traceability style as ORIGINAL/GEMINI sources, with a task-specific name (example: `source-autopilot-user-spec-<plan-topic>.md`)
-   - ✅ Do not leave duplicate source files at `copilot/plans/AUTOPILOT_PLAN.md` after intake completion
+   - ✅ **PLAN CREATION (Step 6):** After detecting AUTOPILOT_PLAN.md, create the full plan package (`README.md`, `strategy-roadmap.md`, `phases/`, `reviewing/`, `working/`, `subplans/`, `user-updates.md`)
+   - ✅ **MOVE & RENAME (Step 6):** Move source (`copilot/plans/AUTOPILOT_PLAN.md` or `AUTOPILOT_PLAN.md`) into the new plan folder's `sources/` subdirectory
+   - ✅ **RENAME:** Rename to `source-autopilot-user-spec-<plan-topic>.md` (matching ORIGINAL/GEMINI source-traceability sºtyle)
+   - ✅ **DELETE ORIGINAL:** Do not leave duplicate source files at original source location after intake completion
+   - ✅ **CONTINUATION:** The plan includes a final phase to continue with remaining AUTOPILOT_EXECUTION_CHECKLIST steps (Step 7 onwards)
 
 3. **ENTRY POINT**
    - Before ANYTHING else: Read [`copilot/README.md`](copilot/README.md) (master navigation hub)
@@ -162,12 +166,28 @@ ANY time you are operating in autopilot mode, you MUST follow these rules with Z
    - Check [`copilot/ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md`](copilot/ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md) - NEVER execute if listed
    - Unknown? Log in [`copilot/ACTIVE-GOVERNANCE/PENDING_COMMANDS.md`](copilot/ACTIVE-GOVERNANCE/PENDING_COMMANDS.md) and ask user
 
-5. **FINAL LEVERAGE GATE**
+5. **BRANCH OWNERSHIP & PLAN-ISOLATION GATE**
+   - Before ANY file change, resolve local `COPILOT_PC_ID`; if missing/empty, STOP immediately
+   - Before ANY file change, verify branch owner matches `COPILOT_PC_ID` in both `copilot/BRANCHES_STATUS.md` and `BRANCH_LOG.md`
+   - When creating a new branch, immediately update `copilot/BRANCHES_STATUS.md` on `development` with the new branch and a clear summary
+   - New branch registration on `development` must be committed and pushed before implementation starts
+   - If current branch parent is `development` and a new plan is requested, DO NOT execute that plan on the current branch
+   - In that case, create a child branch from current branch, execute the new plan there, and merge back only to the parent branch
+   - When creating a branch from another branch, parent branch MUST be explicitly recorded in `BRANCH_LOG.md`
+
+6. **HUMAN MERGE AUTHORIZATION GATE**
+   - Before any merge action in autopilot, read `BRANCH_LOG.md` merge metadata
+   - If `Autopilot Status` is `true`, merge is blocked until `Merge Status` is explicitly marked approved by a real human
+   - Autopilot must NOT use `vscode/askQuestions` to request merge permission when it is on autopilot mode
+   - Merge target MUST always be the `parent-branch` declared in `BRANCH_LOG.md`
+   - If approval is missing/pending/denied, pause merge and wait for human update in branch log
+
+7. **FINAL LEVERAGE GATE**
    - Step 23 of the checklist: Execute `vscode/askQuestions` leverage step (protocol: [`copilot/protocols/vscode-askQuestions-leverage-step.md`](copilot/protocols/vscode-askQuestions-leverage-step.md))
    - NEVER skip this gate - it is mandatory before task closure
    - This is your user confirmation mechanism before ending autopilot
 
-6. **VERIFICATION REQUIREMENT**
+8. **VERIFICATION REQUIREMENT**
    - At task completion, user confirms: "Task 100% complete"
    - Only THEN mark autopilot as finished
    - No partial work, no "started", only DONE
@@ -251,7 +271,7 @@ Entry requirements:
 13. **Minimum completion payload** - For plan requests, you MUST deliver a fully executable plan package (scope, phased steps, validation gates, rollback, and testing strategy), not just brief bullet additions.
 14. **No artificial stopping** - Do not stop after a small change if additional requested work remains; continue autonomously until all requested outcomes are completed.
 15. **Commit/Push Cadence Gate (MANDATORY)** - Commit and push after every major validated work block (feature, bug fix, test block, or docs-sync block) BEFORE starting the next major block. This is a hard execution gate, not a recommendation.
-16. **UI Component Consistency (MANDATORY)** - BEFORE creating any new UI element (modal, overlay, button, dropdown, card, form), you MUST read [copilot/REFERENCE/COMPONENT_REGISTRY.md](copilot/REFERENCE/COMPONENT_REGISTRY.md). If a reusable component exists, you MUST use or extend it instead of creating custom HTML/Tailwind. If you create a new generic UI component, you MUST document it in the registry immediately after creation.
+16. **UI Component Consistency (MANDATORY)** - BEFORE creating any new UI element (modal, overlay, button, dropdown, card, form), you MUST read [copilot/REFERENCE/COMPONENT_REGISTRY.md](copilot/REFERENCE/COMPONENT_REGISTRY.md). If a reusable component exists, you MUST use or extend it instead of creating custom HTML/Tailwind. If you create a new generic UI component, you MUST document it in the registry immediately after creation. For Tailwind class patterns (overlays, scrollbars, cards, buttons, forms, states, tabs), also consult [copilot/REFERENCE/UI_PATTERNS_INDEX.md](copilot/REFERENCE/UI_PATTERNS_INDEX.md).
 
 17. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)** - Before completing ANY premium request, execute the `vscode/askQuestions` leverage step to confirm closure with user. See canonical protocol: [copilot/protocols/vscode-askQuestions-leverage-step.md](copilot/protocols/vscode-askQuestions-leverage-step.md). This protocol supersedes all other completion logic. If the tool fails, document the failure and request user direction before ending the session. No exceptions.
 ---
@@ -489,8 +509,15 @@ Workflow documentation and task-specific guides (e.g., `shortcut-move-request-wo
 ### 1.5 Git Workflow Setup (AUTOPILOT ONLY - MANDATORY)
 ```
 ✅ Check current branch: git branch --show-current
+✅ Resolve COPILOT_PC_ID and hard-stop if it is missing/empty
+✅ Verify branch ownership/permissions in BRANCHES_STATUS + BRANCH_LOG before any file edits
+✅ If ownership does not match COPILOT_PC_ID: STOP and request authorized branch
 ✅ If on main: Create new feature branch (git checkout -b feature/<task-name>)
 ✅ If on feature branch: Continue on existing branch
+✅ For every new branch: update BRANCHES_STATUS on development immediately with branch row + summary, commit, and push
+✅ If branch parent is development and a new plan is requested: create child branch from current branch and execute plan there
+✅ Merge child branches back into parent branch only (never bypass parent lineage)
+✅ Record parent branch explicitly in BRANCH_LOG for every derived branch
 ✅ Read copilot/ACTIVE-GOVERNANCE/git-workflow-rules.md for commit message format
 ✅ Plan periodic Git commits (every logical work unit)
 ✅ Enforce cadence gate: no second major work block may start until prior validated block is committed and pushed
@@ -789,12 +816,20 @@ Command control system built from analysis of **25+ commands** across **15+ exec
    - If on `main`: immediately create feature branch (`git checkout -b feature/<task-name>`)
    - Always verify before commits: `git branch --show-current` must NOT return "main"
 
-2. **Branch Creation Strategy**:
+2. **Branch Ownership Gate (ABSOLUTE)**:
+   - Resolve `COPILOT_PC_ID` before any file change
+   - Verify current branch owner matches `COPILOT_PC_ID` in `copilot/BRANCHES_STATUS.md` and `BRANCH_LOG.md`
+   - If missing/mismatch: STOP immediately (no edits, no commits)
+
+3. **Branch Creation Strategy**:
    - **Large tasks**: Create new feature branch with date (e.g., `feature/firestore-migration-2026-0331`)
    - **Small tasks**: Update existing feature branch if not on `main`
+   - **Immediate visibility rule**: Every newly created branch must be registered in `copilot/BRANCHES_STATUS.md` on `development` with a summary before implementation
+   - **New plan isolation rule**: If current branch parent is `development` and a new plan is requested, create a child branch from current branch and execute the new plan there
+   - **Lineage rule**: Every derived branch MUST declare `parent-branch` in `BRANCH_LOG.md`
    - **Format**: `feature/<descriptive-name>` or `hotfix/<brief-description>`
 
-3. **Commit Message Format** (MANDATORY):
+4. **Commit Message Format** (MANDATORY):
    ```
    <type>(<scope>): <subject>
    
@@ -805,21 +840,22 @@ Command control system built from analysis of **25+ commands** across **15+ exec
    Example: feat(autopilot): Add automatic git branch creation for large tasks
    ```
 
-4. **Push Frequency**:
+5. **Push Frequency**:
    - After each logical work unit (feature block, fix, test suite)
    - Hard gate: do not begin a new major work block until the previous validated block is committed and pushed
    - Command: `git push origin <branch-name>`
    - Always verify branch before pushing
+   - Merge target for completion is always the branch's `parent-branch`
 
 ### Branch Lifecycle Management (REQUIRED FOR MERGED BRANCHES)
 
 **Reference:** `copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md`
 
-After merging a feature branch into development:
+After merging a feature branch into its parent branch:
 1. Update branch status in `BRANCHES_STATUS.md`:
    - Set Status: `pending-delete` (NOT ~~merged~~ or ~~archived~~)
    - Record Pending-Delete Date: Today's date (YYYY-MM-DD)
-   - Document in Notes: "Merged on [date]; will be auto-deleted on [date+7days]"
+   - Document in Notes: "Merged into [parent-branch] on [date]; will be auto-deleted on [date+7days]"
 
 2. **7-Day Grace Period:**
    - Branch is retained for 7 consecutive days after pending-delete-date

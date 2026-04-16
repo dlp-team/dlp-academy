@@ -1,8 +1,8 @@
-// src/pages/InstitutionAdminDashboard/hooks/useCustomization.js
+// src/pages/InstitutionAdminDashboard/hooks/useCustomization.ts
 import { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import { getDownloadURL, getStorage, ref, uploadBytes, deleteObject } from 'firebase/storage';
 import { auth, db, functions } from '../../../firebase/config';
 import {
   GLOBAL_BRAND_DEFAULTS,
@@ -17,17 +17,51 @@ import { getActiveRole } from '../../../utils/permissionUtils';
 export const DEFAULT_CUSTOMIZATION_FORM = {
   institutionDisplayName: '',
   iconUrl: '',
+  iconStoragePath: '',
   logoUrl: '',
+  logoStoragePath: '',
   primaryBrandColor: GLOBAL_BRAND_DEFAULTS.primaryColor,
   secondaryBrandColor: GLOBAL_BRAND_DEFAULTS.secondaryColor,
   tertiaryBrandColor: GLOBAL_BRAND_DEFAULTS.tertiaryColor,
   homeThemeColors: { ...HOME_THEME_DEFAULT_COLORS },
 };
 
+const normalizeThemeSetColors = (colors: any = {}) => ({
+  primary: normalizeHexColor(colors?.primary) || GLOBAL_BRAND_DEFAULTS.primaryColor,
+  secondary: normalizeHexColor(colors?.secondary) || GLOBAL_BRAND_DEFAULTS.secondaryColor,
+  accent: normalizeHexColor(colors?.accent) || GLOBAL_BRAND_DEFAULTS.tertiaryColor,
+  cardBorder: normalizeHexColor(colors?.cardBorder) || HOME_THEME_DEFAULT_COLORS.cardBorder,
+});
+
+const normalizeSavedThemeSets = (themeSetsSource: any) => {
+  const source = themeSetsSource || {};
+  const entries = Array.isArray(source)
+    ? source.map((entry: any) => [entry?.id, entry])
+    : Object.entries(source);
+
+  return entries
+    .map(([fallbackId, entry]: any) => {
+      const id = String(entry?.id || fallbackId || '').trim();
+      const name = String(entry?.name || '').trim();
+      if (!id || !name) return null;
+
+      return {
+        id,
+        name,
+        colors: normalizeThemeSetColors(entry?.colors || entry),
+        createdAt: entry?.createdAt || null,
+        updatedAt: entry?.updatedAt || null,
+      };
+    })
+    .filter(Boolean)
+    .sort((left: any, right: any) => String(left?.name || '').localeCompare(String(right?.name || ''), 'es', { sensitivity: 'base' }));
+};
+
 export const useCustomization = (user, institutionIdOverride = null) => {
   const effectiveInstitutionId = institutionIdOverride || user?.institutionId || null;
   const [institutionName, setInstitutionName] = useState('');
   const [customizationForm, setCustomizationForm] = useState(DEFAULT_CUSTOMIZATION_FORM);
+  const [savedThemeSets, setSavedThemeSets] = useState<any[]>([]);
   const [customizationLoading, setCustomizationLoading] = useState(false);
   const [customizationSaving, setCustomizationSaving] = useState(false);
   const [customizationError, setCustomizationError] = useState('');
@@ -70,12 +104,16 @@ export const useCustomization = (user, institutionIdOverride = null) => {
         setCustomizationForm({
           institutionDisplayName: branding.institutionDisplayName || institutionData.name || '',
           iconUrl: customizationData.iconUrl || '',
+          iconStoragePath: customizationData.iconStoragePath || '',
           logoUrl: branding.logoUrl || '',
+          logoStoragePath: customizationData.logoStoragePath || '',
           primaryBrandColor: branding.primaryColor || GLOBAL_BRAND_DEFAULTS.primaryColor,
           secondaryBrandColor: branding.secondaryColor || GLOBAL_BRAND_DEFAULTS.secondaryColor,
           tertiaryBrandColor: branding.tertiaryColor || GLOBAL_BRAND_DEFAULTS.tertiaryColor,
           homeThemeColors: resolvedColors,
+          browserTabTitle: branding.browserTabTitle || customizationData.browserTabTitle || '',
         });
+        setSavedThemeSets(normalizeSavedThemeSets(customizationData.themeSets));
       } catch (error) {
         console.error('Error loading institution customization:', error);
         if (active) setCustomizationError('No se pudo cargar la personalización de la institución.');
@@ -117,9 +155,10 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     }
 
     const fileExtension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'png';
+    const storagePath = `institutions/${effectiveInstitutionId}/branding/${assetName}.${fileExtension || 'png'}`;
     const storageRef = ref(
       getStorage(db.app),
-      `institutions/${effectiveInstitutionId}/branding/${assetName}.${fileExtension || 'png'}`
+      storagePath,
     );
 
     await syncAuthClaimsForStorage();
@@ -127,7 +166,7 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         await uploadBytes(storageRef, file, { contentType: file.type });
-        return getDownloadURL(storageRef);
+        return { url: await getDownloadURL(storageRef), storagePath };
       } catch (error: any) {
         const isUnauthorized = String(error?.code || '').toLowerCase() === 'storage/unauthorized'
           || String(error?.message || '').toLowerCase().includes('unauthorized');
@@ -151,17 +190,22 @@ export const useCustomization = (user, institutionIdOverride = null) => {
       setIconUploadError('Selecciona una imagen válida para el icono.');
       return;
     }
+    if (file.size > 2 * 1024 * 1024) {
+      setIconUploadError('El icono no puede superar 2 MB.');
+      return;
+    }
     setIconUploading(true);
     setIconUploadError('');
     setCustomizationError('');
     setCustomizationSuccess('');
     try {
-      const iconUrl = await uploadBrandingAsset(file, 'icon');
+      const { url: iconUrl, storagePath: iconStoragePath } = await uploadBrandingAsset(file, 'icon');
       await updateDoc(doc(db, 'institutions', effectiveInstitutionId), {
         'customization.iconUrl': iconUrl,
+        'customization.iconStoragePath': iconStoragePath,
         updatedAt: serverTimestamp(),
       });
-      setCustomizationForm(prev => ({ ...prev, iconUrl }));
+      setCustomizationForm(prev => ({ ...prev, iconUrl, iconStoragePath }));
       setCustomizationSuccess('Icono guardado correctamente.');
     } catch (error) {
       console.error('Error uploading institution icon:', error);
@@ -179,17 +223,22 @@ export const useCustomization = (user, institutionIdOverride = null) => {
       setIconUploadError('Selecciona una imagen válida para el logotipo.');
       return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      setIconUploadError('El logotipo no puede superar 5 MB.');
+      return;
+    }
     setIconUploading(true);
     setIconUploadError('');
     setCustomizationError('');
     setCustomizationSuccess('');
     try {
-      const logoUrl = await uploadBrandingAsset(file, 'logo');
+      const { url: logoUrl, storagePath: logoStoragePath } = await uploadBrandingAsset(file, 'logo');
       await updateDoc(doc(db, 'institutions', effectiveInstitutionId), {
         'customization.logoUrl': logoUrl,
+        'customization.logoStoragePath': logoStoragePath,
         updatedAt: serverTimestamp(),
       });
-      setCustomizationForm(prev => ({ ...prev, logoUrl }));
+      setCustomizationForm(prev => ({ ...prev, logoUrl, logoStoragePath }));
       setCustomizationSuccess('Logotipo guardado correctamente.');
     } catch {
       setIconUploadError('No se pudo subir el logotipo. Inténtalo de nuevo.');
@@ -198,14 +247,45 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     }
   };
 
-  const handleLogoUrlSave = async (url: any) => {
-    if (!url || !effectiveInstitutionId) return;
+  const handleIconUrlSave = async (url: any) => {
+    if (!effectiveInstitutionId) return;
+    const trimmedUrl = typeof url === 'string' ? url.trim() : '';
+    // Delete previously uploaded file if one exists.
+    const previousStoragePath = customizationForm.iconStoragePath;
+    if (previousStoragePath) {
+      try {
+        await deleteObject(ref(getStorage(db.app), previousStoragePath));
+      } catch { /* ignore deletion errors — file may already be gone */ }
+    }
     try {
       await updateDoc(doc(db, 'institutions', effectiveInstitutionId), {
-        'customization.logoUrl': url,
+        'customization.iconUrl': trimmedUrl,
+        'customization.iconStoragePath': '',
         updatedAt: serverTimestamp(),
       });
-      setCustomizationForm(prev => ({ ...prev, logoUrl: url }));
+      setCustomizationForm(prev => ({ ...prev, iconUrl: trimmedUrl, iconStoragePath: '' }));
+    } catch {
+      setCustomizationError('No se pudo guardar el icono por URL. Inténtalo de nuevo.');
+    }
+  };
+
+  const handleLogoUrlSave = async (url: any) => {
+    if (!effectiveInstitutionId) return;
+    const trimmedUrl = typeof url === 'string' ? url.trim() : '';
+    // Delete previously uploaded file if one exists.
+    const previousStoragePath = customizationForm.logoStoragePath;
+    if (previousStoragePath) {
+      try {
+        await deleteObject(ref(getStorage(db.app), previousStoragePath));
+      } catch { /* ignore deletion errors — file may already be gone */ }
+    }
+    try {
+      await updateDoc(doc(db, 'institutions', effectiveInstitutionId), {
+        'customization.logoUrl': trimmedUrl,
+        'customization.logoStoragePath': '',
+        updatedAt: serverTimestamp(),
+      });
+      setCustomizationForm(prev => ({ ...prev, logoUrl: trimmedUrl, logoStoragePath: '' }));
     } catch {
       setCustomizationError('No se pudo guardar el logo por URL. Inténtalo de nuevo.');
     }
@@ -230,6 +310,7 @@ export const useCustomization = (user, institutionIdOverride = null) => {
             cardBorder: incomingFormValues.cardBorder,
             cardBackground: HOME_THEME_DEFAULT_COLORS.cardBackground,
           }),
+          browserTabTitle: incomingFormValues.browserTabTitle ?? customizationForm.browserTabTitle ?? '',
         }
       : customizationForm;
 
@@ -258,6 +339,7 @@ export const useCustomization = (user, institutionIdOverride = null) => {
         'customization.home.colors': resolvedColors,
         'customization.homeThemeTokens': HOME_THEME_TOKENS,
         'customization.home.tokens': HOME_THEME_TOKENS,
+        'customization.browserTabTitle': typeof nextCustomizationForm.browserTabTitle === 'string' ? nextCustomizationForm.browserTabTitle.trim() : '',
         updatedAt: serverTimestamp(),
       });
 
@@ -272,6 +354,54 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     }
   };
 
+  const handleSaveThemeSet = async ({ name, colors }: any = {}) => {
+    if (!effectiveInstitutionId) return null;
+
+    const normalizedName = String(name || '').trim();
+    if (!normalizedName) {
+      throw new Error('El nombre del tema es obligatorio.');
+    }
+
+    const normalizedColors = normalizeThemeSetColors(colors || {});
+    const themeSetId = `theme_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    setCustomizationError('');
+    setCustomizationSuccess('');
+
+    try {
+      const institutionRef = doc(db, 'institutions', effectiveInstitutionId);
+      await updateDoc(institutionRef, {
+        [`customization.themeSets.${themeSetId}`]: {
+          id: themeSetId,
+          name: normalizedName,
+          colors: normalizedColors,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+        updatedAt: serverTimestamp(),
+      });
+
+      const localThemeSet = {
+        id: themeSetId,
+        name: normalizedName,
+        colors: normalizedColors,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setSavedThemeSets((previous: any[]) => (
+        [...previous, localThemeSet]
+          .sort((left: any, right: any) => String(left?.name || '').localeCompare(String(right?.name || ''), 'es', { sensitivity: 'base' }))
+      ));
+      setCustomizationSuccess(`Tema "${normalizedName}" guardado correctamente.`);
+      return localThemeSet;
+    } catch (error) {
+      console.error('Error saving customization theme set:', error);
+      setCustomizationError('No se pudo guardar el tema personalizado. Inténtalo de nuevo.');
+      throw error;
+    }
+  };
+
   const customizationInitialValues = {
     institutionName: customizationForm.institutionDisplayName || institutionName || '',
     logoUrl: customizationForm.logoUrl || '',
@@ -281,12 +411,14 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     mutedText: HOME_THEME_DEFAULT_COLORS.mutedText,
     cardBorder: customizationForm.homeThemeColors?.cardBorder || HOME_THEME_DEFAULT_COLORS.cardBorder,
     cardBackground: HOME_THEME_DEFAULT_COLORS.cardBackground,
+    browserTabTitle: customizationForm.browserTabTitle || '',
   };
 
   return {
     institutionName,
     customizationForm,
     setCustomizationForm,
+    savedThemeSets,
     customizationLoading,
     customizationSaving,
     customizationError,
@@ -295,8 +427,10 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     iconUploadError,
     handleIconUpload,
     handleLogoUpload,
+    handleIconUrlSave,
     handleLogoUrlSave,
     handleSaveCustomization,
+    handleSaveThemeSet,
     customizationInitialValues,
   };
 };

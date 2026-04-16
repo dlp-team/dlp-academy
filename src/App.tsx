@@ -1,6 +1,7 @@
-// src/App.jsx
+// src/App.tsx
 import React, { useState, useEffect, ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'; // Import Firestore functions
 import { auth, db } from './firebase/config'; // Import db
@@ -12,12 +13,12 @@ import Register from './pages/Auth/Register';
 import Profile from './pages/Profile/Profile';
 import OnboardingWizard from './pages/Onboarding/components/OnboardingWizard';
 import AdminPasswordWizard from './pages/Auth/components/AdminPasswordWizard';
+import EmailVerificationPage from './pages/Auth/EmailVerificationPage';
 import Settings from './pages/Settings/Settings';
 import Notifications from './pages/Notifications/Notifications';
 
 // Main app pages
 import Home from './pages/Home/Home';
-import CustomScrollbar from './components/ui/CustomScrollbar';
 import Subject from './pages/Subject/Subject';
 import Topic from './pages/Topic/Topic';
 import Quizzes from './pages/Quizzes/Quizzes';
@@ -43,7 +44,17 @@ import { isInstitutionPreviewThemeMessage } from './utils/institutionPreviewProt
 
 const ACTIVE_ROLE_STORAGE_KEY_PREFIX = 'dlp_active_role_';
 const ACTIVE_ROLE_CHANGE_EVENT = 'dlp-active-role-change';
+const THEME_PREVIEW_SESSION_KEY = 'dlp_theme_preview_active';
 const VALID_ROLES = new Set(['student', 'teacher', 'institutionadmin', 'admin']);
+const GLOBAL_SCROLLBAR_OPTIONS = {
+  scrollbars: {
+    theme: 'os-theme-dlp',
+    autoHide: 'scroll',
+    autoHideDelay: 140,
+    clickScroll: true,
+    dragScroll: true,
+  },
+} as const;
 
 const buildActiveRoleStorageKey = (uid: any) => {
   if (!uid) return null;
@@ -119,6 +130,28 @@ const TeacherStudentDetailViewPage: any = TeacherStudentDetailView;
 const StudentDashboardPage: any = StudentDashboard;
 const ThemePreviewPage: any = ThemePreview;
 
+const ThemePreviewEscapeGuard = () => {
+  const location = useLocation();
+
+  if (typeof window === 'undefined') return null;
+
+  const isIframe = window.self !== window.top;
+  if (!isIframe) return null;
+
+  let previewSessionActive = false;
+  try {
+    previewSessionActive = window.sessionStorage.getItem(THEME_PREVIEW_SESSION_KEY) === '1';
+  } catch {
+    previewSessionActive = false;
+  }
+
+  if (!previewSessionActive) return null;
+  if (location.pathname.startsWith('/theme-preview')) return null;
+
+  const redirectPath = `/theme-preview${location.pathname}${location.search || ''}`;
+  return <Navigate to={redirectPath} replace />;
+};
+
 // Updated ProtectedRoute to handle Role Checks
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -146,6 +179,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   
   // 2. Not Logged In? -> Login
   if (!user) return <Navigate to="/login" />;
+
+  // 2.5. Email verification gate: redirect email/password users who haven't verified
+  const hasPasswordProvider = Array.isArray(user.providerData)
+    && user.providerData.some((p: any) => p?.providerId === 'password');
+  const hasOnlySocialProviders = Array.isArray(user.providerData)
+    && user.providerData.length > 0
+    && user.providerData.every((p: any) => p?.providerId !== 'password');
+  if (hasPasswordProvider && !hasOnlySocialProviders && user.emailVerified === false) {
+    return <Navigate to="/verify-email" />;
+  }
 
   if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
     const activeRole = getActiveRole(user);
@@ -354,6 +397,8 @@ body[data-dlp-preview-highlight]::after {
         const baseUser = {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
+          emailVerified: firebaseUser.emailVerified,
+          providerData: firebaseUser.providerData,
           photoURL: firebaseUser.photoURL,
           displayName: firebaseUser.displayName || ''
         };
@@ -424,9 +469,14 @@ body[data-dlp-preview-highlight]::after {
   }, []);
 
   return (
-    <>
-      <CustomScrollbar />
+    <OverlayScrollbarsComponent
+      defer
+      className="app-global-scrollbar"
+      options={GLOBAL_SCROLLBAR_OPTIONS}
+    >
       <BrowserRouter>
+
+        <ThemePreviewEscapeGuard />
 
         {user && <OnboardingWizard user={user} />}
         {user && <AdminPasswordWizard user={user} />}
@@ -435,7 +485,8 @@ body[data-dlp-preview-highlight]::after {
         {/* Public Routes */}
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" />} />
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/home" />} />
-        <Route path="/theme-preview" element={<ThemePreviewPage />} />
+        <Route path="/verify-email" element={user ? <EmailVerificationPage /> : <Navigate to="/login" />} />
+        <Route path="/theme-preview/*" element={<ThemePreviewPage />} />
         <Route path="/" element={<Navigate to={user ? "/home" : "/login"} />} />
 
         {/* Protected Routes */}
@@ -693,7 +744,7 @@ body[data-dlp-preview-highlight]::after {
         <Route path="*" element={<Navigate to="/home" />} />
         </Routes>
       </BrowserRouter>
-    </>
+    </OverlayScrollbarsComponent>
   );
 }
 

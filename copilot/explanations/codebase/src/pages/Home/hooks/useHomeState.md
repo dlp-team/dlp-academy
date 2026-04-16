@@ -1,6 +1,11 @@
 # useHomeState.js
 
 ## Changelog
+### 2026-04-10: Strict Solo Vigentes current-year and active-period eligibility
+- `showOnlyCurrentSubjects` now enforces current academic year membership (legacy no-year records are excluded from this mode).
+- Added period-window validation for subjects with period metadata so only the currently active period remains visible.
+- Lifecycle-active gate (`isSubjectActiveInPeriodLifecycle`) remains in place and is now composed with the stricter current-only eligibility path.
+
 ### 2026-04-03: Lifecycle policy filtering extended beyond grouped buckets
 - Introduced shared lifecycle policy filter application for `usage`/`courses` outputs.
 - Extended post-course and lifecycle filtering to auxiliary subject collections:
@@ -52,7 +57,7 @@
 
 ## Overview
 - **Source file:** `src/hooks/useHomeState.ts`
-- **Last documented:** 2026-04-03
+- **Last documented:** 2026-04-10
 - **Role:** Custom hook with stateful/business logic for this page area.
 
 ## Responsibilities

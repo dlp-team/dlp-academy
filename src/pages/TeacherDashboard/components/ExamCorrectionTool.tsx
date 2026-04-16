@@ -426,7 +426,7 @@ const ExamCorrectionTool = ({ user }: any) => {
                   <ChevronRight size={14} className="text-slate-400" />
                 </button>
               </div>
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-5 h-[calc(100%-2rem)] overflow-y-auto">
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-5 h-[calc(100%-2rem)] overflow-y-auto minimal-scrollbar">
                 <FeedbackPanel annotation={selectedAnnotation} result={result} />
               </div>
             </div>

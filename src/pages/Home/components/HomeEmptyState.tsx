@@ -9,6 +9,7 @@ const HomeEmptyState = ({
     viewMode = 'grid',
     layoutMode = 'grid',
     canCreateSubject = true,
+    selectMode = false,
     cardScale = 100,
     currentFolder = null
 }) => {
@@ -33,7 +34,10 @@ const HomeEmptyState = ({
         return (
             <div className="space-y-2 relative mb-4">
                 <button
-                    onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder })}
+                    onClick={() => {
+                        if (selectMode) return;
+                        setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder });
+                    }}
                     className={homeThemeTokens.dashedCreateCardIndigoClass}
                     style={{
                         minHeight: `${(48 + 32) * scale}px`,
@@ -65,7 +69,10 @@ const HomeEmptyState = ({
                     style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` }}
                 >
                     <button
-                        onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder })}
+                        onClick={() => {
+                            if (selectMode) return;
+                            setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder });
+                        }}
                         className={homeThemeTokens.dashedCreateCardIndigoClass}
                         style={{ aspectRatio: '16 / 10', gap: `${16 * (cardScale / 100)}px` }}
                     >

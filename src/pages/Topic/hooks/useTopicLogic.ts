@@ -1,5 +1,5 @@
 // src/pages/Topic/hooks/useTopicLogic.ts
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
     FileText, Award, Sigma, BookOpen, NotebookPen, Pencil, Target, Trophy 
@@ -14,6 +14,10 @@ import {
 } from '../../../utils/topicDeletionUtils';
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildUserScopedPersistenceKey } from '../../../utils/pagePersistence';
+import {
+    getPreviewMockSubjectById,
+    getPreviewMockTopicDetail,
+} from '../../../utils/previewMockData';
 
 const EMPTY_CONFIRM_DIALOG = {
     isOpen: false,
@@ -27,7 +31,32 @@ const EMPTY_CONFIRM_DIALOG = {
 };
 
 export const useTopicLogic = (user: any) => {
-    const navigate = useNavigate();
+    const routerNavigate = useNavigate();
+    const isPreviewLocked = user?.__previewLock === true;
+    const navigate = useCallback((to: any, options: any = undefined) => {
+        if (
+            isPreviewLocked
+            && typeof to === 'string'
+            && to.startsWith('/')
+            && !to.startsWith('/theme-preview')
+        ) {
+            const previewTarget = `/theme-preview${to}`;
+            if (options === undefined) {
+                routerNavigate(previewTarget);
+                return;
+            }
+
+            routerNavigate(previewTarget, options);
+            return;
+        }
+
+        if (options === undefined) {
+            routerNavigate(to);
+            return;
+        }
+
+        routerNavigate(to, options);
+    }, [isPreviewLocked, routerNavigate]);
     const { subjectId, topicId } = useParams();
     const fileInputRef = useRef<any>(null);
     const toastTimerRef = useRef<any>(null);
@@ -48,6 +77,7 @@ export const useTopicLogic = (user: any) => {
     const normalizedProfileRole = getNormalizedRole(user);
     const activeRole = getActiveRole(user);
     const isStudentRole = normalizedProfileRole === 'student' && activeRole === 'student';
+    const isPreviewMockMode = user?.__previewMockData === true;
     
     // Notificaciones
     const [toast, setToast] = useState({ show: false, message: '' });
@@ -128,6 +158,23 @@ export const useTopicLogic = (user: any) => {
 
     // --- CARGA DE DATOS ---
     useEffect(() => {
+        if (isPreviewMockMode) {
+            const previewSubject = getPreviewMockSubjectById(subjectId);
+            const previewTopic = getPreviewMockTopicDetail(topicId, subjectId);
+
+            if (!previewSubject || !previewTopic) {
+                setLoading(false);
+                navigate('/home');
+                return () => {};
+            }
+
+            setSubject(previewSubject);
+            setTopic(previewTopic);
+            setLoading(false);
+
+            return () => {};
+        }
+
         let unsubscribeTopic = () => {};
         let unsubscribeDocs = () => {};
         let unsubscribeQuizzes = () => {};
@@ -340,7 +387,7 @@ export const useTopicLogic = (user: any) => {
             if (unsubscribeExamns) unsubscribeExamns();
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         };
-    }, [user, subjectId, topicId, navigate, isStudentRole]);
+    }, [user, subjectId, topicId, navigate, isStudentRole, isPreviewMockMode]);
 
     // --- HELPERS VISUALES ---
     const getFileVisuals = (type: any) => {

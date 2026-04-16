@@ -14,6 +14,7 @@ vi.mock('../../../src/firebase/config', () => ({
     currentUser: {
       uid: 'institution-admin-1',
       email: 'inst.admin@test.com',
+      providerData: [{ providerId: 'password' }],
     },
   },
 }));

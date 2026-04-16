@@ -1,6 +1,23 @@
-# FolderListItem.jsx
+# FolderListItem.tsx
 
 ## Changelog
+### 2026-04-12: Folder list modifier-click navigation wiring
+- Folder list rows now pass `selectionKey` and `selectedItemKeys` into `useGhostDrag` for grouped drag previews.
+- Ctrl/Cmd clicks now route through `onNavigate(item, event)` to support Home-level selection shortcuts:
+  - outside selection mode: auto-start selection,
+  - inside selection mode: open folder while selection mode stays enabled.
+
+### 2026-04-10: Collapsed children spacing regression fix
+- Added children wrapper test hooks (`folder-list-children-shell-*` and `folder-list-children-content-*`) to make expanded/collapsed spacing behavior verifiable.
+- Updated nested children wrapper classes to clip collapsed state (`overflow-hidden pb-0`) while preserving expanded selection-ring safety (`overflow-visible pb-1`).
+
+### 2026-04-10: Folder-row multi-drag and ring-clip follow-up
+- Folder list rows now pass selection-aware `multiDragCount` into `useGhostDrag` and mark drag roots with `data-selection-key`.
+- Expanded-children container switched to visible overflow with bottom spacing to avoid nested selected-ring clipping on lower edges.
+
+### 2026-04-09: Nested selection-ring clipping remediation
+- Added horizontal spacing (`px-2`) to the expanded children container to prevent selected-row ring visuals from being cropped in nested list mode.
+
 ### 2026-04-07: Selection-mode row click behavior parity
 - Folder row click now toggles selection when Home selection mode is active.
 - Preserves expand/collapse interactions and non-selection navigation paths.
@@ -15,8 +32,8 @@
 - Enables nested list rows to stay in sync with Home selection-mode emphasis behavior.
 
 ## Purpose
-- **Source file:** `src/components/modules/ListItems/FolderListItem.jsx`
-- **Last documented:** 2026-04-05
+- **Source file:** `src/components/modules/ListItems/FolderListItem.tsx`
+- **Last documented:** 2026-04-10
 - **Role:** Feature module component composed by pages and higher-level views.
 
 ## File Flow (High Level)

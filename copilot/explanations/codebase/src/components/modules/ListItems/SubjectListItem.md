@@ -1,6 +1,10 @@
 # SubjectListItem.jsx
 
 ## Changelog
+### 2026-04-12: Subject row click events now preserve modifier keys
+- Subject list row `onClick` now forwards the click event to `onSelect(subject.id, event)`.
+- Enables Home-level modifier handling (`Ctrl/Cmd`, `Shift`) for selection-mode shortcuts and range selection.
+
 ### 2026-04-07: Centralized menu portal and positioning logic
 - Replaced in-file `createPortal` shell and close-layer duplication with shared [ContextActionMenuPortal](../../shared/ContextActionMenuPortal.md).
 - Replaced in-file menu position calculations with shared [menuPositionUtils](../../shared/menuPositionUtils.md).

@@ -42,3 +42,11 @@ Track risks discovered during implementation/review that are important but outsi
 	Why Out of Scope: Resolving historical branch content and sanitizing legacy documentation spans prior unrelated work blocks and requires coordinated cleanup policy.
 	Recommended Follow-up: Perform dedicated branch-history/docs sanitization pass, then enforce stricter regexes for scans that differentiate real secrets from policy/example text.
 	Owner/Status: IN_PROGRESS - remediation plan started at [copilot/plans/active/credential-scan-false-positive-remediation-2026-04-04/README.md](copilot/plans/active/credential-scan-false-positive-remediation-2026-04-04/README.md)
+
+- Date: 2026-04-28
+	Plan/Phase: [copilot/plans/active/institution-admin-platform-improvements-apr-2026/phases/phase-07-optimization-inreview.md](copilot/plans/active/institution-admin-platform-improvements-apr-2026/phases/phase-07-optimization-inreview.md)
+	Related Files: [src/pages/Home/components/BinView.tsx](src/pages/Home/components/BinView.tsx)
+	Risk Summary: `BinView.tsx` is 1052 lines, exceeding the ~500-line split threshold. This file size was pre-existing before this plan.
+	Why Out of Scope: Splitting BinView safely requires extracting multiple subcomponents and re-validating selection, drag, restore, and delete flows end-to-end.
+	Recommended Follow-up: Create a dedicated `home-binview-refactor` plan to extract BinHeader, BinSelectionToolbar, and BinItemList components from BinView.
+	Owner/Status: OPEN - requires dedicated refactor plan

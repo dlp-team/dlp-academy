@@ -1,5 +1,26 @@
 # App.tsx
 
+## [2026-04-12] Global OverlayScrollbars Host Integration
+
+### Change
+- Wrapped the full app shell (`BrowserRouter` tree) with `OverlayScrollbarsComponent`.
+- Added shared overlay scrollbar options in `App.tsx` using custom theme `os-theme-dlp` and `autoHide: scroll` behavior.
+- Kept prior `CustomScrollbar` helper unmounted from root flow.
+
+### Impact
+- Global page scrolling now uses a true overlay scrollbar host that does not reflow page layout when scrollbar visibility changes.
+- Scrollbar thumb styling remains theme-reactive via shared CSS tokens in `src/index.css`.
+
+## [2026-04-12] Global Scrollbar Runtime Decoupling
+
+### Change
+- Removed `CustomScrollbar` mount from the app root render tree.
+- Kept global scrollbar behavior fully CSS-driven in `src/index.css`, so runtime class toggling is no longer required for standard app navigation.
+
+### Impact
+- App startup no longer depends on a mount-time DOM class side effect to activate scrollbar styling.
+- Theme responsiveness for scrollbar visuals is now tied directly to CSS variables under `.dark` and updates immediately with theme mode changes.
+
 ## [2026-04-08] Public Theme Preview Route
 
 ### Change

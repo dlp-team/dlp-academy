@@ -1,3 +1,4 @@
+<!-- copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md -->
 # Autopilot Execution Checklist - Multi-Agent Workflow
 
 **Purpose:** Step-by-step checklist for autopilot following ALL required steps in correct sequence for multi-agent collaboration. Nothing is skipped.
@@ -17,7 +18,21 @@
   - [ ] Is this a new feature, bug fix, refactor, or chore?
   - [ ] Are there any dependencies or prerequisites?
 - [ ] **Document assessment** in session memory `/memories/session/`
-- [ ] **Assessment complete** → Continue to Step 1
+- [ ] **Assessment complete** → Continue to Step 0.5
+
+### Step 0.5: Check for AUTOPILOT_PLAN (Plan Auto-Detection)
+
+- [ ] **IF no plan has been assigned to this task:**
+  - [ ] If prompt/chat references `AUTOPILOT_PLAN.md` or says "autopilot plan", treat this as an explicit intake trigger and run this step immediately.
+  - [ ] Check for file named exactly: `copilot/plans/AUTOPILOT_PLAN.md` or with the exact final file name: `AUTOPILOT_PLAN.md`.
+  - [ ] IF file exists:
+    - [ ] Read the plan to understand scope and approach
+    - [ ] Plan structure will be processed in Step 6 (Create or Reference Plan)
+    - [ ] Mark for plan intake: This plan will be moved and renamed when creating the plan package
+    - [ ] Continue to Step 1
+  - [ ] IF file does NOT exist:
+    - [ ] Proceed normally to Step 1 (plan creation in Step 6)
+- [ ] Continue to Step 1
 
 ---
 
@@ -27,8 +42,10 @@
 
 - [ ] **Establish agent identity:**
   - [ ] Read local environment variable: `COPILOT_PC_ID`
-  - [ ] Confirm value (e.g., `pc1`, `pc2`, etc.)
-  - [ ] Use this value throughout workflow for branch ownership
+  - [ ] Confirm value is NOT empty (e.g., `pc1`, `pc2`, etc.)
+  - [ ] IF missing/empty: **STOP IMMEDIATELY** (no file edits, no plan changes, no commits)
+  - [ ] Use this value throughout workflow for branch ownership validation
+- [ ] Run: `git branch --show-current` and capture current branch name
 - [ ] Run: `git fetch origin && git checkout development && git pull origin development`
 - [ ] Read: `copilot/BRANCHES_STATUS.md` (lives on development branch)
 - [ ] Analyze existing branches:
@@ -65,8 +82,19 @@
   - [ ] Run: `git checkout -b feature/<this-pc-id>/<subtask-name>`
   - [ ] Continue to Step 3a
 
-### Step 3a: REGISTER NEW BRANCH IN BRANCHES_STATUS.md
+**Option D: Plan Isolation Child Branch (MANDATORY)**
+- [ ] IF currently on a feature branch whose `parent-branch` is `development`
+- [ ] AND a new plan (new scope/package under `copilot/plans/`) is requested
+- [ ] Then: **DO NOT execute the new plan on the current branch**
+  - [ ] Run: `git checkout <current-branch> && git pull origin <current-branch>`
+  - [ ] Run: `git checkout -b feature/<this-pc-id>/<new-plan-name>`
+  - [ ] Set `<current-branch>` as `parent-branch` in the new branch `BRANCH_LOG.md`
+  - [ ] Continue to Step 3a on the child branch
 
+### Step 3a: REGISTER NEW BRANCH IN BRANCHES_STATUS.md (MANDATORY IMMEDIATE ON DEVELOPMENT)
+
+- [ ] This step is REQUIRED immediately after creating any new branch (Option B, C, or D)
+- [ ] Do NOT start implementation or plan edits until this registration is committed and pushed on `development`
 - [ ] Return to development: `git checkout development && git pull origin development`
 - [ ] Edit: `copilot/BRANCHES_STATUS.md`
 - [ ] Add new row with:
@@ -77,7 +105,7 @@
     - [ ] `locked-private` - Strictly isolated, only owner can modify (single-person work)
     - [ ] `locked-active` - Shared branch, actively being modified now (owner working, others blocked)
     - [ ] `unlocked-idle` - Shared branch at rest (any agent can claim by changing to locked-active)
-  - [ ] Summary: Brief description of work
+  - [ ] Summary: Brief but explicit description of the new branch objective (required)
   - [ ] Plan Path: (will fill in after creating plan)
   - [ ] Files: (will fill in after implementation)
   - [ ] Date: Today's date
@@ -87,38 +115,72 @@
   - [ ] `git commit -m "chore(branches): register feature/<pc-id>/<task-name>"`
   - [ ] `git push origin development`
 - [ ] Return to feature branch: `git checkout feature/<pc-id>/<task-name>`
-- [ ] Continue to Step 3b
+- [ ] Continue to Step 3c
 
 ### Step 3b: READ EXISTING BRANCH CONTEXT (if using existing branch)
 
 - [ ] IF using an existing branch (from Option A), read branch-level context:
   - [ ] File: `BRANCH_LOG.md` at root of branch (or `copilot/branch-logs/BRANCH_LOG.md`)
+  - [ ] Confirm BRANCH_LOG branch identity:
+    - [ ] Current branch name in log matches `git branch --show-current`
+    - [ ] If branch was created from another branch, derived-from branch is explicitly recorded
   - [ ] Which plans are associated with this branch?
+  - [ ] For each related plan entry, check origin branch metadata:
+    - [ ] Keep entries from current branch lineage (same branch and direct ancestor branch)
+    - [ ] Mark external entries (other branches) as external reference, do not mix into lineage
   - [ ] What work has already been completed?
   - [ ] What is the current status?
   - [ ] Are there any external comments or notes?
   - [ ] What files have been touched?
 - [ ] Understand the existing work before proceeding
-- [ ] Continue to Step 4
+  - [ ] Continue to Step 3c
+
+### Step 3c: BRANCH PERMISSION HARD GATE (NO EDITS BEFORE PASS)
+
+- [ ] Run: `git branch --show-current` and capture `CURRENT_BRANCH`
+- [ ] Verify `CURRENT_BRANCH` exists in `copilot/BRANCHES_STATUS.md`
+- [ ] Verify branch owner in `copilot/BRANCHES_STATUS.md` matches `COPILOT_PC_ID`
+  - [ ] Allowed exception: owner is empty AND branch lock is `unlocked-idle` and will be claimed immediately
+- [ ] Verify branch ownership in `BRANCH_LOG.md` matches `COPILOT_PC_ID` (if `BRANCH_LOG.md` exists)
+- [ ] IF any owner mismatch is found: **STOP IMMEDIATELY** (no file edits, no plan edits, no commits)
+- [ ] IF branch is not authorized for this `COPILOT_PC_ID`: **STOP IMMEDIATELY** and wait for user/human reassignment or move/create a new branch.
+- [ ] Permission gate passed? → Continue to Step 4
 
 ### Step 4: LOCK BRANCH & CREATE BRANCH_LOG.md
 
 - [ ] Ensure on feature branch: `git branch --show-current` (must NOT be main or development)
 - [ ] Create/update: `BRANCH_LOG.md` at root of branch
+  - [ ] Add section: "Branch Identity"
+    - [ ] `current-branch: <branch-name>`
+    - [ ] `parent-branch: <branch-name-or-development>`
+    - [ ] `derived-from-branch: <branch-name-or-none>`
+    - [ ] `lineage-policy: preserve related plans from current/ancestor branch lineage`
   - [ ] **CRITICAL REFERENCE SECTION (TOP OF FILE):**
     - [ ] Workflow Guide: `copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`
     - [ ] Current Step: `4` (UPDATE THIS AFTER EACH PHASE)
+    - [ ] Autopilot Status: `true` (set to true for autopilot runs)
     - [ ] Last Opened: Today's date + time
     - [ ] NOTE: Any copilot working on this branch MUST follow the checklist and track current step
   - [ ] Metadata section:
     - [ ] Created/Updated: Today's date
     - [ ] Owner: `<this-pc-id>`
+    - [ ] Owner validation: `owner == COPILOT_PC_ID` (required)
+    - [ ] Branch permission verified: `true` (required before any implementation step)
     - [ ] Lock Status: Match the value from Step 3a (locked-private, locked-active, or unlocked-idle)
     - [ ] Current Work: Brief summary of what will be done
-  - [ ] Add section: "Related Plans" (will link to plans after creating them)
+  - [ ] Add section: "Related Plans" with lineage metadata per entry:
+    - [ ] plan path
+    - [ ] lifecycle state
+    - [ ] origin branch
+    - [ ] relationship (`current-branch` | `ancestor-branch` | `external-reference`)
   - [ ] Add section: "Touched Files" (will fill in during implementation)
   - [ ] Add section: "External Comments" (for other copilots to leave notes)
-  - [ ] Add section: "Merge Status" (empty for now)
+  - [ ] Add section: "Autopilot Status" with explicit flag (`true` or `false`)
+  - [ ] Add section: "Merge Status" with explicit gate fields:
+    - [ ] `merge-permission: pending-human-approval | approved | denied`
+    - [ ] `approved-by: <human-name-or-id>`
+    - [ ] `approval-date: YYYY-MM-DD`
+    - [ ] `approval-evidence: <link-or-note>`
 - [ ] Commit & push the BRANCH_LOG.md immediately:
   - [ ] `git add BRANCH_LOG.md`
   - [ ] `git commit -m "chore(branch-log): lock ${BRANCH_NAME} for pc<id> - ${SUMMARY} [${LOCK_STATUS}]"`
@@ -159,13 +221,30 @@
 
 ### Step 6: Create or Reference Plan
 
-- [ ] IF multi-step feature: Create comprehensive plan
+- [ ] **Plan Isolation Gate (MANDATORY BEFORE PLAN EXECUTION):**
+  - [ ] If current branch has `parent-branch: development` AND requested work is a new plan, STOP.
+  - [ ] Create a child branch from current branch (Step 2 Option D), then continue on that child branch.
+  - [ ] Record both `parent-branch` and `derived-from-branch` in child `BRANCH_LOG.md`.
+  - [ ] Do NOT run the new plan directly on the parent branch.
+- [ ] **IF AUTOPILOT_PLAN.md was found in Step 0.5:**
+  - [ ] Use create-plan skill with AUTOPILOT_PLAN.md as source
+  - [ ] Create comprehensive plan package
+  - [ ] Move AUTOPILOT_PLAN.md into plan sources folder with rename:
+    - [ ] New location: `copilot/plans/active/plan-name/sources/source-autopilot-user-spec-<plan-topic>.md`
+    - [ ] Delete original: `copilot/plans/AUTOPILOT_PLAN.md`
+    - [ ] Document in plan `README.md`: "Created from user-provided AUTOPILOT_PLAN.md"
+  - [ ] Commit: `git add BRANCH_LOG.md && git commit -m "docs(plan): intake AUTOPILOT_PLAN and create plan package"`
+  - [ ] Push: `git push origin <feature-branch>`
+  - [ ] Continue to implementation
+- [ ] **IF multi-step feature (no AUTOPILOT_PLAN):** Create comprehensive plan
   - [ ] File: `copilot/plans/active/feature-name/README.md`
   - [ ] Include: Scope, roadmap, phases, validation gates
   - [ ] Set status: `active`
-- [ ] IF single-step task: Create lightweight plan OR reference existing plan
+- [ ] **IF single-step task:** Create lightweight plan OR reference existing plan
 - [ ] Update BRANCH_LOG.md:
   - [ ] Add plan path/reference under "Related Plans"
+  - [ ] Append new plan entry; do NOT delete prior entries from current/ancestor branch lineage
+  - [ ] If a previous plan changed lifecycle (example: active -> finished), update that entry path/state instead of removing it
   - [ ] **Update Current Step: `6`** (for next copilot)
   - [ ] Commit: `git add BRANCH_LOG.md && git commit -m "docs(branch-log): link plan references + step 6"`
   - [ ] Push: `git push origin <feature-branch>`
@@ -265,6 +344,7 @@
   - [ ] If NO: Update BRANCH_LOG.md:
     - [ ] **Update Current Step: `16`** (implementation complete, ready for finalization)
     - [ ] Update status to "ready-for-merge"
+    - [ ] Set `Merge Status` to `pending-human-approval` unless already explicitly approved by a real human
     - [ ] Commit & push: `git add BRANCH_LOG.md && git commit -m "docs(branch-log): implementation complete - step 16"`
   - [ ] Continue to Step 17 (finalization)
 
@@ -275,7 +355,8 @@
 ### Step 17: Pre-Merge Synchronization
 
 - [ ] Run: `git fetch origin`
-- [ ] Run: `git pull origin development` (into feature branch)
+- [ ] Read `parent-branch` from `BRANCH_LOG.md`
+- [ ] Run: `git pull origin <parent-branch>` (into feature branch)
 - [ ] Check for merge conflicts locally:
   - [ ] IF conflicts detected: Go to Step 18 (autonomous resolution)
   - [ ] IF no conflicts: Skip to Step 19
@@ -290,13 +371,15 @@
   - [ ] If unclear: Keep BOTH changes combined strategically
 - [ ] After resolving all conflicts:
   - [ ] `git add <conflicted-files>`
-  - [ ] `git commit -m "chore(merge): resolve conflicts with development"`
+  - [ ] `git commit -m "chore(merge): resolve conflicts with parent branch"`
   - [ ] `git push origin <feature-branch>`
 
 ### Step 19: Create Pull Request (Autonomous)
 
 - [ ] Use GitHub CLI:
-  - [ ] `gh pr create --base development --title "feat: <brief description>" --body "$(cat BRANCH_LOG.md)"`
+  - [ ] `gh pr create --base <parent-branch> --title "feat: <brief description>" --body "$(cat BRANCH_LOG.md)"`
+  - [ ] PR base MUST exactly match `parent-branch` in `BRANCH_LOG.md`
+  - [ ] Never override base to `development` unless `parent-branch` is `development`
   - [ ] PR body includes BRANCH_LOG.md content (what was done, plans, references)
 - [ ] PR created? → Continue to Step 20
 
@@ -311,15 +394,30 @@
   - [ ] Checks re-run
   - [ ] Repeat until green
 
-### Step 21: Autonomous Merge Decision
+### Step 21: Human-Authorized Merge Gate
 
+- [ ] Read `BRANCH_LOG.md` merge metadata before any merge action
+- [ ] Read and capture `parent-branch` from `BRANCH_LOG.md`
+- [ ] Verify PR base branch equals `parent-branch`
+- [ ] IF PR base does NOT equal `parent-branch`: **STOP MERGE FLOW** and fix PR target
+- [ ] Check `Autopilot Status`:
+  - [ ] IF `autopilot-active: true`, do NOT use `vscode/askQuestions` to request merge permission
+  - [ ] IF `autopilot-active: true`, merge is blocked until `Merge Status` is explicitly approved by a real human
 - [ ] Check PR status:
-  - [ ] IF all checks green AND no merge conflicts: Proceed with merge
+  - [ ] IF all checks green AND no merge conflicts: continue to merge gate
   - [ ] IF merge conflicts exist: Go back to Step 18 (resolve manually)
-- [ ] Run: `gh pr merge --squash --delete-branch` (merge and clean up)
-- [ ] **After merge, return to development branch:**
-  - [ ] `git checkout development`
+- [ ] Check `Merge Status`:
+  - [ ] IF `merge-permission: approved` and human approver metadata exists: Proceed
+  - [ ] IF `merge-permission: pending-human-approval` or `denied`: Stop merge flow, update BRANCH_LOG.md, and wait for human update
+- [ ] Run (only when approved): `gh pr merge --squash --delete-branch` (merge and clean up)
+- [ ] **After merge, return to parent branch:**
+  - [ ] `git checkout <parent-branch>`
   - [ ] (Feature branch deleted by GitHub; local checkout prevents being in deleted branch)
+  - [ ] If `parent-branch == development`:
+    - [ ] **DELETE BRANCH_LOG.md if it exists on development:**
+    - [ ] Run: `rm BRANCH_LOG.md` (if file exists in root)
+    - [ ] Commit: `git add -A && git commit -m "chore(cleanup): remove BRANCH_LOG after merge to development"`
+    - [ ] Push: `git push origin development`
 - [ ] Branch merged & deleted automatically
 
 ### Step 22: Update BRANCHES_STATUS.md & Mark for Deletion
@@ -329,7 +427,10 @@
 - [ ] Find row for the merged branch and update:
   - [ ] Status: `pending-delete` (NOT ~~merged~~ or ~~archived~~)
   - [ ] Pending-Delete Date: Today's date (YYYY-MM-DD format)
-  - [ ] Notes: Append "Merged into development on [date]; will be auto-deleted on [date+7days]"
+  - [ ] Notes: Append "Merged into <parent-branch> on [date]; will be auto-deleted on [date+7days]"
+- [ ] **IF new tasks were performed on this branch:**
+  - [ ] Update: Related `BRANCH_LOG` or `BRANCHES_STATUS` with new task logs
+  - [ ] Document progress in notes for audit trail
 - [ ] **Important:** Only delete the row if the branch will absolutely never be needed (rare case)
   - [ ] Normally: Keep row visible with `pending-delete` status for 7-day grace period
   - [ ] If retention needed: Set Status to `retained` and document reason instead
@@ -383,7 +484,7 @@
   - [ ] All tests passing
   - [ ] All documentation updated
   - [ ] All commits pushed
-  - [ ] Branch merged into development
+  - [ ] Branch merged into parent branch
   - [ ] BRANCHES_STATUS.md updated
   - [ ] Leverage question answered affirmatively
 - [ ] **CALL task_complete()**
@@ -398,6 +499,9 @@
 4. **Merge conflict unresolvable:** Cannot logically resolve → LOG & REQUEST DIRECTION
 5. **Framework mismatch:** `.github/` differs from development → REBASE/MERGE before coding
 6. **Deletion failure:** Cannot delete expired branch → LOG WITH BRANCH NAME & REASON, continue
+7. **Missing identity:** `COPILOT_PC_ID` missing/empty → STOP before any edits
+8. **Owner mismatch:** branch owner does not match `COPILOT_PC_ID` → STOP before any edits
+9. **Wrong merge target:** PR base does not match `parent-branch` in BRANCH_LOG → STOP merge
 
 ---
 
@@ -409,7 +513,7 @@
 | Branch Strategy | 1-4 | Decide branch, lock it | Branch locked with pc_id |
 | Load Context | 5-6 | Load frameworks, create plan | Context ready |
 | Implementation | 7-16 | Implement, validate, commit, push | Tests green |
-| Finalization | 17-22 | Merge, sync status, mark for deletion | Merged into development |
+| Finalization | 17-22 | Merge, sync status, mark for deletion | Merged into parent branch |
 | Cleanup | 22.5 | Auto-delete expired branches | Expired branches removed |
 | Closure | 23-24 | Final question, task_complete() | User confirms |
 
@@ -439,7 +543,7 @@
 
 ---
 
-**Version:** 2.1 (Multi-Agent Workflow + Branch Lifecycle Automation)  
-**Date Updated:** April 7, 2026  
+**Version:** 2.2 (Strict Ownership + Parent-Branch Merge Enforcement)  
+**Date Updated:** April 14, 2026  
 **Status:** ACTIVE  
 **Use Cases:** All autopilot tasks in multi-agent environments

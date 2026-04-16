@@ -77,8 +77,7 @@ describe('BinSelectionOverlay', () => {
     expect(screen.getByTestId('selected-card-clone')).toBeTruthy();
     const backdrop = screen.getByTestId('bin-selection-overlay-backdrop');
     expect(backdrop.className).not.toContain('backdrop-blur');
-    expect(backdrop.className).toContain('bg-slate-900/30');
-    expect(backdrop.className).toContain('dark:bg-slate-950/55');
+    expect(backdrop.className).toContain('bg-transparent');
 
     expect(screen.getByTestId('bin-selection-panel')).toBeTruthy();
     fireEvent.click(backdrop);

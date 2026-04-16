@@ -1,7 +1,7 @@
 // src/pages/Content/Exam.tsx
 /* eslint-disable react-hooks/error-boundaries */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     ChevronLeft, ChevronRight, Clock, Eye, EyeOff, ClipboardList,
     Trophy, CheckCircle2, ArrowLeft, Sparkles, RotateCcw,
@@ -343,6 +343,7 @@ const CompletionScreen = ({ examData, revealedAnswers, timeLeft, total, gradient
 const Exam = ({ user }) => {
     const { subjectId, topicId, examId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const questionRef = useRef<any>(null);
 
     const [loading, setLoading] = useState(true);
@@ -364,6 +365,25 @@ const Exam = ({ user }) => {
         () => sessionStorage.getItem('dlpPreviewAsStudent') === '1'
     );
 
+    useEffect(() => {
+        if (typeof document === 'undefined') return undefined;
+
+        const previousHeaderOffset = document.body.style.getPropertyValue('--app-fixed-header-height');
+
+        document.body.classList.add('has-fixed-header');
+        document.body.style.setProperty('--app-fixed-header-height', '6rem');
+
+        return () => {
+            document.body.classList.remove('has-fixed-header');
+
+            if (previousHeaderOffset) {
+                document.body.style.setProperty('--app-fixed-header-height', previousHeaderOffset);
+            } else {
+                document.body.style.removeProperty('--app-fixed-header-height');
+            }
+        };
+    }, []);
+
     // Load data
     useEffect(() => {
         const load = async () => {
@@ -380,6 +400,19 @@ const Exam = ({ user }) => {
                 setExamNotFound(false);
                 setSubjectLoadWarning('');
                 setExamData(null);
+
+                // Preview mode: use prefetched exam data instead of Firestore
+                const prefetchedExam = (location?.state as any)?.prefetchedExam;
+                const stateSubjectColor = (location?.state as any)?.subjectColor;
+                if (prefetchedExam) {
+                    const questions = prefetchedExam.questions || [];
+                    setExamData({ ...prefetchedExam, questions });
+                    if (stateSubjectColor) {
+                        setTopicGradient(stateSubjectColor);
+                    }
+                    setLoading(false);
+                    return;
+                }
 
                 try {
                     if (subjectId) {
@@ -433,7 +466,7 @@ const Exam = ({ user }) => {
             }
         };
         load();
-    }, [subjectId, examId, navigate, user]);
+    }, [subjectId, examId, navigate, user, location?.state]);
 
 
     // Timer

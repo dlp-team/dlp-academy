@@ -1,3 +1,13 @@
+## [2026-04-12] Selection Batch Routing for Promote Zone
+### Behavior Updates
+- Promote-zone drops now honor selection-mode batch routing.
+- If the dragged element belongs to the current selected set, promote-zone drop dispatches `onDropSelectedItems(currentFolder.parentId)` instead of single-item promote handlers.
+- This preserves batch confirmation/share-rule behavior for the "mover a carpeta anterior" drop target.
+
+### Validation Additions
+- Extended `tests/unit/hooks/useHomeContentDnd.test.js` with:
+	- selected-subject promote-zone drop -> bulk move route.
+
 ## [2026-04-08] Selection-Mode Batch Drag/Drop Parity
 ### Behavior Updates
 - Added selection-aware drop routing (`onDropSelectedItems`) to root and list drop handlers.

@@ -1,6 +1,8 @@
 # FolderCard.jsx
 
 ## Changelog
+- **2026-04-12:** Folder card click handler now forwards the native click event to `onOpen(folder, event)` so Home can distinguish plain clicks from Ctrl/Cmd modifier interactions in selection mode.
+- **2026-04-10:** Folder cards now pass selection-aware multi-drag counts into `useGhostDrag`, emit `data-selection-key` on the drag root, and participate in grouped drag ghost rendering for selected-item drags.
 - **2026-04-04:** Selection ring classes now resolve from shared utility constants so folder selection visuals match manual/bin parity rules.
 
 ## Purpose

@@ -8,6 +8,7 @@ import { db } from '../firebase/config';
 import { isInvalidFolderMove } from '../utils/folderUtils';
 import { DEFAULT_TOPIC_CASCADE_COLLECTIONS, cascadeDeleteTopicResources } from '../utils/topicDeletionUtils';
 import { getActiveRole } from '../utils/permissionUtils';
+import { PREVIEW_MOCK_FOLDERS } from '../utils/previewMockData';
 
 export const useFolders = (user: any) => {
     const [folders, setFolders] = useState<any[]>([]);
@@ -16,6 +17,7 @@ export const useFolders = (user: any) => {
     const normalizedRole = getActiveRole(user);
     const isStudentRole = normalizedRole === 'student';
     const canReadHomeData = Boolean(normalizedRole && user?.displayName);
+    const isPreviewMockMode = user?.__previewMockData === true;
 
     const debugShare = (stage, payload = {}) => {
         console.info('[SHARE_DEBUG][folder]', {
@@ -29,6 +31,12 @@ export const useFolders = (user: any) => {
     };
 
     useEffect(() => {
+        if (isPreviewMockMode) {
+            setFolders(PREVIEW_MOCK_FOLDERS.map((folder: any) => ({ ...folder })));
+            setLoading(false);
+            return;
+        }
+
         // Students should not subscribe to folders because rules intentionally deny folder reads.
         if (!user || !canReadHomeData || isStudentRole) {
             setFolders([]);
@@ -99,7 +107,7 @@ export const useFolders = (user: any) => {
         );
 
         return () => { unsubscribeOwned(); unsubscribeShared(); };
-    }, [user, currentInstitutionId, canReadHomeData, isStudentRole]);
+    }, [user, currentInstitutionId, canReadHomeData, isStudentRole, isPreviewMockMode]);
 
     const applyBatchOperationsInChunks = async (operations: any[] = [], chunkSize = 450) => {
         for (let index = 0; index < operations.length; index += chunkSize) {

@@ -17,7 +17,7 @@ export default function useSettingsPageState({ user, db }: any) {
 
   const [settings, setSettings] = useState({
     theme: 'system',
-    headerThemeSliderEnabled: true,
+    headerThemeSliderEnabled: false,
     language: 'es',
     viewMode: 'grid',
     rememberSort: true,
@@ -41,7 +41,7 @@ export default function useSettingsPageState({ user, db }: any) {
           ? data.headerThemeSliderEnabled
           : dataSettings.headerThemeSliderEnabled !== undefined
             ? dataSettings.headerThemeSliderEnabled
-            : true;
+            : false;
         setSettings(prev => ({
           ...prev,
           theme: nextTheme,

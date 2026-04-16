@@ -93,6 +93,11 @@ const colorDistance = (a: string, b: string) => {
   return Math.sqrt((ra.r - rb.r) ** 2 + (ra.g - rb.g) ** 2 + (ra.b - rb.b) ** 2);
 };
 
+const isFirebaseStorageUrl = (value: any) => {
+  if (typeof value !== 'string') return false;
+  return value.includes('firebasestorage.googleapis.com') || value.includes('storage.googleapis.com');
+};
+
 // ─── Palette Suggestion Strip ────────────────────────────────────────────────
 
 const PaletteStrip = ({ colors, onApply, isLoading }: any) => {
@@ -157,7 +162,9 @@ const ImageCard = ({
   const [palette, setPalette] = useState<string[]>([]);
   const [paletteLoading, setPaletteLoading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
-  const [urlDraft, setUrlDraft] = useState(url || '');
+  const [urlDraft, setUrlDraft] = useState(() => {
+    return isFirebaseStorageUrl(url) ? '' : (url || '');
+  });
   const urlRef = useRef<any>(null);
 
   const isIcon = type === 'icon';
@@ -173,8 +180,13 @@ const ImageCard = ({
   // Re-analyze whenever URL changes
   React.useEffect(() => {
     if (url) {
-      setUrlDraft(url);
-      analyzeImage(url);
+      const isStorageUrl = isFirebaseStorageUrl(url);
+      setUrlDraft(isStorageUrl ? '' : url);
+      if (isStorageUrl) {
+        setPalette([]);
+      } else {
+        analyzeImage(url);
+      }
     } else {
       setPalette([]);
     }
@@ -337,6 +349,7 @@ const ImageCard = ({
  *  - iconUploading       : boolean
  *  - iconUploadError     : string
  *  - onIconUpload        : (event) => void
+ *  - onIconUrlSave       : (url: string) => void
  *  - onLogoUpload        : (event) => void
  *  - onLogoUrlSave       : (url: string) => void
  *  - onPaletteApply      : ({ token, color }) => void  — preview-only, no Firestore
@@ -347,6 +360,7 @@ const BrandingSection = ({
   iconUploading,
   iconUploadError,
   onIconUpload,
+  onIconUrlSave,
   onLogoUpload,
   onLogoUrlSave,
   onPaletteApply,
@@ -367,6 +381,7 @@ const BrandingSection = ({
         uploadError={iconUploadError}
         institutionLabel={institutionName}
         onFileUpload={onIconUpload}
+        onUrlSave={onIconUrlSave}
         onPaletteApply={onPaletteApply}
       />
 

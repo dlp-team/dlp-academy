@@ -24,7 +24,7 @@ const EditTopicModalContent = ({ onClose, topic, onSave }: any) => {
     };
 
     return (
-        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto" style={OVERLAY_TOP_OFFSET_STYLE}>
+        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto clean-scrollbar" style={OVERLAY_TOP_OFFSET_STYLE}>
             <div className="flex min-h-full items-center justify-center p-4">
                 <div 
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 

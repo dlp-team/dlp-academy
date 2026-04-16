@@ -1,5 +1,5 @@
 // src/components/layout/Header.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Settings, Moon, Sun, LayoutDashboard } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -24,6 +24,15 @@ const ROLE_VIEW_LABELS: any = {
   teacher: 'Profesor',
   student: 'Estudiante',
 };
+
+const buildEmptyToastState = () => ({
+  show: false,
+  id: '',
+  title: '',
+  message: '',
+  type: 'info',
+  variant: 'info',
+});
 
 const Header = ({ user }: any) => {
   const navigate = useNavigate();
@@ -61,7 +70,7 @@ const Header = ({ user }: any) => {
 
   // --- 2. USER DATA LOGIC (Cached + Live) ---
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || user?.__previewLock) return;
 
     const cacheKey = `user_profile_${user.uid}`;
     const getUserThemePreference = (profileData: any) => profileData?.theme || profileData?.settings?.theme || 'system';
@@ -139,7 +148,7 @@ const Header = ({ user }: any) => {
   const userData = { ...(user || {}), ...(firestoreUser || {}) };
   const assignedRoles = getAssignedRoles(userData);
   const activeRole = getActiveRole(userData);
-  const canSwitchRole = assignedRoles.length > 1;
+  const canSwitchRole = !userData?.__previewLock && assignedRoles.length > 1;
   const institutionBranding = useInstitutionBranding(userData);
 
   const getDisplayName = () => {
@@ -183,6 +192,19 @@ const Header = ({ user }: any) => {
 
   const dashboardRoute = getDashboardRoute(activeRole);
   const dashboardLabel = getDashboardLabel(activeRole);
+  const previewSafeNavigate = useCallback((path: any) => {
+    if (
+      userData?.__previewLock === true
+      && typeof path === 'string'
+      && path.startsWith('/')
+      && !path.startsWith('/theme-preview')
+    ) {
+      navigate(`/theme-preview${path}`);
+      return;
+    }
+
+    navigate(path);
+  }, [navigate, userData?.__previewLock]);
 
   const handleRoleSwitch = (event: any) => {
     const nextRole = event?.target?.value;
@@ -206,25 +228,76 @@ const Header = ({ user }: any) => {
     isResolvingMoveRequest,
   } = useNotifications(userData);
   const [showPanel, setShowPanel] = useState(false);
-  const [toast, setToast] = useState({ show: false, message: '' });
+  const [toast, setToast] = useState<any>(buildEmptyToastState());
   const prevCountRef = useRef<any>(null);
   const isFirstLoadRef = useRef(true);
   const notificationsTriggerRef = useRef<any>(null);
+  const shownNotificationToastIdsRef = useRef<Set<string>>(new Set());
+
+  const notificationToastStorageKey = userData?.uid
+    ? `dlp-seen-notification-toasts:${userData.uid}`
+    : null;
+
+  const persistSeenNotificationToastIds = useCallback((nextIds: Set<string>) => {
+    if (!notificationToastStorageKey || typeof window === 'undefined') return;
+
+    try {
+      window.sessionStorage.setItem(
+        notificationToastStorageKey,
+        JSON.stringify(Array.from(nextIds))
+      );
+    } catch (error) {
+      console.error('Error persisting seen notification toast ids:', error);
+    }
+  }, [notificationToastStorageKey]);
+
+  useEffect(() => {
+    shownNotificationToastIdsRef.current = new Set();
+
+    if (!notificationToastStorageKey || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const rawStoredIds = window.sessionStorage.getItem(notificationToastStorageKey);
+      if (!rawStoredIds) return;
+
+      const parsedStoredIds = JSON.parse(rawStoredIds);
+      if (!Array.isArray(parsedStoredIds)) return;
+
+      shownNotificationToastIdsRef.current = new Set(
+        parsedStoredIds
+          .map((entry: any) => String(entry || '').trim())
+          .filter(Boolean)
+      );
+    } catch (error) {
+      console.error('Error restoring seen notification toast ids:', error);
+      shownNotificationToastIdsRef.current = new Set();
+    }
+  }, [notificationToastStorageKey]);
 
   const handleResolveMoveRequest = async (notification: any, resolution: any) => {
     try {
       await resolveMoveRequestFromNotification(notification, resolution);
       setToast({
         show: true,
+        id: `shortcut-resolution-${notification?.id || Date.now()}-${resolution}`,
+        title: 'Solicitud procesada',
         message: resolution === 'approved'
           ? 'Solicitud aprobada correctamente.'
           : 'Solicitud rechazada correctamente.',
+        type: notification?.type || 'shortcut_move_request',
+        variant: resolution === 'approved' ? 'success' : 'warning',
       });
     } catch (error) {
       console.error('Error resolving shortcut move request notification:', error);
       setToast({
         show: true,
+        id: `shortcut-resolution-error-${notification?.id || Date.now()}`,
+        title: 'Error al procesar',
         message: 'No se pudo procesar la solicitud de movimiento.',
+        type: notification?.type || 'shortcut_move_request',
+        variant: 'error',
       });
     }
   };
@@ -241,14 +314,57 @@ const Header = ({ user }: any) => {
       return;
     }
 
-    const newest = notifications[0];
+    const newest = notifications.find((notification: any) => {
+      const notificationId = String(notification?.id || '').trim();
+      return Boolean(notificationId) && !shownNotificationToastIdsRef.current.has(notificationId);
+    });
+
+    if (!newest) {
+      prevCountRef.current = notifications.length;
+      return;
+    }
+
+    const newestNotificationId = String(newest?.id || '').trim();
+    if (newestNotificationId) {
+      const nextSeenIds = new Set(shownNotificationToastIdsRef.current);
+      nextSeenIds.add(newestNotificationId);
+      shownNotificationToastIdsRef.current = nextSeenIds;
+      persistSeenNotificationToastIds(nextSeenIds);
+    }
+
     const toastTimer = setTimeout(() => {
-      setToast({ show: true, message: newest?.message || '¡Un tema tiene contenido listo!' });
+      setToast({
+        show: true,
+        id: newestNotificationId,
+        title: newest?.title || 'Nueva notificacion',
+        message: newest?.message || 'Tienes una nueva notificacion.',
+        type: newest?.type || 'info',
+        variant: 'info',
+      });
     }, 0);
 
     prevCountRef.current = notifications.length;
     return () => clearTimeout(toastTimer);
-  }, [notifications]);
+  }, [notifications, persistSeenNotificationToastIds]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+
+    const previousHeaderOffset = document.body.style.getPropertyValue('--app-fixed-header-height');
+
+    document.body.classList.add('has-fixed-header');
+    document.body.style.setProperty('--app-fixed-header-height', '5rem');
+
+    return () => {
+      document.body.classList.remove('has-fixed-header');
+
+      if (previousHeaderOffset) {
+        document.body.style.setProperty('--app-fixed-header-height', previousHeaderOffset);
+      } else {
+        document.body.style.removeProperty('--app-fixed-header-height');
+      }
+    };
+  }, []);
 
   return (
     <>
@@ -258,7 +374,7 @@ const Header = ({ user }: any) => {
         {/* --- LEFT: LOGO --- */}
         <div 
             className="flex items-center gap-3 cursor-pointer group" 
-            onClick={() => navigate('/home')}
+          onClick={() => previewSafeNavigate('/home')}
         >
           {institutionBranding.logoUrl ? (
             <img
@@ -313,9 +429,14 @@ const Header = ({ user }: any) => {
             {/* 3. DASHBOARD BUTTON (Role-based) */}
             {dashboardRoute && (
                 <button
-                    onClick={() => navigate(dashboardRoute)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all duration-200 cursor-pointer"
-                title={dashboardLabel ?? undefined}
+                onClick={userData?.__previewLock ? undefined : () => previewSafeNavigate(dashboardRoute)}
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      userData?.__previewLock
+                        ? 'text-gray-400 dark:text-slate-500 cursor-not-allowed opacity-60'
+                        : 'text-gray-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer'
+                    }`}
+                title={userData?.__previewLock ? 'No disponible en vista previa' : (dashboardLabel ?? undefined)}
+                disabled={!!userData?.__previewLock}
                 >
                     <LayoutDashboard size={18} />
                     <span className="hidden md:inline">{dashboardLabel}</span>
@@ -324,7 +445,7 @@ const Header = ({ user }: any) => {
 
             {/* 4. SETTINGS BUTTON */}
             <button 
-                onClick={() => navigate('/settings')}
+              onClick={() => previewSafeNavigate('/settings')}
                 className="p-2.5 text-gray-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-full transition-all duration-200 cursor-pointer"
                 title="Configuración"
             >
@@ -334,7 +455,7 @@ const Header = ({ user }: any) => {
             {/* 5. USER PROFILE (Clickable Area) */}
             <div 
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => navigate('/profile')} 
+              onClick={() => previewSafeNavigate('/profile')} 
             >
                 {/* Text Info */}
                 <div className="text-right hidden sm:block">
@@ -371,7 +492,7 @@ const Header = ({ user }: any) => {
                       triggerRef={notificationsTriggerRef}
                       onOpenAll={() => {
                         setShowPanel(false);
-                        navigate('/notifications');
+                        previewSafeNavigate('/notifications');
                       }}
                       onResolveMoveRequest={handleResolveMoveRequest}
                       isResolvingMoveRequest={isResolvingMoveRequest}
@@ -386,8 +507,12 @@ const Header = ({ user }: any) => {
 
     <AppToast
         show={toast.show}
+      title={toast.title}
         message={toast.message}
-        onClose={() => setToast({ show: false, message: '' })}
+      type={toast.type}
+      variant={toast.variant}
+      durationMs={10000}
+      onClose={() => setToast(buildEmptyToastState())}
     />
     </>
   );

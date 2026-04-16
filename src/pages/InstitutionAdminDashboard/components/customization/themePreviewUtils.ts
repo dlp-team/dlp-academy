@@ -1,4 +1,5 @@
 // src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils.ts
+// src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils.ts
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
 import {
   INSTITUTION_PREVIEW_MESSAGE_SOURCE,
@@ -29,6 +30,7 @@ const TOKEN_SELECTORS = {
 export const DEFAULTS = {
   institutionName: '',
   logoUrl: '',
+  browserTabTitle: '',
   primary: '#6366f1',
   secondary: '#8b5cf6',
   accent: '#a855f7',
@@ -118,32 +120,32 @@ const buildThemeCss = (c: any) => {
   const t = scale(c.accent);
   return `
 :root {
-  --color-primary:${c.primary};
-  --color-primary-50:${p[50]};--color-primary-100:${p[100]};--color-primary-200:${p[200]};
-  --color-primary-300:${p[300]};--color-primary-400:${p[400]};--color-primary-500:${p[500]};
-  --color-primary-600:${p[600]};--color-primary-700:${p[700]};--color-primary-800:${p[800]};
-  --color-primary-900:${p[900]};
-  --color-secondary:${c.secondary};
-  --color-secondary-50:${s[50]};--color-secondary-100:${s[100]};--color-secondary-200:${s[200]};
-  --color-secondary-300:${s[300]};--color-secondary-400:${s[400]};--color-secondary-500:${s[500]};
-  --color-secondary-600:${s[600]};--color-secondary-700:${s[700]};--color-secondary-800:${s[800]};
-  --color-secondary-900:${s[900]};
-  --color-tertiary:${c.accent};
-  --color-tertiary-50:${t[50]};--color-tertiary-100:${t[100]};--color-tertiary-200:${t[200]};
-  --color-tertiary-300:${t[300]};--color-tertiary-400:${t[400]};--color-tertiary-500:${t[500]};
-  --color-tertiary-600:${t[600]};--color-tertiary-700:${t[700]};--color-tertiary-800:${t[800]};
-  --color-tertiary-900:${t[900]};
+  --color-primary:${c.primary} !important;
+  --color-primary-50:${p[50]} !important;--color-primary-100:${p[100]} !important;--color-primary-200:${p[200]} !important;
+  --color-primary-300:${p[300]} !important;--color-primary-400:${p[400]} !important;--color-primary-500:${p[500]} !important;
+  --color-primary-600:${p[600]} !important;--color-primary-700:${p[700]} !important;--color-primary-800:${p[800]} !important;
+  --color-primary-900:${p[900]} !important;
+  --color-secondary:${c.secondary} !important;
+  --color-secondary-50:${s[50]} !important;--color-secondary-100:${s[100]} !important;--color-secondary-200:${s[200]} !important;
+  --color-secondary-300:${s[300]} !important;--color-secondary-400:${s[400]} !important;--color-secondary-500:${s[500]} !important;
+  --color-secondary-600:${s[600]} !important;--color-secondary-700:${s[700]} !important;--color-secondary-800:${s[800]} !important;
+  --color-secondary-900:${s[900]} !important;
+  --color-tertiary:${c.accent} !important;
+  --color-tertiary-50:${t[50]} !important;--color-tertiary-100:${t[100]} !important;--color-tertiary-200:${t[200]} !important;
+  --color-tertiary-300:${t[300]} !important;--color-tertiary-400:${t[400]} !important;--color-tertiary-500:${t[500]} !important;
+  --color-tertiary-600:${t[600]} !important;--color-tertiary-700:${t[700]} !important;--color-tertiary-800:${t[800]} !important;
+  --color-tertiary-900:${t[900]} !important;
 }
 .home-page {
-  --home-primary:${c.primary};
-  --home-secondary:${c.secondary};
-  --home-accent:${c.accent};
-  --home-muted-text:#6b7280;
-  --home-card-border:${c.cardBorder};
-  --home-primary-soft:${hexToRgba(c.primary, 0.12) ?? 'rgba(99,102,241,.12)'};
-  --home-primary-soft-dark:${hexToRgba(c.primary, 0.24) ?? 'rgba(99,102,241,.24)'};
-  --home-secondary-soft:${hexToRgba(c.secondary, 0.12) ?? 'rgba(245,158,11,.12)'};
-  --home-secondary-soft-dark:${hexToRgba(c.secondary, 0.24) ?? 'rgba(245,158,11,.24)'};
+  --home-primary:${c.primary} !important;
+  --home-secondary:${c.secondary} !important;
+  --home-accent:${c.accent} !important;
+  --home-muted-text:#6b7280 !important;
+  --home-card-border:${c.cardBorder} !important;
+  --home-primary-soft:${hexToRgba(c.primary, 0.12) ?? 'rgba(99,102,241,.12)'} !important;
+  --home-primary-soft-dark:${hexToRgba(c.primary, 0.24) ?? 'rgba(99,102,241,.24)'} !important;
+  --home-secondary-soft:${hexToRgba(c.secondary, 0.12) ?? 'rgba(245,158,11,.12)'} !important;
+  --home-secondary-soft-dark:${hexToRgba(c.secondary, 0.24) ?? 'rgba(245,158,11,.24)'} !important;
 }`;
 };
 
@@ -207,10 +209,46 @@ const TOKEN_HIGHLIGHT_MESSAGES = {
   cardBorder: 'Resaltando bordes de tarjetas y paneles.',
 };
 
+const sanitizePreviewUserForMessage = (previewUser: any) => {
+  if (!previewUser || typeof previewUser !== 'object') {
+    return null;
+  }
+
+  const normalizedRoles = Array.from(new Set(
+    [
+      previewUser?.activeRole,
+      previewUser?.role,
+      ...(Array.isArray(previewUser?.roles) ? previewUser.roles : []),
+      ...(Array.isArray(previewUser?.availableRoles) ? previewUser.availableRoles : []),
+    ]
+      .map((roleEntry: any) => String(roleEntry || '').trim().toLowerCase())
+      .filter(Boolean)
+  ));
+
+  return {
+    uid: String(previewUser?.uid || '').trim(),
+    email: String(previewUser?.email || '').trim(),
+    displayName: String(previewUser?.displayName || '').trim(),
+    photoURL: String(previewUser?.photoURL || '').trim(),
+    institutionId: String(previewUser?.institutionId || '').trim(),
+    activeRole: String(previewUser?.activeRole || previewUser?.role || '').trim().toLowerCase(),
+    role: String(previewUser?.role || previewUser?.activeRole || '').trim().toLowerCase(),
+    roles: normalizedRoles,
+    availableRoles: normalizedRoles,
+    classId: previewUser?.classId || null,
+    classIds: Array.isArray(previewUser?.classIds) ? previewUser.classIds : [],
+    completedSubjects: Array.isArray(previewUser?.completedSubjects) ? previewUser.completedSubjects : [],
+    settings: previewUser?.settings && typeof previewUser.settings === 'object'
+      ? previewUser.settings
+      : {},
+  };
+};
+
 export const buildInstitutionPreviewThemeMessage = ({
   colors,
   activeToken = null,
   previewRole = 'teacher',
+  previewUser = null,
 }: any) => {
   const safeColors = { ...DEFAULTS, ...(colors || {}) };
   const safeRole = previewRole === 'student' ? 'student' : 'teacher';
@@ -223,6 +261,7 @@ export const buildInstitutionPreviewThemeMessage = ({
       colors: safeColors,
       previewRole: safeRole,
       activeToken: highlightToken,
+      previewUser: sanitizePreviewUserForMessage(previewUser),
       themeCss: buildThemeCss(safeColors),
       highlightCss: highlightToken ? buildHighlightCss(highlightToken, safeColors[highlightToken]) : '',
       highlightMessage: highlightToken ? TOKEN_HIGHLIGHT_MESSAGES[highlightToken] : '',

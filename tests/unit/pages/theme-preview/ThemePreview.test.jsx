@@ -1,8 +1,24 @@
 // tests/unit/pages/theme-preview/ThemePreview.test.jsx
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+
+vi.mock('../../../../src/pages/Home/Home', () => ({
+  default: ({ user }) => (
+    <>
+      <div data-testid="theme-preview-home-mock">
+        Rol activo: {user?.activeRole || 'none'}
+      </div>
+      <div data-testid="theme-preview-role-meta">
+        roles:{Array.isArray(user?.roles) ? user.roles.join(',') : 'none'}
+        {' | '}
+        available:{Array.isArray(user?.availableRoles) ? user.availableRoles.join(',') : 'none'}
+      </div>
+    </>
+  ),
+}));
+
 import ThemePreview from '../../../../src/pages/ThemePreview/ThemePreview';
 import {
   INSTITUTION_PREVIEW_MESSAGE_SOURCE,
@@ -31,56 +47,120 @@ const dispatchPreviewMessage = ({ origin = window.location.origin, payload = {} 
 };
 
 describe('ThemePreview', () => {
-  it('uses role query parameter for initial preview role', async () => {
-    renderThemePreview('/theme-preview?role=student');
-
-    await waitFor(() => {
-      expect(screen.getByText(/panel estudiante/i)).toBeTruthy();
-    });
+  beforeEach(() => {
+    window.sessionStorage.removeItem('__dlp_preview_user');
   });
 
-  it('applies postMessage payload for role and live colors', async () => {
-    renderThemePreview('/theme-preview?role=teacher');
-    expect(screen.getByText(/panel docente/i)).toBeTruthy();
+  it('uses role query parameter for initial preview role', async () => {
+    renderThemePreview('/theme-preview?role=student');
 
     act(() => {
       dispatchPreviewMessage({
         payload: {
-          previewRole: 'student',
-          activeToken: 'primary',
-          colors: {
-            primary: '#123456',
-            secondary: '#8b5cf6',
-            accent: '#a855f7',
-            cardBorder: '#d1d5db',
+          previewUser: {
+            uid: 'user-preview-1',
+            email: 'docente@demo.es',
+            displayName: 'Docente Demo',
+            institutionId: 'inst-1',
+            role: 'teacher',
+            activeRole: 'teacher',
+            roles: ['teacher', 'student'],
           },
         },
       });
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/panel estudiante/i)).toBeTruthy();
+      expect(screen.getByTestId('theme-preview-home-mock')).toBeTruthy();
+      expect(screen.getByText(/rol activo:\s*student/i)).toBeTruthy();
     });
-
-    const avatar = screen.getByLabelText(/avatar de vista previa/i);
-    expect(String(avatar.style.backgroundColor).replace(/\s+/g, '')).toContain('18,52,86');
   });
 
-  it('ignores postMessage updates from foreign origins', async () => {
+  it('applies postMessage payload for role and live colors', async () => {
     renderThemePreview('/theme-preview?role=teacher');
-    expect(screen.getByText(/panel docente/i)).toBeTruthy();
+    expect(screen.getByText(/cargando vista previa/i)).toBeTruthy();
 
     act(() => {
       dispatchPreviewMessage({
-        origin: 'https://example.org',
         payload: {
+          previewUser: {
+            uid: 'user-preview-2',
+            email: 'docente@demo.es',
+            displayName: 'Docente Demo',
+            institutionId: 'inst-1',
+            role: 'teacher',
+            activeRole: 'teacher',
+            roles: ['teacher', 'student'],
+          },
+          previewRole: 'student',
+          themeCss: ':root { --color-primary:#123456; }',
+          highlightCss: '.home-page { outline: 2px solid #123456; }',
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/rol activo:\s*student/i)).toBeTruthy();
+    });
+
+    const themeTag = document.getElementById('__dlp_theme_preview_runtime_theme');
+    const highlightTag = document.getElementById('__dlp_theme_preview_runtime_highlight');
+    expect(themeTag?.textContent || '').toContain('--color-primary:#123456');
+    expect(highlightTag?.textContent || '').toContain('outline: 2px solid #123456');
+  });
+
+  it('locks role options to selected preview role for iframe header parity', async () => {
+    renderThemePreview('/theme-preview?role=teacher');
+
+    act(() => {
+      dispatchPreviewMessage({
+        payload: {
+          previewUser: {
+            uid: 'user-preview-locked-role',
+            email: 'admin@demo.es',
+            displayName: 'Admin Demo',
+            institutionId: 'inst-1',
+            role: 'institutionadmin',
+            activeRole: 'institutionadmin',
+            roles: ['institutionadmin', 'teacher', 'student'],
+            availableRoles: ['institutionadmin', 'teacher', 'student'],
+          },
           previewRole: 'student',
         },
       });
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/panel docente/i)).toBeTruthy();
+      expect(screen.getByText(/rol activo:\s*student/i)).toBeTruthy();
+    });
+
+    const roleMeta = screen.getByTestId('theme-preview-role-meta').textContent || '';
+    expect(roleMeta).toContain('roles:student');
+    expect(roleMeta).toContain('available:student');
+  });
+
+  it('ignores postMessage updates from foreign origins', async () => {
+    renderThemePreview('/theme-preview?role=teacher');
+    expect(screen.getByText(/cargando vista previa/i)).toBeTruthy();
+
+    act(() => {
+      dispatchPreviewMessage({
+        origin: 'https://example.org',
+        payload: {
+          previewUser: {
+            uid: 'user-preview-3',
+            email: 'docente@demo.es',
+            displayName: 'Docente Demo',
+            institutionId: 'inst-1',
+          },
+          previewRole: 'student',
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/cargando vista previa/i)).toBeTruthy();
+      expect(screen.queryByTestId('theme-preview-home-mock')).toBeNull();
     });
   });
 });

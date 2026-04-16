@@ -14,6 +14,11 @@
 - Preview tab switching across `Papelera`, `Compartido`, and `Manual` plus topic/resource drilldown assertions.
 
 ## Changelog
+### 2026-04-09
+- Added saved-theme-set coverage:
+	- save current color palette as named theme set through editor callback,
+	- apply hydrated saved theme set and assert all color inputs update deterministically.
+
 ### 2026-04-08
 - Added coverage for color-card interaction contract:
 	- swatch click opens picker without forcing active state,

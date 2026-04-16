@@ -80,6 +80,24 @@ const useHomeContentDnd = ({
         setIsPromoteZoneHovered(false);
 
         if (!currentFolder || !draggedItem) return;
+
+        const parentFolderId = currentFolder?.parentId || null;
+        const draggedSelectionKey = draggedItemType === 'folder'
+            ? `folder:${draggedItem?.shortcutId || draggedItem?.id}`
+            : `subject:${draggedItem?.shortcutId || draggedItem?.id}`;
+
+        if (
+            selectMode
+            && selectedItemKeys instanceof Set
+            && selectedItemKeys.size > 0
+            && selectedItemKeys.has(draggedSelectionKey)
+            && typeof onDropSelectedItems === 'function'
+        ) {
+            onDropSelectedItems(parentFolderId);
+            if (handleDragEnd) handleDragEnd();
+            return;
+        }
+
         if (draggedItemType === 'subject') {
             handlePromoteSubject(draggedItem.id, draggedItem.shortcutId || null);
         } else if (draggedItemType === 'folder') {

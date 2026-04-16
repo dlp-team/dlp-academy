@@ -6,6 +6,7 @@ import {
 import { db } from '../firebase/config';
 import { generateSubjectInviteCode, normalizeSubjectAccessPayload } from '../utils/subjectAccessUtils';
 import { getActiveRole } from '../utils/permissionUtils';
+import { PREVIEW_MOCK_SUBJECTS } from '../utils/previewMockData';
 import {
     canTeacherDeleteSubjectsWithStudents,
     canTeacherCreateSubjectsAutonomously,
@@ -55,6 +56,7 @@ export const useSubjects = (user: any) => {
     const currentInstitutionId = user?.institutionId || null;
     const activeRole = getActiveRole(user);
     const canReadHomeData = Boolean(activeRole && user?.displayName);
+    const isPreviewMockMode = user?.__previewMockData === true;
     const completedSubjectIds = useMemo(
         () => Array.from(new Set(
             (Array.isArray(user?.completedSubjects) ? user.completedSubjects : [])
@@ -310,6 +312,11 @@ export const useSubjects = (user: any) => {
         let active = true;
 
         const resolveTeacherCreationPolicy = async () => {
+            if (isPreviewMockMode) {
+                if (active) setTeacherSubjectCreationAllowed(true);
+                return;
+            }
+
             if (activeRole !== 'teacher') {
                 if (active) setTeacherSubjectCreationAllowed(true);
                 return;
@@ -328,10 +335,21 @@ export const useSubjects = (user: any) => {
         return () => {
             active = false;
         };
-    }, [user?.uid, activeRole, currentInstitutionId]);
+    }, [user?.uid, activeRole, currentInstitutionId, isPreviewMockMode]);
 
 
     useEffect(() => {
+        if (isPreviewMockMode) {
+            const isStudent = activeRole === 'student';
+            setSubjects(
+                PREVIEW_MOCK_SUBJECTS
+                    .filter((s: any) => !s._studentOnly || isStudent)
+                    .map((subject: any) => ({ ...subject })),
+            );
+            setLoading(false);
+            return;
+        }
+
         if (!user || !canReadHomeData) {
             setSubjects([]);
             setLoading(false);
@@ -515,7 +533,7 @@ export const useSubjects = (user: any) => {
             unsubscribeClassMatched();
             unsubscribeEnrolled();
         };
-    }, [user, currentInstitutionId, canReadHomeData, activeRole]);
+    }, [user, currentInstitutionId, canReadHomeData, activeRole, isPreviewMockMode]);
 
     const addSubject = async (payload: any) => {
         const normalizedPayload: any = normalizeSubjectAccessPayload(payload, { requireCourse: true });

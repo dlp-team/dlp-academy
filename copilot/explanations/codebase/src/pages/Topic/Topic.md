@@ -32,6 +32,14 @@
 
 ## Changelog
 
+### 2026-04-15 - Preview Mock Data Streams for Quizzes and Tasks
+
+**Change**: Added preview-mode data branches in `Topic.tsx` so quiz results, quiz review overrides, and topic assignments are hydrated from `previewMockData` instead of Firestore listeners when `user.__previewMockData` is enabled.
+
+**Reason**: Enable complete topic-tab mockups (quizzes + tareas) in theme preview without realtime permission noise or empty states.
+
+**Impact**: Preview role sessions now render populated quiz/task states deterministically while production data flow remains unchanged.
+
 ### 2026-03-08 - Exam Card Component Extraction
 
 **Change**: Refactored inline exam card rendering into dedicated ExamCard component.

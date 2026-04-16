@@ -21,6 +21,11 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+### 2026-04-15: Preview assignments mock section + prefetched deep links
+- Added preview-only `assignments` rendering branch that displays task mock cards directly from `topic.assignments`, avoiding Firestore-dependent assignment management in theme preview mode.
+- Quiz/exam deep links now pass prefetched payloads (`prefetchedQuiz`, `prefetchedExam`) during preview navigation to keep downstream mock route context deterministic.
+- Preview mode hides `Ver revision` action for completed quizzes to avoid routing into review flows that depend on non-mock backend reads.
+
 ### 2026-04-02: Active-role student/teacher analytics alignment
 - Student/viewer detection in quiz cards and analytics sections now resolves from `getActiveRole(user)` + viewer permissions, avoiding stale behavior when active role is switched.
 

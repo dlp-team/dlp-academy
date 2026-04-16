@@ -42,6 +42,7 @@ import {
 const DEFAULT_INSTITUTION_PERIOD_CONFIG = {
   periodMode: DEFAULT_COURSE_PERIOD_MODE,
   customPeriodLabel: '',
+  periodDates: [] as Array<{ periodIndex: number; periodStartAt: string; periodEndAt: string }>,
   academicCalendar: {
     startDate: '',
     ordinaryEndDate: '',
@@ -110,6 +111,15 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
         const nextInstitutionPeriodConfig = {
           periodMode: normalizeCoursePeriodMode(periodization?.mode),
           customPeriodLabel: String(periodization?.customLabel || '').trim(),
+          periodDates: Array.isArray(periodization?.periodDates)
+            ? periodization.periodDates
+                .map((entry: any) => ({
+                  periodIndex: Number(entry.periodIndex),
+                  periodStartAt: String(entry.periodStartAt || '').trim(),
+                  periodEndAt: String(entry.periodEndAt || '').trim(),
+                }))
+                .filter((entry: any) => Number.isFinite(entry.periodIndex))
+            : [],
           academicCalendar: {
             startDate: String(academicCalendar?.startDate || '').trim(),
             ordinaryEndDate: String(academicCalendar?.ordinaryEndDate || '').trim(),

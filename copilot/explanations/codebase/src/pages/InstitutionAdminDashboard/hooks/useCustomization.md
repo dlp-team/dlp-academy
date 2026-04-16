@@ -7,6 +7,12 @@
 - Role: Institution customization state and persistence hook for branding assets and theme tokens.
 
 ## Changelog
+### 2026-04-09
+- Added saved theme-set lifecycle support:
+  - normalizes/hydrates `customization.themeSets` into hook state,
+  - persists new named theme sets with nested Firestore updates,
+  - exposes `savedThemeSets` + `handleSaveThemeSet` for editor/UI integration.
+
 ### 2026-04-02
 - `verifyAndSyncClaims` now resolves expected role from `getActiveRole(user)` before claims reconciliation.
 - Branding upload claim checks now follow switched role context for dual-role sessions, reducing false mismatches when role switch is active.

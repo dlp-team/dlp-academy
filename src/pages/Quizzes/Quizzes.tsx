@@ -1,6 +1,6 @@
 // src/pages/Quizzes/Quizzes.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
     ChevronLeft, Target, Clock, Sparkles, ArrowRight, Lock, CalendarDays, GraduationCap
 } from 'lucide-react';
@@ -27,7 +27,7 @@ import ResultsView from '../../components/modules/QuizEngine/QuizResults';
 
 // ==================== CUSTOM HOOKS ====================
 
-const useQuizData = (user: any, subjectId: any, topicId: any, quizId: any, navigate: any) => {
+const useQuizData = (user: any, subjectId: any, topicId: any, quizId: any, navigate: any, location: any) => {
     const [loading, setLoading] = useState(true);
     const [quizData, setQuizData] = useState<any>(null);
     const [loadError, setLoadError] = useState('');
@@ -39,6 +39,28 @@ const useQuizData = (user: any, subjectId: any, topicId: any, quizId: any, navig
         const loadData = async () => {
             if (!user || !subjectId || !topicId || !quizId) {
                 setLoadError('No se pudo identificar el test para abrir.');
+                setLoading(false);
+                return;
+            }
+
+            // Preview mode: use prefetched quiz data instead of Firestore
+            const prefetchedQuiz = location?.state?.prefetchedQuiz;
+            if (prefetchedQuiz) {
+                const stateSubjectColor = location?.state?.subjectColor;
+                if (stateSubjectColor) {
+                    setTopicGradient(stateSubjectColor);
+                    const extracted = extractColorFromGradient(stateSubjectColor);
+                    if (extracted) setAccentColor(extracted);
+                }
+                setQuizData({
+                    title: prefetchedQuiz.name || prefetchedQuiz.title || "Test Generado",
+                    subtitle: prefetchedQuiz.level || "Repaso",
+                    formulas: prefetchedQuiz.formulas || [],
+                    questions: prefetchedQuiz.questions || [],
+                    isAssignment: Boolean(prefetchedQuiz.isAssignment),
+                    assignmentStartAt: prefetchedQuiz.assignmentStartAt || null,
+                    assignmentDueAt: prefetchedQuiz.assignmentDueAt || null
+                });
                 setLoading(false);
                 return;
             }
@@ -115,7 +137,7 @@ const useQuizData = (user: any, subjectId: any, topicId: any, quizId: any, navig
         };
 
         loadData();
-    }, [user, subjectId, topicId, quizId, navigate]);
+    }, [user, subjectId, topicId, quizId, navigate, location?.state]);
 
     return { loading, quizData, loadError, subjectIconKey, accentColor, topicGradient };
 };
@@ -322,9 +344,10 @@ QuizView.displayName = 'QuizView';
 const Quizzes = ({ user }: any) => {
     const { subjectId, topicId, quizId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { loading, quizData, loadError, subjectIconKey, accentColor, topicGradient } = 
-        useQuizData(user, subjectId, topicId, quizId, navigate);
+        useQuizData(user, subjectId, topicId, quizId, navigate, location);
 
     const [viewState, setViewState] = useState(VIEW_STATES.REVIEW);
     const [currentStep, setCurrentStep] = useState(0);
@@ -388,6 +411,8 @@ const Quizzes = ({ user }: any) => {
 
     const saveQuizResult = useCallback(async (score: any, correct: any, total: any, detail: any) => {
         if (!user?.uid || !subjectId || !topicId || !quizId) return;
+        // Skip Firestore writes in preview mode
+        if (user?.__previewMockData) return;
         setSaveError('');
 
         try {

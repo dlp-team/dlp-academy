@@ -1,5 +1,8 @@
 # HomeEmptyState.jsx
 
+## Changelog
+- **2026-04-10:** Create-subject buttons in empty-state grid/list variants now remain visible in selection mode and are inert on click when selection mode is active.
+
 ## Overview
 - **Source file:** `src/pages/Home/components/HomeEmptyState.jsx`
 - **Last documented:** 2026-02-24

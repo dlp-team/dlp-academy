@@ -1249,7 +1249,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             isOpen={isOpen}
             onClose={onClose}
             onBeforeClose={() => evaluateCloseRequest()}
-            rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto"
+            rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto clean-scrollbar"
             rootStyle={OVERLAY_TOP_OFFSET_STYLE}
             backdropClassName="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity"
             contentWrapperClassName="flex min-h-full items-center justify-center p-4 text-center"
@@ -1450,7 +1450,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                             {shouldShowShareSuggestions && (
                                                 <div className="absolute left-0 right-0 top-full mt-1 z-20 p-2 border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 shadow-lg">
                                                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sugerencias de tu institución</p>
-                                                    <div className="max-h-32 overflow-y-auto space-y-1">
+                                                    <div className="max-h-32 overflow-y-auto space-y-1 minimal-scrollbar">
                                                         {suggestedEmails.map((email: any) => (
                                                             <button
                                                                 key={email}
@@ -1477,7 +1477,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                         Se aplicará al guardar cambios
                                                     </span>
                                                 </div>
-                                                <div className="space-y-2 max-h-32 overflow-y-auto">
+                                                <div className="space-y-2 max-h-32 overflow-y-auto minimal-scrollbar">
                                                     {shareQueue.map((entry: any) => (
                                                         <div key={entry.email} className="flex items-center justify-between p-2 rounded-md bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700">
                                                             <div>
@@ -1799,7 +1799,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                 ) : availableClasses.length === 0 ? (
                                     <p className="text-sm text-slate-500 dark:text-slate-400">No hay clases disponibles para asignar.</p>
                                 ) : (
-                                    <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                                    <div className="max-h-60 overflow-y-auto space-y-2 pr-1 minimal-scrollbar">
                                         {availableClasses.map((cl: any) => (
                                             <label key={cl.id} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 cursor-pointer">
                                                 <input
@@ -1872,7 +1872,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     {stagedPermissionEntries.length > 0 && <li>Actualizar permisos de {stagedPermissionEntries.length} usuario(s).</li>}
                                     {pendingUnshares.length > 0 && <li>Quitar acceso a {pendingUnshares.length} usuario(s).</li>}
                                 </ul>
-                                <div className="mt-3 max-h-32 overflow-y-auto rounded-md border border-gray-200 dark:border-slate-700 p-2 text-xs text-gray-700 dark:text-gray-300">
+                                <div className="mt-3 max-h-32 overflow-y-auto rounded-md border border-gray-200 dark:border-slate-700 p-2 text-xs text-gray-700 dark:text-gray-300 minimal-scrollbar">
                                     {shareQueue.map(entry => (
                                         <p key={`add-${entry.email}`}>• {entry.email}: se añadirá como {entry.role === 'editor' ? 'Editor' : 'Lector'}.</p>
                                     ))}

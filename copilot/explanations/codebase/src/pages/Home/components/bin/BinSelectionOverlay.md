@@ -1,8 +1,8 @@
 <!-- copilot/explanations/codebase/src/pages/Home/components/bin/BinSelectionOverlay.md -->
-# BinSelectionOverlay.jsx
+# BinSelectionOverlay.tsx
 
 ## Overview
-- **Source file:** `src/pages/Home/components/bin/BinSelectionOverlay.jsx`
+- **Source file:** `src/pages/Home/components/bin/BinSelectionOverlay.tsx`
 - **Last documented:** 2026-04-05
 - **Role:** Full-screen overlay that anchors selected bin card and side panel to viewport coordinates.
 
@@ -13,6 +13,7 @@
 - Applies staged focus UX with immediate panel availability and focused-card transition.
 
 ## Changelog
+- **2026-04-09:** Removed backdrop color dimming (`bg-transparent`) while preserving outside-click close behavior so grid selection no longer darkens background on press.
 - **2026-04-08:** Removed delayed panel reveal and kept panel rendering immediate after overlay mount; backdrop opacity was reduced to preserve card legibility while selected.
 - **2026-04-07:** Bin focus overlay refined for visual parity:
 	- softened backdrop opacity in light/dark modes,

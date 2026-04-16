@@ -77,10 +77,9 @@ export const useLogin = () => {
             });
         } else {
             // Existing User - Update login time
+            // SECURITY: Do NOT auto-link institutionId for existing users via domain match.
+            // Institution membership must go through invite/code flow, not passive domain resolution.
             const updates: any = { lastLogin: serverTimestamp() };
-            if (!userSnap.data()?.institutionId && resolvedInstitutionId) {
-                updates.institutionId = resolvedInstitutionId;
-            }
             if (normalizedRememberMe !== null) {
                 updates.rememberMe = normalizedRememberMe;
             }

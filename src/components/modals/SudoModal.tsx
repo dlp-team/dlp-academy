@@ -1,9 +1,11 @@
 // src/components/modals/SudoModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AlertTriangle, Key, Loader2, X } from 'lucide-react';
 import {
   EmailAuthProvider,
+  GoogleAuthProvider,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
 } from 'firebase/auth';
 import { auth } from '../../firebase/config';
 import BaseModal from '../ui/BaseModal';
@@ -18,6 +20,12 @@ const SudoModal = ({
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Detect if user has a password provider or only social (Google) providers
+  const hasPasswordProvider = useMemo(() => {
+    const currentUser = auth.currentUser;
+    return currentUser?.providerData?.some((p) => p.providerId === 'password') ?? false;
+  }, [isOpen]);
+
   const handleClose = () => {
     if (isSubmitting) return;
     setPassword('');
@@ -25,8 +33,43 @@ const SudoModal = ({
     onClose();
   };
 
+  const handleGoogleReauth = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      setError('No se pudo verificar tu sesión actual. Inicia sesión de nuevo.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const googleProvider = new GoogleAuthProvider();
+      await reauthenticateWithPopup(currentUser, googleProvider);
+      await onConfirm();
+      setError('');
+      onClose();
+    } catch (submissionError: any) {
+      if (submissionError?.code === 'auth/popup-closed-by-user') {
+        setError('Ventana de autenticación cerrada. Inténtalo de nuevo.');
+      } else if (submissionError?.code === 'auth/user-mismatch') {
+        setError('La cuenta de Google no coincide con tu sesión actual.');
+      } else {
+        setError('No se pudo completar la verificación con Google.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (event: any) => {
     event.preventDefault();
+
+    // If no password provider, use Google reauth
+    if (!hasPasswordProvider) {
+      await handleGoogleReauth();
+      return;
+    }
 
     const currentUser = auth.currentUser;
     const normalizedPassword = password.trim();
@@ -98,21 +141,27 @@ const SudoModal = ({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Contraseña
-            <div className="relative mt-1.5">
-              <Key className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Introduce tu contraseña"
-                autoComplete="current-password"
-                autoFocus
-              />
-            </div>
-          </label>
+          {hasPasswordProvider ? (
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Contraseña
+              <div className="relative mt-1.5">
+                <Key className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Introduce tu contraseña"
+                  autoComplete="current-password"
+                  autoFocus
+                />
+              </div>
+            </label>
+          ) : (
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Haz clic en &quot;Confirmar&quot; para verificar tu identidad a través de Google.
+            </p>
+          )}
 
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

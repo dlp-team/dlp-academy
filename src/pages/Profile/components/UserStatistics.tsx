@@ -118,7 +118,7 @@ const UserStatistics = ({ subjects, userId, statsOptions = {}, role = 'student' 
                         <Clock className="w-5 h-5 text-indigo-500" />
                         Actividad Reciente
                     </h3>
-                    <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
+                    <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 minimal-scrollbar">
                         {stats.recentActivity.map((activity: any) => (
                             <div key={activity.id} className="flex items-start gap-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-700 group">
                                 <div className={`mt-1 min-w-[10px] h-2.5 w-2.5 rounded-full ${activity.passed ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>

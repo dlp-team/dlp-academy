@@ -2,6 +2,7 @@
 import React from 'react';
 import { AlertCircle, ArrowUpDown, CalendarDays, CheckCircle2, Loader2, Settings2, ShieldCheck, Sparkles } from 'lucide-react';
 import CoursePromotionOrderEditor from './settings/CoursePromotionOrderEditor';
+import { buildCoursePeriodDefinitions } from '../../../utils/coursePeriodScheduleUtils';
 
 const SettingsTabContent = ({
   loading,
@@ -14,6 +15,19 @@ const SettingsTabContent = ({
 }: any) => {
   const setField = (key: any, value: any) => {
     setSettingsForm((prev: any) => ({ ...prev, [key]: value }));
+  };
+
+  const setPeriodDateField = (periodIndex: number, field: 'periodStartAt' | 'periodEndAt', value: string) => {
+    setSettingsForm((prev: any) => {
+      const currentDates: any[] = Array.isArray(prev.periodDates) ? prev.periodDates : [];
+      const existingIdx = currentDates.findIndex((d: any) => Number(d.periodIndex) === periodIndex);
+      const existing = existingIdx >= 0 ? currentDates[existingIdx] : { periodIndex, periodStartAt: '', periodEndAt: '' };
+      const updated = { ...existing, [field]: value };
+      const next = [...currentDates];
+      if (existingIdx >= 0) next[existingIdx] = updated;
+      else next.push(updated);
+      return { ...prev, periodDates: next };
+    });
   };
 
   if (loading) {
@@ -112,6 +126,46 @@ const SettingsTabContent = ({
             />
           </label>
         )}
+
+        <div className="mt-5">
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-slate-400" />
+            Fechas predeterminadas por periodo
+          </p>
+          <div className="space-y-3">
+            {buildCoursePeriodDefinitions({
+              periodMode: settingsForm.periodMode,
+              customPeriodLabel: settingsForm.customPeriodLabel,
+            }).map((period: any) => {
+              const currentPeriodDate = (settingsForm.periodDates || []).find((d: any) => Number(d.periodIndex) === period.periodIndex);
+              const periodStartAt = currentPeriodDate?.periodStartAt || '';
+              const periodEndAt = currentPeriodDate?.periodEndAt || '';
+              return (
+                <div key={period.periodIndex} className="grid grid-cols-[7rem_1fr_1fr] items-center gap-3">
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400 truncate">{period.periodLabel}</span>
+                  <label className="space-y-1">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Inicio</span>
+                    <input
+                      type="date"
+                      value={periodStartAt}
+                      onChange={(e) => setPeriodDateField(period.periodIndex, 'periodStartAt', e.target.value)}
+                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Fin</span>
+                    <input
+                      type="date"
+                      value={periodEndAt}
+                      onChange={(e) => setPeriodDateField(period.periodIndex, 'periodEndAt', e.target.value)}
+                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
           Este calendario define la base institucional. Cada curso puede sobrescribir fechas de periodos y fin extraordinario sin modificar estos valores globales.

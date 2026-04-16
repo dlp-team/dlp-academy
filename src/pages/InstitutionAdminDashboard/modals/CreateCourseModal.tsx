@@ -87,6 +87,31 @@ const CreateCourseModal = ({ onClose, onSubmit, submitting, error, periodConfig 
   ), [periodDefinitions, periodRowsByIndex]);
 
   const initializePeriodSchedule = (nextAcademicYear: any) => {
+    // If the institution has explicit per-period dates configured, use them as defaults
+    const institutionPeriodDates: any[] = Array.isArray(periodConfig?.periodDates) ? periodConfig.periodDates : [];
+    const hasPeriodDateDefaults = institutionPeriodDates.length > 0 &&
+      periodDefinitions.every((definition: any) =>
+        institutionPeriodDates.some(
+          (d: any) => Number(d.periodIndex) === definition.periodIndex && d.periodStartAt && d.periodEndAt
+        )
+      );
+
+    if (hasPeriodDateDefaults) {
+      const periodRowsFromConfig = periodDefinitions.map((definition: any) => {
+        const configDate = institutionPeriodDates.find((d: any) => Number(d.periodIndex) === definition.periodIndex);
+        return {
+          periodIndex: definition.periodIndex,
+          periodLabel: definition.periodLabel,
+          periodStartAt: configDate?.periodStartAt || '',
+          periodEndAt: configDate?.periodEndAt || '',
+        };
+      });
+      setPeriodRows(periodRowsFromConfig);
+      setExtraordinaryEndDate(String(resolvedAcademicCalendar.extraordinaryEndDate || '').trim());
+      return;
+    }
+
+    // Fall back to calculated defaults from academic calendar
     const defaults = buildDefaultCoursePeriodSchedule({
       academicYear: normalizeAcademicYear(nextAcademicYear),
       periodMode: resolvedPeriodMode,

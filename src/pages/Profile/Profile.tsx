@@ -6,6 +6,7 @@ import Header from '../../components/layout/Header';
 // Hooks
 import { useProfile } from './hooks/useProfile';
 import useUserStatistics from './hooks/useUserStatistics';
+import { useAdminProfileStats } from './hooks/useAdminProfileStats';
 
 // Components
 import UserCard from './components/UserCard';
@@ -15,6 +16,8 @@ import UserStatistics from './components/UserStatistics';
 import Notas from './components/Notas';
 import BadgesSection from './components/BadgesSection';
 import EditProfileModal from './modals/EditProfileModal';
+import AdminStatsPanel from './components/AdminStatsPanel';
+import { getActiveRole } from '../../utils/permissionUtils';
 
 const Profile = ({ user }: any) => {
   const {
@@ -30,6 +33,9 @@ const Profile = ({ user }: any) => {
   const [headerUser, setHeaderUser] = useState(user);
 
   const role = userProfile?.role === 'teacher' ? 'teacher' : 'student';
+  const activeRole = getActiveRole(user);
+  const isAdminUser = activeRole === 'admin' || activeRole === 'institutionadmin';
+  const institutionId = user?.institutionId || null;
   const badges = userProfile?.badges || [];
 
   const assignedUserIds = useMemo(
@@ -56,6 +62,7 @@ const Profile = ({ user }: any) => {
   }, [role, assignedUserIds, assignedUsersById]);
 
   const { stats, loading: statsLoading, getChartData } = useUserStatistics(subjects, user?.uid, statsOptions);
+  const adminStats = useAdminProfileStats(isAdminUser ? institutionId : null);
 
   if (loading) {
     return (
@@ -82,17 +89,21 @@ const Profile = ({ user }: any) => {
         {/* Subjects (2/3) + Sidebar with chart & badges (1/3) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <ProfileSubjects subjects={subjects} />
-          <StatsSidebar
-            chartData={!statsLoading ? getChartData('all') : []}
-            role={role}
-            loading={statsLoading}
-            badges={badges}
-            showBadges={role !== 'teacher'}
-          />
+          {isAdminUser ? (
+            <AdminStatsPanel stats={adminStats.stats} loading={adminStats.loading} />
+          ) : (
+            <StatsSidebar
+              chartData={!statsLoading ? getChartData('all') : []}
+              role={role}
+              loading={statsLoading}
+              badges={badges}
+              showBadges={role !== 'teacher'}
+            />
+          )}
         </div>
 
-        {/* Notas — full width */}
-        {!statsLoading && stats.totalQuizzes > 0 && (
+        {/* Notas — full width (hidden for admin users) */}
+        {!isAdminUser && !statsLoading && stats.totalQuizzes > 0 && (
           <Notas
             subjectPerformance={stats.subjectPerformance}
             recentActivity={stats.recentActivity}
@@ -113,13 +124,15 @@ const Profile = ({ user }: any) => {
           />
         )}
 
-        {/* Full Detailed Statistics */}
-        <UserStatistics
-          subjects={subjects}
-          userId={user.uid}
-          statsOptions={statsOptions}
-          role={role}
-        />
+        {/* Full Detailed Statistics (hidden for admin users) */}
+        {!isAdminUser && (
+          <UserStatistics
+            subjects={subjects}
+            userId={user.uid}
+            statsOptions={statsOptions}
+            role={role}
+          />
+        )}
 
       </main>
 

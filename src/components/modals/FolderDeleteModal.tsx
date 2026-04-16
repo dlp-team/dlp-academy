@@ -28,7 +28,7 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
             <BaseModal
                 isOpen={isOpen}
                 onClose={handleCancel}
-                rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto transition-colors"
+                rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto transition-colors clean-scrollbar"
                 rootStyle={OVERLAY_TOP_OFFSET_STYLE}
                 backdropClassName="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity"
                 contentWrapperClassName="flex min-h-full items-center justify-center p-4 text-center"
@@ -124,7 +124,7 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
         <BaseModal
             isOpen={isOpen}
             onClose={onClose}
-            rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto transition-colors"
+            rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto transition-colors clean-scrollbar"
             rootStyle={OVERLAY_TOP_OFFSET_STYLE}
             backdropClassName="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity"
             contentWrapperClassName="flex min-h-full items-center justify-center p-4 text-center"

@@ -5,6 +5,7 @@ import { useRegister } from '../../../src/pages/Auth/hooks/useRegister';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   createUserWithEmailAndPassword: vi.fn(),
+  sendEmailVerification: vi.fn(),
   updateProfile: vi.fn(),
   collection: vi.fn((db, name) => ({ db, name })),
   query: vi.fn((...args) => ({ args })),
@@ -36,6 +37,7 @@ vi.mock('firebase/auth', async () => {
   return {
     ...actual,
     createUserWithEmailAndPassword: mocks.createUserWithEmailAndPassword,
+    sendEmailVerification: mocks.sendEmailVerification,
     updateProfile: mocks.updateProfile,
   };
 });
@@ -68,6 +70,7 @@ describe('useRegister', () => {
     mocks.deleteDoc.mockResolvedValue(undefined);
     mocks.updateProfile.mockResolvedValue(undefined);
     mocks.setDoc.mockResolvedValue(undefined);
+    mocks.sendEmailVerification.mockResolvedValue(undefined);
     mocks.validateInstitutionalAccessCode.mockResolvedValue({ valid: false, institutionId: null, role: 'teacher' });
   });
 
@@ -112,7 +115,7 @@ describe('useRegister', () => {
     expect(mocks.createUserWithEmailAndPassword).toHaveBeenCalledTimes(1);
     expect(mocks.updateProfile).toHaveBeenCalledTimes(1);
     expect(mocks.setDoc).toHaveBeenCalledTimes(1);
-    expect(mocks.navigate).toHaveBeenCalledWith('/home');
+    expect(mocks.navigate).toHaveBeenCalledWith('/verify-email?registered=true');
   });
 
   it('registers teacher with institutional code using uppercase normalization', async () => {
@@ -152,7 +155,7 @@ describe('useRegister', () => {
       expect.anything(),
       expect.objectContaining({ role: 'teacher', institutionId: 'inst-1' })
     );
-    expect(mocks.navigate).toHaveBeenCalledWith('/home');
+    expect(mocks.navigate).toHaveBeenCalledWith('/verify-email?registered=true');
   });
 
   it('keeps direct invite document ID case for lookup and deletion', async () => {
@@ -226,7 +229,7 @@ describe('useRegister', () => {
       expect.anything(),
       expect.objectContaining({ role: 'teacher', institutionId: 'inst-dynamic-1' })
     );
-    expect(mocks.navigate).toHaveBeenCalledWith('/home');
+    expect(mocks.navigate).toHaveBeenCalledWith('/verify-email?registered=true');
   });
 
   it('registers student with institutional student code via callable when provided', async () => {
@@ -265,6 +268,6 @@ describe('useRegister', () => {
       expect.anything(),
       expect.objectContaining({ role: 'student', institutionId: 'inst-student-1' })
     );
-    expect(mocks.navigate).toHaveBeenCalledWith('/home');
+    expect(mocks.navigate).toHaveBeenCalledWith('/verify-email?registered=true');
   });
 });

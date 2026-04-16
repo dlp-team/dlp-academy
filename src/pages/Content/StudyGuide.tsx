@@ -371,7 +371,7 @@ const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, i
 
                 {isOpen && (
                     <div className="mt-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl p-5 border-2 border-white dark:border-slate-700 shadow-xl dark:shadow-slate-900/50 animate-in slide-in-from-top-4 duration-500 overflow-hidden">
-                        <div className="space-y-2 max-h-[32rem] overflow-y-auto overflow-x-hidden custom-scrollbar">
+                        <div className="space-y-2 max-h-[32rem] overflow-y-auto overflow-x-hidden minimal-scrollbar">
                             {sections.map((section, idx: any) => {
                                 const isActive = activeSection === idx;
                                 return (
@@ -463,6 +463,25 @@ const StudyGuide = ({ user }: any) => {
     const [keepHeaderVisible, setKeepHeaderVisible] = useState(false);
     const [isGridMode, setIsGridMode] = useState(false);
     const { isDark, toggleDarkMode } = useDarkMode();
+
+    useEffect(() => {
+        if (typeof document === 'undefined') return undefined;
+
+        const previousHeaderOffset = document.body.style.getPropertyValue('--app-fixed-header-height');
+
+        document.body.classList.add('has-fixed-header');
+        document.body.style.setProperty('--app-fixed-header-height', '6rem');
+
+        return () => {
+            document.body.classList.remove('has-fixed-header');
+
+            if (previousHeaderOffset) {
+                document.body.style.setProperty('--app-fixed-header-height', previousHeaderOffset);
+            } else {
+                document.body.style.removeProperty('--app-fixed-header-height');
+            }
+        };
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -578,7 +597,10 @@ const StudyGuide = ({ user }: any) => {
                 setLoading(true);
 
                 // 1. OBTENER EL COLOR DE LA ASIGNATURA (SUBJECT)
-                try {
+                const stateSubjectColor = (location?.state as any)?.subjectColor;
+                if (stateSubjectColor) {
+                    setTopicGradient(stateSubjectColor);
+                } else try {
                     if (subjectId) {
                         const subjectRef = doc(db, "subjects", subjectId);
                         const subjectSnap = await getDoc(subjectRef);

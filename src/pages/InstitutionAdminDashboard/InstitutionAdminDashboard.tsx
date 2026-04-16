@@ -71,7 +71,6 @@ const InstitutionAdminDashboard = ({ user }: any) => {
           <div>
             <h1 className="text-3xl font-black text-slate-900 dark:text-white">Panel de Administración</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
-              {user?.institutionId ? `Institución ID: ${user.institutionId}` : 'Configuración de Institución'}
               {effectiveInstitutionId ? `Institución ID: ${effectiveInstitutionId}` : 'Configuración de Institución'}
             </p>
           </div>
@@ -174,19 +173,23 @@ const InstitutionAdminDashboard = ({ user }: any) => {
         {/* ── Customization tab ── */}
         {activeTab === 'customization' && (
           <CustomizationTab
+            previewUser={user}
             customizationLoading={customization.customizationLoading}
             customizationSaving={customization.customizationSaving}
             customizationError={customization.customizationError}
             customizationSuccess={customization.customizationSuccess}
             customizationForm={customization.customizationForm}
+            savedThemeSets={customization.savedThemeSets}
             institutionName={customization.institutionName}
             iconUploading={customization.iconUploading}
             iconUploadError={customization.iconUploadError}
             customizationInitialValues={customization.customizationInitialValues}
             onIconUpload={customization.handleIconUpload}
+            onIconUrlSave={customization.handleIconUrlSave}
             onLogoUpload={customization.handleLogoUpload}
             onLogoUrlSave={customization.handleLogoUrlSave}
             onSaveCustomization={customization.handleSaveCustomization}
+            onSaveThemeSet={customization.handleSaveThemeSet}
           />
         )}
       </main>

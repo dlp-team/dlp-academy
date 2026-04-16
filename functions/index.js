@@ -186,6 +186,32 @@ export const validateInstitutionalAccessCode = onCall(
     invoker: 'public',
   },
   async (request) => {
+    // SECURITY: Server-side rate limiting per IP/UID to prevent brute-force code guessing.
+    const callerId = request.auth?.uid || request.rawRequest?.ip || 'anonymous';
+    const rateLimitRef = db.collection('_rateLimits').doc(`accessCode_${callerId}`);
+    const rateLimitSnap = await rateLimitRef.get();
+    const rateLimitData = rateLimitSnap.data() || {};
+    const windowMs = 15 * 60 * 1000; // 15-minute window
+    const maxAttempts = 10;
+    const currentTime = Date.now();
+
+    if (rateLimitData.windowStart && (currentTime - rateLimitData.windowStart) < windowMs) {
+      if ((rateLimitData.attempts || 0) >= maxAttempts) {
+        throw new HttpsError('resource-exhausted', 'Too many validation attempts. Please wait before trying again.');
+      }
+      await rateLimitRef.set({
+        windowStart: rateLimitData.windowStart,
+        attempts: (rateLimitData.attempts || 0) + 1,
+        lastAttempt: currentTime,
+      });
+    } else {
+      await rateLimitRef.set({
+        windowStart: currentTime,
+        attempts: 1,
+        lastAttempt: currentTime,
+      });
+    }
+
     const verificationCode = assertNonEmptyString(request.data?.verificationCode, 'verificationCode').toUpperCase();
     const normalizedEmail = assertNonEmptyString(request.data?.email, 'email').toLowerCase();
     const userType = String(request.data?.userType || 'teacher').trim().toLowerCase();
@@ -340,6 +366,18 @@ export const syncCurrentUserClaims = onCall(
     const authAdmin = getAuth();
     const userRecord = await authAdmin.getUser(uid);
     const currentClaims = userRecord.customClaims || {};
+
+    // SECURITY: Prevent self-promotion to privileged roles via claim sync.
+    // If the Firestore role is admin/institutionadmin but the user does NOT
+    // already hold that claim, block the sync to prevent escalation.
+    const PRIVILEGED_ROLES = ['admin', 'institutionadmin'];
+    if (PRIVILEGED_ROLES.includes(role) && !PRIVILEGED_ROLES.includes(currentClaims.role)) {
+      throw new HttpsError(
+        'permission-denied',
+        'Cannot self-sync privileged role claims. Role promotion must be performed by an administrator.'
+      );
+    }
+
     const { role: _legacyRole, institutionId: _legacyInstitutionId, ...remainingClaims } = currentClaims;
 
     await authAdmin.setCustomUserClaims(uid, {

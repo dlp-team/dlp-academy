@@ -2,6 +2,11 @@
 # NotificationsPanel.tsx
 
 ## Changelog
+### 2026-04-09
+- Refreshed dropdown notification cards to a cleaner, lower-contrast visual style.
+- Added shared notification-type visual mapping (icon + tone classes) so share/assignment/shortcut events render distinct icons without neon gradients.
+- Updated unread indicator tone to neutral slate for consistency with the new history-page style.
+
 ### 2026-04-04
 - Added trigger-boundary aware outside-click handling (`triggerRef`) so bell-trigger clicks do not race against outside-close logic.
 - Added `Ver todas` action (`onOpenAll`) to open dedicated notifications history route.

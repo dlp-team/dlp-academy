@@ -19,7 +19,7 @@ import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
 import { getCourseDisplayLabel } from '../../../utils/courseLabelUtils';
 import { getTrashDaysRemaining } from '../../../utils/trashRetentionUtils';
-import { getAcademicYearStartYear, isValidAcademicYear, normalizeAcademicYear } from './classes-courses/academicYearUtils';
+import { getAcademicYearStartYear, getDefaultAcademicYear, isValidAcademicYear, normalizeAcademicYear } from './classes-courses/academicYearUtils';
 
 const TAB_COURSES = 'courses';
 const TAB_CLASSES = 'classes';
@@ -117,8 +117,10 @@ const ClassesCoursesSection = ({
   const [isDeletingItem, setIsDeletingItem] = React.useState(false);
   const [binActionLoadingKey, setBinActionLoadingKey] = React.useState('');
   const [binActionError, setBinActionError] = React.useState('');
-  const [academicYearStartFilter, setAcademicYearStartFilter] = React.useState('');
-  const [academicYearEndFilter, setAcademicYearEndFilter] = React.useState('');
+  const [academicYearStartFilter, setAcademicYearStartFilter] = React.useState(() => getDefaultAcademicYear());
+  const [academicYearEndFilter, setAcademicYearEndFilter] = React.useState(() => getDefaultAcademicYear());
+  const [classCourseFilter, setClassCourseFilter] = React.useState('');
+  const [classTeacherFilter, setClassTeacherFilter] = React.useState('');
   const [collapsedCourseYears, setCollapsedCourseYears] = React.useState<Record<string, boolean>>({});
   const [collapsedClassYears, setCollapsedClassYears] = React.useState<Record<string, boolean>>({});
 
@@ -171,8 +173,13 @@ const ClassesCoursesSection = ({
   ), [courses, academicYearStartFilter, academicYearEndFilter]);
 
   const filteredClasses = React.useMemo(() => (
-    classes.filter((cls: any) => isAcademicYearWithinRange(resolveClassAcademicYear(cls), academicYearStartFilter, academicYearEndFilter))
-  ), [classes, resolveClassAcademicYear, academicYearStartFilter, academicYearEndFilter]);
+    classes.filter((cls: any) => {
+      if (!isAcademicYearWithinRange(resolveClassAcademicYear(cls), academicYearStartFilter, academicYearEndFilter)) return false;
+      if (classCourseFilter && cls.courseId !== classCourseFilter) return false;
+      if (classTeacherFilter && cls.teacherId !== classTeacherFilter) return false;
+      return true;
+    })
+  ), [classes, resolveClassAcademicYear, academicYearStartFilter, academicYearEndFilter, classCourseFilter, classTeacherFilter]);
 
   const groupedCourses = React.useMemo(() => {
     const grouped: Record<string, any[]> = {};
@@ -205,10 +212,31 @@ const ClassesCoursesSection = ({
   }, [filteredClasses, resolveClassAcademicYear]);
 
   const hasAcademicYearFilter = Boolean(academicYearStartFilter || academicYearEndFilter);
+  const hasClassFilter = Boolean(classCourseFilter || classTeacherFilter);
   const clearAcademicYearFilter = () => {
     setAcademicYearStartFilter('');
     setAcademicYearEndFilter('');
+    setClassCourseFilter('');
+    setClassTeacherFilter('');
   };
+
+  const availableCoursesInClasses = React.useMemo(() => {
+    const courseIds = new Set<string>();
+    classes.forEach((cls: any) => { if (cls.courseId) courseIds.add(cls.courseId); });
+    return Array.from(courseIds)
+      .map((id) => courses.find((c: any) => c.id === id))
+      .filter(Boolean)
+      .sort((a: any, b: any) => String(a?.name || '').localeCompare(String(b?.name || ''), 'es', { sensitivity: 'base' }));
+  }, [classes, courses]);
+
+  const availableTeachersInClasses = React.useMemo(() => {
+    const teacherIds = new Set<string>();
+    classes.forEach((cls: any) => { if (cls.teacherId) teacherIds.add(cls.teacherId); });
+    return Array.from(teacherIds)
+      .map((id) => allTeachers.find((t: any) => t.id === id))
+      .filter(Boolean)
+      .sort((a: any, b: any) => String(a?.displayName || a?.email || '').localeCompare(String(b?.displayName || b?.email || ''), 'es', { sensitivity: 'base' }));
+  }, [classes, allTeachers]);
 
   const toggleCourseYearGroup = (academicYear: string) => {
     setCollapsedCourseYears((previous) => ({
@@ -458,12 +486,16 @@ const ClassesCoursesSection = ({
         </div>
 
         {!showingDetail && tab !== TAB_BIN && (
-          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full md:w-auto">
             <label className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
               Desde
               <select
                 value={academicYearStartFilter}
-                onChange={(event: any) => setAcademicYearStartFilter(event.target.value)}
+                onChange={(event: any) => {
+                  const value = event.target.value;
+                  setAcademicYearStartFilter(value);
+                  if (!value) setAcademicYearEndFilter('');
+                }}
                 className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200"
               >
                 <option value="">Todos</option>
@@ -477,7 +509,11 @@ const ClassesCoursesSection = ({
               Hasta
               <select
                 value={academicYearEndFilter}
-                onChange={(event: any) => setAcademicYearEndFilter(event.target.value)}
+                onChange={(event: any) => {
+                  const value = event.target.value;
+                  setAcademicYearEndFilter(value);
+                  if (!value) setAcademicYearStartFilter('');
+                }}
                 className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200"
               >
                 <option value="">Todos</option>
@@ -487,14 +523,36 @@ const ClassesCoursesSection = ({
               </select>
             </label>
 
-            {hasAcademicYearFilter && (
-              <button
-                type="button"
-                onClick={clearAcademicYearFilter}
-                className="self-end sm:self-auto inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-              >
-                <FilterX className="w-3.5 h-3.5" /> Limpiar filtro
-              </button>
+            {tab === TAB_CLASSES && (
+              <>
+                <label className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
+                  Curso
+                  <select
+                    value={classCourseFilter}
+                    onChange={(event: any) => setClassCourseFilter(event.target.value)}
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200"
+                  >
+                    <option value="">Todos</option>
+                    {availableCoursesInClasses.map((course: any) => (
+                      <option key={course.id} value={course.id}>{getCourseDisplayLabel(course)}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
+                  Profesor
+                  <select
+                    value={classTeacherFilter}
+                    onChange={(event: any) => setClassTeacherFilter(event.target.value)}
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200"
+                  >
+                    <option value="">Todos</option>
+                    {availableTeachersInClasses.map((teacher: any) => (
+                      <option key={teacher.id} value={teacher.id}>{teacher.displayName || teacher.email}</option>
+                    ))}
+                  </select>
+                </label>
+              </>
             )}
           </div>
         )}
