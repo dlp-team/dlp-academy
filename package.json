@@ -15,6 +15,8 @@
     "test:rules:unit": "vitest run --config vitest.rules.config.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:e2e:emulator": "npx cross-env VITE_USE_EMULATORS=true FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 playwright test",
+    "test:e2e:live": "playwright test",
     "security:scan:staged": "node scripts/security/high-confidence-diff-scan.cjs --staged",
     "security:scan:branch": "node scripts/security/high-confidence-diff-scan.cjs --range origin/main..HEAD"
   },
@@ -44,6 +46,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
     "autoprefixer": "^10.4.23",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

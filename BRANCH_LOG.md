@@ -1,5 +1,5 @@
 <!-- BRANCH_LOG.md -->
-# Branch Log — feature/hector/e2e-home-firestore-tests-2026-04-16
+# Branch Log — feature/hector/e2e-firebase-emulators-2026-04-17
 
 ---
 
@@ -8,9 +8,9 @@
 | Field | Value |
 |-------|-------|
 | Workflow Guide | [copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md](copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md) |
-| Current Step | `6` |
+| Current Step | `7` |
 | Autopilot Status | `true` |
-| Last Opened | 2026-04-16 |
+| Last Opened | 2026-04-17 |
 
 > **NOTE:** Any copilot working on this branch MUST follow the checklist and track current step above.
 
@@ -20,9 +20,9 @@
 
 | Field | Value |
 |-------|-------|
-| current-branch | `feature/hector/e2e-home-firestore-tests-2026-04-16` |
-| parent-branch | `development` |
-| derived-from-branch | `none` |
+| current-branch | `feature/hector/e2e-firebase-emulators-2026-04-17` |
+| parent-branch | `feature/hector/e2e-home-firestore-tests-2026-04-16` |
+| derived-from-branch | `feature/hector/e2e-home-firestore-tests-2026-04-16` |
 | lineage-policy | preserve related plans from current/ancestor branch lineage |
 
 ---
@@ -31,12 +31,12 @@
 
 | Field | Value |
 |-------|-------|
-| Created | 2026-04-16 |
+| Created | 2026-04-17 |
 | Owner | `hector` |
 | Owner validation | `owner == COPILOT_PC_ID` (verified) |
 | Branch permission verified | `true` |
 | Lock Status | `locked-private` |
-| Current Work | Comprehensive Playwright E2E tests for Home page Firestore operations |
+| Current Work | Migrate all 75 Playwright E2E tests from live Firebase to Firebase Emulators (Auth + Firestore + Storage) |
 
 ---
 
@@ -44,7 +44,7 @@
 
 | Plan Path | Lifecycle State | Origin Branch | Relationship |
 |-----------|----------------|---------------|--------------|
-| [copilot/plans/active/e2e-home-firestore-tests-2026-04-16/](copilot/plans/active/e2e-home-firestore-tests-2026-04-16/) | `active` | `feature/hector/e2e-home-firestore-tests-2026-04-16` | `current-branch` |
+| [copilot/plans/active/migrate-e2e-to-firebase-emulators-2026-04-17/](copilot/plans/active/migrate-e2e-to-firebase-emulators-2026-04-17/) | `active` | `feature/hector/e2e-firebase-emulators-2026-04-17` | `current-branch` |
 
 ---
 
@@ -54,8 +54,9 @@
 
 | File | Action | Phase |
 |------|--------|-------|
-| `copilot/plans/active/e2e-home-firestore-tests-2026-04-16/**` | Created | Plan intake (Step 6) |
-| `BRANCH_LOG.md` | Created | Step 4 |
+| `copilot/plans/active/migrate-e2e-to-firebase-emulators-2026-04-17/**` | Moved from todo | Plan intake (Step 2) |
+| `BRANCH_LOG.md` | Created/Updated | Step 2 |
+| `copilot/ACTIVE-GOVERNANCE/BRANCHES_STATUS.md` | Updated (registered branch) | Step 1 |
 
 ---
 
@@ -70,8 +71,8 @@
 | Field | Value |
 |-------|-------|
 | autopilot-active | `true` |
-| started | 2026-04-16 |
-| current-phase | Plan creation (Step 6) |
+| started | 2026-04-17 |
+| current-phase | Phase 1 — Emulator Connection Layer |
 
 ---
 

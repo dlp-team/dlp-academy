@@ -22,10 +22,10 @@ This file is the single source of truth for plan progress. Update phase status h
 
 ### Phase Status Tracker
 
-- [ ] Phase 1: Emulator Connection Layer
-- [ ] Phase 2: Auth Emulator Setup & User Seeding
-- [ ] Phase 3: Firestore Emulator Data Seeding
-- [ ] Phase 4: Playwright Config & Test Runner Integration
+- [x] Phase 1: Emulator Connection Layer (pre-existing in config.ts)
+- [x] Phase 2: Auth Emulator Setup & User Seeding (pre-existing in global-setup.ts)
+- [x] Phase 3: Firestore Emulator Data Seeding (tests/e2e/seed/firestore-seed.ts + global-setup integration)
+- [x] Phase 4: Playwright Config & Test Runner Integration (webServer array + npm scripts)
 - [ ] Phase 5: Test Migration & Validation
 - [ ] Phase 6: CI/CD Pipeline Setup
 - [ ] Phase 7: Final Validation & Cleanup
