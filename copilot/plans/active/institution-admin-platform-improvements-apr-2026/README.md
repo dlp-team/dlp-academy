@@ -3,7 +3,7 @@
 > This plan was created from user-provided `AUTOPILOT_PLAN.md` and will be executed via the AUTOPILOT_EXECUTION_CHECKLIST workflow.
 
 ## Status
-`TODO`
+`IN_REVIEW`
 
 ## Branch
 `feature/new-features-2026-04-12`
@@ -25,14 +25,14 @@ Multiple improvements and bug fixes across the Institution Admin Dashboard, app-
 
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | [Institution Admin Dashboard fixes](phases/phase-01-institution-admin-fixes.md) | TODO |
-| 2 | [App-wide UX: Settings, Bin, Profile](phases/phase-02-settings-bin-profile.md) | TODO |
-| 3 | [Scrollbars modernization](phases/phase-03-scrollbars.md) | TODO |
-| 4 | [Sign-in email verification](phases/phase-04-sign-in-verification.md) | TODO |
-| 5 | [Selection mode drag bug fix](phases/phase-05-selection-mode-drag.md) | TODO |
-| 6 | [Copilot documentation system](phases/phase-06-copilot-docs.md) | TODO |
-| 7 | [Final optimization + inReview](phases/phase-07-optimization-inreview.md) | TODO |
-| F | [Continue autopilot execution](phases/final-phase-continue-autopilot-execution.md) | TODO |
+| 1 | [Institution Admin Dashboard fixes](phases/phase-01-institution-admin-fixes.md) | DONE |
+| 2 | [App-wide UX: Settings, Bin, Profile](phases/phase-02-settings-bin-profile.md) | DONE |
+| 3 | [Scrollbars modernization](phases/phase-03-scrollbars.md) | DONE |
+| 4 | [Sign-in email verification](phases/phase-04-sign-in-verification.md) | DONE |
+| 5 | [Selection mode drag bug fix](phases/phase-05-selection-mode-drag.md) | DONE |
+| 6 | [Copilot documentation system](phases/phase-06-copilot-docs.md) | DONE |
+| 7 | [Final optimization + inReview](phases/phase-07-optimization-inreview.md) | IN_REVIEW |
+| F | [Continue autopilot execution](phases/final-phase-continue-autopilot-execution.md) | IN_PROGRESS |
 
 ## Validation Strategy
 - `npm run test` must pass after each phase

@@ -3,6 +3,9 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import ClassesCoursesSection from '../../../../src/pages/InstitutionAdminDashboard/components/ClassesCoursesSection';
+import { getDefaultAcademicYear } from '../../../../src/pages/InstitutionAdminDashboard/components/classes-courses/academicYearUtils';
+
+const DEFAULT_YEAR = getDefaultAcademicYear();
 
 const mocks = vi.hoisted(() => ({
   createCourse: vi.fn(),
@@ -24,6 +27,7 @@ vi.mock('../../../../src/pages/InstitutionAdminDashboard/hooks/useClassesCourses
         id: 'course-1',
         name: '1 ESO',
         color: '#6366f1',
+        academicYear: DEFAULT_YEAR,
       },
     ],
     classes: [
@@ -33,6 +37,7 @@ vi.mock('../../../../src/pages/InstitutionAdminDashboard/hooks/useClassesCourses
         courseId: 'course-1',
         teacherId: 'teacher-1',
         studentIds: [],
+        academicYear: DEFAULT_YEAR,
       },
     ],
     trashedCourses: [

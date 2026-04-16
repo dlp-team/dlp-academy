@@ -33,3 +33,28 @@ _None at this time._
 ### 2026-04-12 — User feedback on Phase 2B
 **Feedback:** "the selection mode on the bin should be on the same position and have the same style as the one on the other tabs like the manual."
 **Action taken:** Restructured `BinView.tsx` selection toolbar from inline-in-header to standalone card section below the main toolbar row, matching `HomeSelectionToolbar`'s `mt-4 mb-6 rounded-xl border p-3 flex flex-col gap-3` container pattern with `containerTone` color logic. "Vaciar papelera" moved to always-visible position in top sort row.
+
+### 2026-04-28 — Phases 4, 5, 6 completed; Phase 7 moved to inReview
+
+**Phase 4 — DONE (pre-existing implementation verified)**
+- Email verification flow already implemented in register, login, and app route guards.
+- Plan phase documented and marked DONE.
+- Commit: `c36c2bb`
+
+**Phase 5 — DONE**
+- Fixed multi-drag ghost behavior for 7+ selected items in `useGhostDrag.ts`.
+- Staging now uses uncapped companion selection while ghost preview remains capped at 6.
+- Commit: `1490ceb`
+
+**Phase 6 — DONE**
+- Created full Copilot UI patterns documentation system under `copilot/REFERENCE/ui-patterns/`.
+- Added `copilot/REFERENCE/UI_PATTERNS_INDEX.md` and updated instruction gates in `.github/copilot-instructions.md` and `AGENTS.md`.
+- Commit: `1a78a73`
+
+**Phase 7 — IN_REVIEW**
+- Completed optimization and deep risk analysis docs.
+- Logged out-of-scope risk for pre-existing oversized `BinView.tsx`.
+- Fixed Phase 1 regression in `ClassesCoursesSection.deleteConfirm.test.jsx` fixtures.
+- Current test baseline: 164/165 files and 760/762 tests passing.
+- Remaining failures are pre-existing in `InstitutionCustomizationMockView.test.jsx`.
+- Commit(s): `9dd8b41` + follow-up pending for recovered risk/test/doc sync

@@ -1,6 +1,6 @@
 # Phase 7 — Final Optimization + InReview
 
-## Status: DONE
+## Status: IN_REVIEW
 
 ## Completion Summary (2026-04-28)
 
@@ -19,8 +19,8 @@ BinView.tsx file size logged in [copilot/plans/out-of-scope-risk-log.md](../../o
 
 ### Final Test Baseline
 - 164/165 test files passing
-- 759/762 tests passing
-- Remaining 2-3 failures: `InstitutionCustomizationMockView.test.jsx` — pre-existing (confirmed failing before Phase 1)
+- 760/762 tests passing
+- Remaining 2 failures: `InstitutionCustomizationMockView.test.jsx` — pre-existing (confirmed failing before Phase 1)
 
 ---
 
@@ -48,10 +48,10 @@ Document any discovered risks outside this plan's scope in:
 
 ## Closure Gate
 This plan cannot move to `finished` until:
-- [ ] Optimization checklist completed
-- [ ] Risk analysis documented
-- [ ] Any out-of-scope risks logged
-- [ ] Final `npm run test` clean pass
+- [x] Optimization checklist completed
+- [x] Risk analysis documented
+- [x] Any out-of-scope risks logged
+- [ ] Final `npm run test` clean pass (blocked by 2 pre-existing failures in `InstitutionCustomizationMockView.test.jsx`)
 - [ ] Human merge authorization obtained per BRANCH_LOG
 
 ## Commits Required
