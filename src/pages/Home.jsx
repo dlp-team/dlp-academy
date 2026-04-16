@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { 
     Plus, BookOpen, Home, ArrowUpDown, CheckCircle2, 
     Clock, RotateCw, ChevronLeft, FileText, Download, Play , Trash2
@@ -21,7 +21,7 @@ import { db } from '../firebase/config';
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
 
 const AIClassroom = ({ user }) => {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
 
     // --- ESTADOS (EL CEREBRO DE LA APP) ---
     const [subjects, setSubjects] = useState([]);
@@ -35,21 +35,19 @@ const AIClassroom = ({ user }) => {
     // Estados de Modales
     const [showSubjectModal, setShowSubjectModal] = useState(false);
     const [showTopicModal, setShowTopicModal] = useState(false);
-    const [showPositionModal, setShowPositionModal] = useState(false);
-    const [showReorderModal, setShowReorderModal] = useState(false);
+    const [, setShowPositionModal] = useState(false);
+    const [, setShowReorderModal] = useState(false);
 
     // Datos de Formularios
     const [subjectFormData, setSubjectFormData] = useState({ name: '', course: '', color: 'from-blue-400 to-blue-600' });
     const [topicFormData, setTopicFormData] = useState({ title: '', prompt: '' });
-    const [pendingTopic, setPendingTopic] = useState(null);
-    const [reorderList, setReorderList] = useState([]);
+    const [, setPendingTopic] = useState(null);
 
     // UI States
     const [dragActive, setDragActive] = useState(false);
     const [files, setFiles] = useState([]);
     const [activeTab, setActiveTab] = useState('materials');
-    const [draggedIndex, setDraggedIndex] = useState(null);
-    const [dragOverIndex, setDragOverIndex] = useState(null);
+
 
     const colorOptions = [
         { name: 'Azul', value: 'from-blue-400 to-blue-600' },
