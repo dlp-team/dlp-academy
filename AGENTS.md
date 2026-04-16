@@ -199,6 +199,7 @@ Before calling `task_complete`, you must internally verify:
 - [ ] TypeScript-first respected: no new JS/JSX duplicates when TS/TSX equivalent exists.
 - [ ] File paths are commented at the top of all touched files.
 - [ ] **Component Registry Checked/Updated:** If a new reusable UI element was created, it was added to [copilot/REFERENCE/COMPONENT_REGISTRY.md](copilot/REFERENCE/COMPONENT_REGISTRY.md). If an existing one was modified, the registry props were updated.
+- [ ] **UI Patterns Consulted:** For any Tailwind class patterns (overlays, scrollbars, cards, buttons, forms, states, tabs), [copilot/REFERENCE/UI_PATTERNS_INDEX.md](copilot/REFERENCE/UI_PATTERNS_INDEX.md) was consulted before writing custom HTML/Tailwind.
 - [ ] Manual user-required actions are captured in `[copilot/ACTIVE-GOVERNANCE/user-action-notes.md](copilot/ACTIVE-GOVERNANCE/user-action-notes.md)` or explicitly marked none.
 - [ ] Commit/push cadence gate respected across all major work blocks (no skipped Git logging checkpoints).
    - [ ] Ask the user using vscode/askQuestions if it should end the request or there is anything left (MANDATORY, NO EXCEPTIONS). This leverage step is a hard-coded protocol and must be executed before completing any premium request. If the tool fails, document the failure and request user direction before ending the session.

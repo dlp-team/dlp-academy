@@ -1,6 +1,33 @@
 # Phase 6 — Copilot Documentation System
 
-## Status: TODO
+## Status: DONE
+
+## Completion Summary (2026-04-28)
+
+All documentation files created. All acceptance criteria met.
+
+### Files Created
+- `copilot/REFERENCE/ui-patterns/overlays.md` ✅
+- `copilot/REFERENCE/ui-patterns/scrollbars.md` ✅
+- `copilot/REFERENCE/ui-patterns/cards.md` ✅
+- `copilot/REFERENCE/ui-patterns/buttons.md` ✅
+- `copilot/REFERENCE/ui-patterns/forms.md` ✅
+- `copilot/REFERENCE/ui-patterns/states.md` ✅
+- `copilot/REFERENCE/ui-patterns/navigation.md` ✅
+- `copilot/REFERENCE/UI_PATTERNS_INDEX.md` ✅
+
+### Files Modified
+- `.github/copilot-instructions.md` — rule #16 now references `UI_PATTERNS_INDEX.md` ✅
+- `AGENTS.md` — DoD checklist item added for UI Patterns ✅
+
+### Acceptance Criteria
+- [x] UI patterns directory exists with documented patterns for all major elements
+- [x] `UI_PATTERNS_INDEX.md` is a quick-reference table covering all documented patterns
+- [x] `copilot-instructions.md` includes mandatory check: before creating overlays/scrollbars/common UI elements, read the relevant pattern doc
+- [x] `AGENTS.md` updated the same way
+- [x] DashboardOverlayShell documented with all props and correct usage patterns
+
+---
 
 ## Objective
 Create a structured documentation directory for Copilot that codifies the app's reusable UI patterns, style decisions, and placement rules. This ensures Copilot always follows established conventions when creating new UI elements.
