@@ -414,15 +414,22 @@
   - [ ] `git checkout <parent-branch>`
   - [ ] (Feature branch deleted by GitHub; local checkout prevents being in deleted branch)
   - [ ] If `parent-branch == development`:
-    - [ ] **DELETE BRANCH_LOG.md if it exists on development:**
-    - [ ] Run: `rm BRANCH_LOG.md` (if file exists in root)
-    - [ ] Commit: `git add -A && git commit -m "chore(cleanup): remove BRANCH_LOG after merge to development"`
+    - [ ] **MANDATORY: DELETE BRANCH_LOG.md from development after merge**
+    - [ ] Rationale: `BRANCH_LOG.md` is branch-specific metadata. If it lands on `development` via the merge, it pollutes `development` with log data that belongs to the feature branch only. It MUST be removed from `development` before any further work begins on `development`.
+    - [ ] Check: `Test-Path BRANCH_LOG.md` (PowerShell) or `test -f BRANCH_LOG.md` (bash)
+    - [ ] IF file exists on development: `git rm BRANCH_LOG.md`
+    - [ ] Commit: `git commit -m "chore(cleanup): remove BRANCH_LOG.md from development after merge"`
     - [ ] Push: `git push origin development`
+    - [ ] **ALSO check for any `BRANCH_LOG_*.md` variants** (e.g., `BRANCH_LOG_NEW_FEATURES.md`) and delete them the same way
 - [ ] Branch merged & deleted automatically
 
 ### Step 22: Update BRANCHES_STATUS.md & Mark for Deletion
 
 - [ ] Checkout development: `git checkout development && git pull origin development`
+- [ ] **VERIFY BRANCH_LOG.md cleanup (from Step 21) was completed:**
+  - [ ] Run: `Test-Path BRANCH_LOG.md` (or `git ls-files BRANCH_LOG.md`)
+  - [ ] IF `BRANCH_LOG.md` still exists on development → delete it now: `git rm BRANCH_LOG.md && git commit -m "chore(cleanup): remove BRANCH_LOG.md from development" && git push origin development`
+  - [ ] Rationale: `BRANCH_LOG.md` is branch-specific; it must never persist on `development`
 - [ ] Edit: `copilot/BRANCHES_STATUS.md`
 - [ ] Find row for the merged branch and update:
   - [ ] Status: `pending-delete` (NOT ~~merged~~ or ~~archived~~)
