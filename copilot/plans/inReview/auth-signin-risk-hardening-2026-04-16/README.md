@@ -1,11 +1,11 @@
 # Auth Sign-In Risk Hardening Plan (2026-04-16)
 
 ## Status
-- Lifecycle: active (all phases implemented, pending commit/push)
+- Lifecycle: inReview
 - Owner: Copilot
 - Requested by: user
 - Last updated: 2026-04-16
-- Current Phase: 08 (complete — awaiting user review)
+- Current Phase: 08 (all phases complete — merged to development, awaiting user verification)
 
 ## Problem Statement
 Current authentication, login, registration, and onboarding flows contain security and integrity risks that can lead to privilege escalation, role misassignment, access-policy bypass, and weak step-up authentication behavior. The existing risk log needs a fresh, implementation-grounded reassessment and a remediation roadmap.
