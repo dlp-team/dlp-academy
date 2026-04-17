@@ -97,10 +97,10 @@ const FolderCardBody = ({
                 
                 {/* --- FRONT VISUALS --- */}
                 {!isModern && (
-                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-100 ${isOrphan ? 'saturate-[0.45] grayscale-[0.32] brightness-[1.05]' : ''}`}></div>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-100 pointer-events-none ${isOrphan ? 'saturate-[0.45] grayscale-[0.32] brightness-[1.05]' : ''}`}></div>
                 )}
                 {isModern && fillColor && (
-                    <div className={`absolute inset-0 ${fillColor} ${isOrphan ? 'saturate-[0.45] grayscale-[0.32] brightness-[1.05]' : ''}`}></div>
+                    <div className={`absolute inset-0 pointer-events-none ${fillColor} ${isOrphan ? 'saturate-[0.45] grayscale-[0.32] brightness-[1.05]' : ''}`}></div>
                 )}
                 {/* Hover Overlay */}
                 {isModern && (

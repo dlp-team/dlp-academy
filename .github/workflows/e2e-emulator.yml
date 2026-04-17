@@ -1,0 +1,138 @@
+# .github/workflows/e2e-emulator.yml
+# E2E tests running against Firebase Emulators — no real Firebase credentials needed
+name: E2E Emulator Tests
+
+on:
+  push:
+    branches: [main, development, 'feature/**']
+  pull_request:
+    branches: [main, development]
+
+concurrency:
+  group: e2e-emulator-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-emulator:
+    name: E2E (Firebase Emulators)
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      CI: true
+      # Emulator mode flags
+      VITE_USE_EMULATORS: 'true'
+      FIRESTORE_EMULATOR_HOST: localhost:8080
+      FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+      FIREBASE_STORAGE_EMULATOR_HOST: localhost:9199
+      VITE_FIREBASE_PROJECT_ID: demo-dlp-academy
+      # Enable mutation tests (safe with emulators — data is ephemeral)
+      E2E_RUN_MUTATIONS: 'true'
+      # Test personas (emulator-only — not real credentials)
+      E2E_EMAIL: e2e-default@test.local
+      E2E_PASSWORD: testpass123
+      E2E_OWNER_EMAIL: e2e-owner@test.local
+      E2E_OWNER_PASSWORD: testpass123
+      E2E_EDITOR_EMAIL: e2e-editor@test.local
+      E2E_EDITOR_PASSWORD: testpass123
+      E2E_VIEWER_EMAIL: e2e-viewer@test.local
+      E2E_VIEWER_PASSWORD: testpass123
+      E2E_ADMIN_EMAIL: e2e-admin@test.local
+      E2E_ADMIN_PASSWORD: testpass123
+      E2E_INSTITUTION_ADMIN_EMAIL: e2e-instadmin@test.local
+      E2E_INSTITUTION_ADMIN_PASSWORD: testpass123
+      E2E_TEACHER_EMAIL: e2e-teacher@test.local
+      E2E_TEACHER_PASSWORD: testpass123
+      E2E_STUDENT_EMAIL: e2e-student@test.local
+      E2E_STUDENT_PASSWORD: testpass123
+      E2E_ONBOARDING_EMAIL: e2e-onboarding@test.local
+      E2E_ONBOARDING_PASSWORD: testpass123
+      E2E_INSTITUTION_ID: e2e-test-institution
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java (required for Firestore emulator)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Cache Firebase emulator binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}-${{ hashFiles('firebase.json') }}
+          restore-keys: |
+            firebase-emulators-${{ runner.os }}-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Install Playwright browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Start Firebase Emulators
+        run: |
+          firebase emulators:start --only auth,firestore,storage,functions --project demo-dlp-academy &
+          # Wait for emulators to be ready
+          echo "Waiting for emulators..."
+          timeout 60 bash -c 'until curl -s http://localhost:4000 > /dev/null 2>&1; do sleep 2; done'
+          echo "Emulators ready!"
+
+      - name: Start Vite dev server
+        run: |
+          npm run dev &
+          # Wait for Vite to be ready
+          echo "Waiting for Vite..."
+          timeout 30 bash -c 'until curl -s http://localhost:5173 > /dev/null 2>&1; do sleep 2; done'
+          echo "Vite ready!"
+
+      - name: Run E2E tests
+        run: npx playwright test --project=chromium
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-emulator-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload test traces (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-emulator-traces
+          path: test-results/**/*.zip
+          retention-days: 7
+          if-no-files-found: ignore

@@ -104,17 +104,17 @@ const SubjectCardFront = ({
             
             {/* Classic Background: Full Gradient */}
             {!isModern && (
-                <div className={`absolute inset-0 bg-gradient-to-br ${subjectGradientClass} opacity-90`}></div>
+                <div className={`absolute inset-0 bg-gradient-to-br ${subjectGradientClass} opacity-90 pointer-events-none`}></div>
             )}
 
             {/* Modern Background: Fill color */}
             {isModern && fillColor && (
-                <div className={`absolute inset-0 ${isPassedShortcut ? 'bg-gradient-to-br from-emerald-50 via-cyan-50 to-teal-100 dark:from-emerald-950/70 dark:via-cyan-950/60 dark:to-teal-950/70' : fillColor}`}></div>
+                <div className={`absolute inset-0 pointer-events-none ${isPassedShortcut ? 'bg-gradient-to-br from-emerald-50 via-cyan-50 to-teal-100 dark:from-emerald-950/70 dark:via-cyan-950/60 dark:to-teal-950/70' : fillColor}`}></div>
             )}
 
             {/* Modern Hover Effect */}
             {isModern && (
-                <div className="absolute inset-0 bg-slate-100/30 dark:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute inset-0 bg-slate-100/30 dark:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
             )}
 
             {endedBadge && (

@@ -121,7 +121,7 @@ const PREVIEW_SUBJECTS = [
     cardStyle: 'default',
     modernFillColor: '#10b981',
     completed: false,
-    folderId: 'preview-folder-ciencias',
+    folderId: 'preview-folder-3',
     academicYear: '2025-2026',
     isCurrent: true,
     lastActivityAt: '2026-03-18',
