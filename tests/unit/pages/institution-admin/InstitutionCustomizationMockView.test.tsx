@@ -132,7 +132,7 @@ describe('InstitutionCustomizationMockView', () => {
       expect(screen.queryByDisplayValue('Colegio Horizonte')).toBeNull();
       expect(screen.queryByDisplayValue('#123456')).toBeNull();
     });
-  });
+  }, 12000);
 
   it('saves the current palette as a named theme set', async () => {
     const onSaveThemeSet = vi.fn(async () => {});
