@@ -1,7 +1,7 @@
 <!-- copilot/ACTIVE-GOVERNANCE/BRANCHES_STATUS.md -->
 # Repository Branches Status
 
-**Last Updated:** 2026-04-16
+**Last Updated:** 2026-04-17
 **Purpose:** Global registry of all active feature/fix/chore branches. Single source of truth for understanding what work is happening across the repo.
 
 **Retention Policy:** See [copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md](./BRANCH_RETENTION_POLICY.md) for auto-deletion rules and grace periods.
@@ -19,9 +19,12 @@
 
 | Branch Name | Owner | Type | Status | Pending-Delete Date | Summary | Related Plan | Key Files | Last Updated | Notes |
 |---|---|---|---|---|---|---|---|---|---|
+| feature/hector/e2e-firebase-emulators-2026-04-17 | hector | feature | pending-delete | 2026-04-17 | Migrate all 75 E2E Playwright tests to use Firebase Auth+Firestore+Storage emulators for full test isolation and CI/CD friendliness | copilot/plans/active/migrate-e2e-to-firebase-emulators-2026-04-17/ | src/firebase/config.ts, playwright.config.js, tests/e2e/global-setup.ts, tests/e2e/emulator-seed.ts, tests/e2e/seed/firestore-seed.ts | 2026-04-17 | Merged into feature/hector/e2e-home-firestore-tests-2026-04-16 on 2026-04-17; will be auto-deleted on 2026-04-24 |
+| feature/hector/e2e-home-firestore-tests-2026-04-16 | hector | feature | active | — | Comprehensive E2E tests for Home page Firestore operations (68/75 passing) | copilot/plans/finished/ | tests/e2e/**, playwright.config.js | 2026-04-17 | Awaiting human merge approval per BRANCH_LOG.md |
 | feature/new-features-2026-04-12 | hector | feature | pending-delete | 2026-04-16 | Bulk selection workflows + auth-signin-risk-hardening (8 phases) | selection-mode-bulk-workflows-2026-04-12, auth-signin-risk-hardening-2026-04-16 | firestore.rules, functions/index.js, src/App.tsx, src/components/modals/SudoModal.tsx, src/pages/Auth/hooks/useRegister.ts, src/pages/Auth/hooks/useLogin.ts | 2026-04-16 | Merged into development on 2026-04-16; will be auto-deleted on 2026-04-23 |
 | feature/autopilot-workflow-updates-2026-04-09 | hector | feature | active | — | Continue AUTOPILOT execution with explicit plan lineage (2026-04-09 predecessor + 2026-04-10 active continuation) | copilot/plans/active/autopilot-plan-execution-2026-04-10/ ; copilot/plans/finished/autopilot-plan-execution-2026-04-09/ | BRANCH_LOG.md, copilot/plans/active/autopilot-plan-execution-2026-04-10/**, copilot/plans/finished/autopilot-plan-execution-2026-04-09/**, copilot/ACTIVE-GOVERNANCE/BRANCHES_STATUS.md | 2026-04-10 | Lock: locked-private; checklist Step 6 complete, implementation Step 7+ pending; prior same-branch plan preserved in BRANCH_LOG lineage registry; human merge approval required in BRANCH_LOG | 
 | feature/hector/autopilot-plan-notifications-topic-2026-0412 | hector | feature | active | — | Execute AUTOPILOT_PLAN notifications unification, direct messaging, and Topic study guide permissions fix | copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/ | src/pages/Home/**, src/pages/Topic/**, src/components/**, src/hooks/**, src/firebase/**, src/utils/** | 2026-04-12 | Lock: pending BRANCH_LOG initialization |
+| feature/hector/e2e-home-firestore-tests-2026-04-16 | hector | feature | active | — | Comprehensive Playwright E2E tests for all Home page Firestore write/modify/delete operations (subjects, folders, sharing, bulk ops) with full cleanup | copilot/plans/active/e2e-home-firestore-tests-2026-04-16/ | tests/e2e/**, playwright.config.js | 2026-04-16 | Lock: locked-private; created from AUTOPILOT_PLAN.md intake |
 <!-- Deleted 2026-04-16: feature/hector/autopilot-plan-execution-2026-0408 (expired 2026-04-15) -->
 <!-- Deleted 2026-04-16: feature/hector/original-plan-execution-2026-0407 (expired 2026-04-14) -->
 <!-- Deleted 2026-04-16: gemini-opt (expired 2026-04-14) -->
