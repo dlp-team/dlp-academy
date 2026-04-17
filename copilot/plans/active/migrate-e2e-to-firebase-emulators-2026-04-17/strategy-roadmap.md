@@ -26,6 +26,6 @@ This file is the single source of truth for plan progress. Update phase status h
 - [x] Phase 2: Auth Emulator Setup & User Seeding (pre-existing in global-setup.ts)
 - [x] Phase 3: Firestore Emulator Data Seeding (tests/e2e/seed/firestore-seed.ts + global-setup integration)
 - [x] Phase 4: Playwright Config & Test Runner Integration (webServer array + npm scripts)
-- [ ] Phase 5: Test Migration & Validation
+- [x] Phase 5: Test Migration & Validation (67/67 passing, 3 consecutive clean runs — 2026-04-18)
 - [ ] Phase 6: CI/CD Pipeline Setup
 - [ ] Phase 7: Final Validation & Cleanup
