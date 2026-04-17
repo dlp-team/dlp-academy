@@ -23,19 +23,21 @@ export default defineConfig({
     }
   ],
   // Automatically start emulators (if enabled) + local dev server before testing
+  // In CI, emulators and Vite are started by the workflow — reuseExistingServer avoids port conflicts.
+  // Locally, reuseExistingServer lets Playwright start them if not already running.
   webServer: useEmulators
     ? [
         {
           command: 'npx firebase emulators:start --only auth,firestore,storage,functions',
           url: 'http://localhost:4000',
-          reuseExistingServer: !process.env.CI,
+          reuseExistingServer: true,
           timeout: 60000,
           stdout: 'pipe',
         },
         {
           command: 'npm run dev',
           url: 'http://localhost:5173',
-          reuseExistingServer: !process.env.CI,
+          reuseExistingServer: true,
           env: { VITE_USE_EMULATORS: 'true' },
         },
       ]
