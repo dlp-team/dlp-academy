@@ -80,7 +80,7 @@
 
 | Field | Value |
 |-------|-------|
-| merge-permission | `pending-human-approval` |
-| approved-by | — |
-| approval-date | — |
-| approval-evidence | — |
+| merge-permission | `approved` |
+| approved-by | `hector` |
+| approval-date | 2026-04-17 |
+| approval-evidence | User approved merge in chat session |
