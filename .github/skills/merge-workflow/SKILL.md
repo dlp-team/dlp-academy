@@ -162,6 +162,15 @@ ACTION SEQUENCE:
 
 **Purpose:** Create a PR targeting the correct parent branch.
 
+**PRE-REQUISITE CHECK:**
+```
+1. Verify gh CLI is available: gh --version
+2. IF gh is not installed or not authenticated:
+   a. Log to PENDING_COMMANDS.md: "gh pr create requires GitHub CLI"
+   b. Ask user to create PR manually via GitHub UI
+   c. User provides PR URL → continue to STEP M6
+```
+
 ```
 ACTION SEQUENCE:
 1. Read parent-branch from BRANCH_LOG.md
@@ -173,7 +182,7 @@ ACTION SEQUENCE:
 - PR base does not match `parent-branch` from `BRANCH_LOG.md`
 - PR creation fails (log error, ask user)
 
-**If PR already exists:** Skip this step. Verify existing PR targets correct base.
+**If PR already exists:** Skip creation. Verify existing PR targets correct base.
 
 ---
 
@@ -221,30 +230,36 @@ ACTION SEQUENCE:
 3. git pull origin <parent-branch>
 ```
 
-**Post-merge BRANCH_LOG.md cleanup (MANDATORY if parent is development):**
+**Post-merge BRANCH_LOG.md cleanup (MANDATORY for ALL parent branches):**
 ```
-IF parent-branch == development:
-  1. Test-Path BRANCH_LOG.md
-  2. IF exists: git rm BRANCH_LOG.md
-  3. ALSO check for BRANCH_LOG_*.md variants → delete them too
-  4. git commit -m "chore(cleanup): remove BRANCH_LOG.md from development after merge"
-  5. git push origin development
+After merging into ANY parent branch:
+  1. git checkout <parent-branch>
+  2. git pull origin <parent-branch>
+  3. Test-Path BRANCH_LOG.md
+  4. IF exists AND it belongs to the merged feature branch (not the parent's own log):
+     a. git rm BRANCH_LOG.md
+     b. ALSO check for BRANCH_LOG_*.md variants → delete them too
+     c. git commit -m "chore(cleanup): remove BRANCH_LOG.md from <parent-branch> after merge"
+     d. git push origin <parent-branch>
+  5. IF parent-branch has its OWN BRANCH_LOG.md (different content/branch identity):
+     a. Do NOT delete — it belongs to the parent branch
+     b. Verify by checking "current-branch" field inside the file
 ```
 
-**RATIONALE:** `BRANCH_LOG.md` is branch-specific metadata. If it lands on `development` via the merge, it pollutes `development` with data that belongs to the feature branch only.
+**RATIONALE:** `BRANCH_LOG.md` is branch-specific metadata. If it lands on the parent via merge, it pollutes the parent with data that belongs to the feature branch only. This applies to ALL parent branches, not just `development`.
 
 ---
 
 ### STEP M8: Update BRANCHES_STATUS.md (MANDATORY — NEVER SKIP)
 
-**Purpose:** Mark the merged branch as pending-delete in the global registry.
+**Purpose:** Mark the merged branch as pending-delete in the global registry AND update plan lifecycle.
 
 ```
 ACTION SEQUENCE:
 1. git checkout development && git pull origin development
 2. VERIFY BRANCH_LOG.md cleanup from STEP M7 was completed:
    a. Test-Path BRANCH_LOG.md
-   b. IF still exists → delete now: git rm BRANCH_LOG.md && commit && push
+   b. IF still exists AND belongs to merged branch → delete now: git rm BRANCH_LOG.md && commit && push
 3. Edit: copilot/BRANCHES_STATUS.md
 4. Find the row for the merged branch
 5. Update fields:
@@ -255,6 +270,18 @@ ACTION SEQUENCE:
 7. git commit -m "chore(branches): mark <branch-name> as pending-delete"
 8. git push origin development
 ```
+
+**PLAN LIFECYCLE UPDATE (if applicable):**
+```
+IF the merged branch had an associated plan in copilot/plans/active/:
+  1. Move the plan folder from copilot/plans/active/ to copilot/plans/finished/
+  2. Update the plan README.md status to FINISHED with completion date
+  3. git add copilot/plans/
+  4. git commit -m "docs(plans): move <plan-name> to finished after merge"
+  5. git push origin development
+```
+
+**NOTE on parent-branch routing:** If `parent-branch` is NOT `development` (e.g., merging a child into a parent feature branch), you still MUST update `BRANCHES_STATUS.md` on `development`. Always checkout `development` for this step regardless of where the merge landed.
 
 **THIS STEP IS THE MOST COMMONLY FORGOTTEN STEP.** If you skip it, the branch registry becomes stale and other agents make incorrect decisions based on outdated data.
 
@@ -371,3 +398,40 @@ After completing ALL steps, verify:
 6. **Not running tests after sync** → Broken parent branch
 7. **Force-pushing during merge** → Lost commit history
 8. **Deleting branch row immediately** → No grace period for rollback
+9. **Not updating plan lifecycle** → Plans stuck in `active/` after work is done
+10. **BRANCH_LOG.md pollution on non-development parents** → Metadata leaks to parent feature branches
+
+---
+
+## Emergency Rollback Procedure
+
+**If a regression is discovered after merge (within 7-day grace period):**
+
+```
+ROLLBACK SEQUENCE:
+1. Identify the merge commit on the parent branch:
+   git log --oneline --merges -10   (find the squash merge commit)
+2. Verify the branch still exists (within 7-day pending-delete window):
+   git branch -a | grep <branch-name>
+3. Revert the merge commit on the parent branch:
+   git checkout <parent-branch>
+   git revert <merge-commit-hash> -m 1
+   git push origin <parent-branch>
+4. Update BRANCHES_STATUS.md:
+   - Change Status from pending-delete back to active
+   - Remove Pending-Delete Date
+   - Add Notes: "Reverted on <date> due to <reason>. Needs re-work."
+5. Re-checkout the feature branch (if still exists):
+   git checkout <feature-branch>
+6. Fix the issue on the feature branch
+7. Re-run the full merge workflow from STEP M1
+```
+
+**If branch was already deleted (past 7-day window):**
+```
+1. git revert <merge-commit-hash> -m 1   (on parent branch)
+2. Create a NEW branch from parent to re-implement the fix
+3. Follow standard branch creation protocol (Steps 2-4 of AUTOPILOT_EXECUTION_CHECKLIST)
+```
+
+**NEVER use `git reset --hard` or `git push --force` to undo a merge.** Always use `git revert`.
