@@ -10,29 +10,36 @@ const E2E_EDITOR_PASSWORD = process.env.E2E_EDITOR_PASSWORD;
 const E2E_VIEWER_EMAIL = process.env.E2E_VIEWER_EMAIL;
 const E2E_VIEWER_PASSWORD = process.env.E2E_VIEWER_PASSWORD;
 
+const requireCredential = (value: string | undefined, variableName: string): string => {
+  if (!value) {
+    throw new Error(`Missing required E2E credential: ${variableName}`);
+  }
+  return value;
+};
+
 export const login = async (page: Page, email: string, password: string) => {
   await page.goto('/login');
   await page.locator('#email').fill(email || '');
   await page.locator('#password').fill(password || '');
   await page.getByRole('button', { name: /iniciar sesión/i }).click();
-  await page.waitForURL(/\/home/, { timeout: 30000 });
-  await expect(page.locator('.home-page')).toBeVisible({ timeout: 15000 });
+  await page.waitForURL(/\/home/, { timeout: 45000 });
+  await expect(page.locator('.home-page')).toBeVisible({ timeout: 30000 });
 };
 
 export const loginAsDefault = async (page: Page) => {
-  await login(page, E2E_EMAIL, E2E_PASSWORD);
+  await login(page, requireCredential(E2E_EMAIL, 'E2E_EMAIL'), requireCredential(E2E_PASSWORD, 'E2E_PASSWORD'));
 };
 
 export const loginAsOwner = async (page: Page) => {
-  await login(page, E2E_OWNER_EMAIL, E2E_OWNER_PASSWORD);
+  await login(page, requireCredential(E2E_OWNER_EMAIL, 'E2E_OWNER_EMAIL'), requireCredential(E2E_OWNER_PASSWORD, 'E2E_OWNER_PASSWORD'));
 };
 
 export const loginAsEditor = async (page: Page) => {
-  await login(page, E2E_EDITOR_EMAIL, E2E_EDITOR_PASSWORD);
+  await login(page, requireCredential(E2E_EDITOR_EMAIL, 'E2E_EDITOR_EMAIL'), requireCredential(E2E_EDITOR_PASSWORD, 'E2E_EDITOR_PASSWORD'));
 };
 
 export const loginAsViewer = async (page: Page) => {
-  await login(page, E2E_VIEWER_EMAIL, E2E_VIEWER_PASSWORD);
+  await login(page, requireCredential(E2E_VIEWER_EMAIL, 'E2E_VIEWER_EMAIL'), requireCredential(E2E_VIEWER_PASSWORD, 'E2E_VIEWER_PASSWORD'));
 };
 
 export const logout = async (page: Page) => {

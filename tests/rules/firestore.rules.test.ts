@@ -1,4 +1,4 @@
-// tests/rules/firestore.rules.test.js
+// tests/rules/firestore.rules.test.ts
 import { describe, it, beforeAll, afterAll, afterEach } from 'vitest';
 import {
   initializeTestEnvironment,

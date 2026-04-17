@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      'firebase-functions/v2/https': path.resolve(process.cwd(), 'tests/mocks/firebase-functions-v2-https.js'),
+      'firebase-functions/v2/https': path.resolve(process.cwd(), 'tests/mocks/firebase-functions-v2-https.ts'),
     },
   },
   test: {
@@ -15,6 +15,6 @@ export default defineConfig({
     ],
     environment: 'jsdom', // Simulates a browser environment for React components
     globals: true,        // Allows using describe/it/expect without importing them
-    setupFiles: './tests/setup.js', // Optional: for global mocks (like Firebase) later
+    setupFiles: './tests/setup.ts', // Optional: for global mocks (like Firebase) later
   },
 });

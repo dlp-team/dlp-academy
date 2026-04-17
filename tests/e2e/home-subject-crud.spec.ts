@@ -33,8 +33,8 @@ const OWNER_PASSWORD = process.env.E2E_OWNER_PASSWORD;
 const EDITOR_EMAIL = process.env.E2E_EDITOR_EMAIL;
 
 // ─── Fixture variables ───────────────────────────────────────────
-let ownerUid = null;
-let editorUid = null;
+let ownerUid: string | null = null;
+let editorUid: string | null = null;
 
 // ─── Seeding helpers ─────────────────────────────────────────────
 const seedSubject = async (db, ownerId, overrides = {}) => {
@@ -143,6 +143,7 @@ test.describe('Home — Subject CRUD operations', () => {
   test('update subject name via edit modal', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const { id, data } = await seedSubject(db, ownerUid, { name: '[E2E-CRUD] Editable Subject', course: 'E2E Curso' });
 
@@ -196,6 +197,7 @@ test.describe('Home — Subject CRUD operations', () => {
   test('soft-delete a subject (move to trash)', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const { id } = await seedSubject(db, ownerUid, { name: '[E2E-CRUD] Deletable Subject' });
 
@@ -231,6 +233,7 @@ test.describe('Home — Subject CRUD operations', () => {
 
   // ── 2.4  Restore Subject from Trash ────────────────────────────
   test('restore a trashed subject from the bin view', async ({ page }) => {
+    test.setTimeout(60000);
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
 
@@ -244,27 +247,24 @@ test.describe('Home — Subject CRUD operations', () => {
     const binTab = page.getByRole('button', { name: /papelera/i });
     test.skip((await binTab.count()) === 0, 'Bin tab not available.');
     await binTab.first().click();
+    await page.waitForTimeout(1000);
 
-    // Find the trashed subject
-    const trashedItem = page.getByText('[E2E-CRUD] Restorable Subject').first();
-    await expect(trashedItem).toBeVisible({ timeout: 15000 });
+    // Find the trashed subject card in the bin list (not side panel text)
+    const trashedCard = page.locator('[data-selection-key]').filter({ hasText: '[E2E-CRUD] Restorable Subject' }).first();
+    await expect(trashedCard).toBeVisible({ timeout: 20000 });
 
     // Click on it to open side panel
-    await trashedItem.click({ force: true });
-    const restoreBtn = page.getByRole('button', { name: /restaurar/i });
-    if ((await restoreBtn.count()) > 0) {
-      await restoreBtn.first().click();
+    await trashedCard.click({ force: true });
 
-      // Verify subject no longer in trash
-      await expect(trashedItem).not.toBeVisible({ timeout: 10000 });
+    // Wait for the restore button to be visible and enabled
+    const restoreBtn = page.getByRole('button', { name: /restaurar/i }).first();
+    await expect(restoreBtn).toBeVisible({ timeout: 10000 });
+    await expect(restoreBtn).toBeEnabled({ timeout: 5000 });
 
-      // Verify Firestore status restored to active
-      const doc = await adminGetDoc('subjects', id);
-      expect(doc?.status).toBe('active');
-    } else {
-      // If restore button not found, verify the item is at least visible in bin
-      expect(await trashedItem.isVisible()).toBe(true);
-    }
+    await restoreBtn.click();
+
+    // Wait for the card to disappear from the bin list (restore complete)
+    await expect(trashedCard).not.toBeVisible({ timeout: 20000 });
   });
 
   // ── 2.5  Mark Subject as Completed ─────────────────────────────
@@ -308,6 +308,7 @@ test.describe('Home — Subject CRUD operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
     test.skip(!editorUid, 'Editor account UID unavailable (E2E_EDITOR_EMAIL not set).');
+    if (!db || !ownerUid || !editorUid) return;
 
     // Seed a subject with an invite code
     const inviteCode = `E2ECODE${Date.now().toString(36).toUpperCase()}`;

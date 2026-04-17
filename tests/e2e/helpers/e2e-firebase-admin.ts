@@ -1,10 +1,16 @@
 // tests/e2e/helpers/e2e-firebase-admin.ts
 import admin from 'firebase-admin';
 
+const isEmulatorMode = (): boolean =>
+  process.env.VITE_USE_EMULATORS === 'true' ||
+  !!process.env.FIRESTORE_EMULATOR_HOST ||
+  !!process.env.FIREBASE_AUTH_EMULATOR_HOST;
+
 /**
  * Singleton Firebase Admin SDK initializer.
- * Parses FIREBASE_SERVICE_ACCOUNT_JSON env var and returns a Firestore instance.
- * Returns null if the env var is missing or invalid (tests continue without Admin SDK).
+ * In emulator mode: connects to local emulators (no real credentials needed).
+ * In live mode: parses FIREBASE_SERVICE_ACCOUNT_JSON env var.
+ * Returns null if neither mode can initialize.
  */
 let _db: FirebaseFirestore.Firestore | null = null;
 let _initialized = false;
@@ -12,6 +18,19 @@ let _initialized = false;
 export const ensureAdmin = (): FirebaseFirestore.Firestore | null => {
   if (_initialized) return _db;
   _initialized = true;
+
+  if (isEmulatorMode()) {
+    // Set emulator env vars so Admin SDK auto-connects to local emulators
+    process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || 'localhost:8080';
+    process.env.FIREBASE_AUTH_EMULATOR_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST || 'localhost:9099';
+    process.env.FIREBASE_STORAGE_EMULATOR_HOST = process.env.FIREBASE_STORAGE_EMULATOR_HOST || 'localhost:9199';
+
+    if (!admin.apps.length) {
+      admin.initializeApp({ projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'demo-dlp-academy' });
+    }
+    _db = admin.firestore();
+    return _db;
+  }
 
   const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (!serviceAccountRaw) return null;
@@ -116,3 +135,5 @@ export const serverTimestamp = () => admin.firestore.FieldValue.serverTimestamp(
 export const arrayUnion = (...elements: any[]) => admin.firestore.FieldValue.arrayUnion(...elements);
 export const arrayRemove = (...elements: any[]) => admin.firestore.FieldValue.arrayRemove(...elements);
 export const increment = (n: number) => admin.firestore.FieldValue.increment(n);
+
+export { isEmulatorMode };

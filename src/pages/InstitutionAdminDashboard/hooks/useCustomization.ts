@@ -24,6 +24,7 @@ export const DEFAULT_CUSTOMIZATION_FORM = {
   secondaryBrandColor: GLOBAL_BRAND_DEFAULTS.secondaryColor,
   tertiaryBrandColor: GLOBAL_BRAND_DEFAULTS.tertiaryColor,
   homeThemeColors: { ...HOME_THEME_DEFAULT_COLORS },
+  browserTabTitle: '',
 };
 
 const normalizeThemeSetColors = (colors: any = {}) => ({
@@ -298,7 +299,9 @@ export const useCustomization = (user, institutionIdOverride = null) => {
       ? {
           institutionDisplayName: incomingFormValues.institutionName || '',
           iconUrl: customizationForm.iconUrl || '',
+          iconStoragePath: customizationForm.iconStoragePath || '',
           logoUrl: incomingFormValues.logoUrl || '',
+          logoStoragePath: customizationForm.logoStoragePath || '',
           primaryBrandColor: incomingFormValues.primary || GLOBAL_BRAND_DEFAULTS.primaryColor,
           secondaryBrandColor: incomingFormValues.secondary || GLOBAL_BRAND_DEFAULTS.secondaryColor,
           tertiaryBrandColor: incomingFormValues.accent || GLOBAL_BRAND_DEFAULTS.tertiaryColor,

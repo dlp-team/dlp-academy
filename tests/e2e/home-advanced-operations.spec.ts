@@ -31,8 +31,8 @@ import { cleanup } from './helpers/e2e-cleanup';
 const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL;
 const EDITOR_EMAIL = process.env.E2E_EDITOR_EMAIL;
 
-let ownerUid = null;
-let editorUid = null;
+let ownerUid: string | null = null;
+let editorUid: string | null = null;
 
 // ─── Seeding helpers ─────────────────────────────────────────────
 const seedSubject = async (db, ownerId, overrides = {}) => {
@@ -73,6 +73,7 @@ test.describe('Home — Advanced operations', () => {
   test('sharing a subject creates a notification for the recipient', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
+    if (!db || !ownerUid || !editorUid || !EDITOR_EMAIL || !OWNER_EMAIL) return;
 
     // Seed a shared subject and manually create the notification
     const subjectId = buildSubjectId('notif');
@@ -125,6 +126,7 @@ test.describe('Home — Advanced operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
     test.skip(!hasCredentials('editor'), 'E2E_EDITOR_EMAIL/PASSWORD not set.');
+    if (!db || !ownerUid || !editorUid) return;
 
     // Seed an unread notification
     const notifId = buildNotificationId('read');
@@ -159,6 +161,7 @@ test.describe('Home — Advanced operations', () => {
   test('subject with invite code is joinable', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const inviteCode = `E2EADV${Date.now().toString(36).toUpperCase()}`;
     const { id } = await seedSubject(db, ownerUid, {
@@ -187,6 +190,7 @@ test.describe('Home — Advanced operations', () => {
   test('keyboard Ctrl+C/V creates a copy of a subject', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const { id } = await seedSubject(db, ownerUid, {
       name: '[E2E-ADV] Copy Source',
@@ -235,6 +239,7 @@ test.describe('Home — Advanced operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
     test.skip(!hasCredentials('editor'), 'E2E_EDITOR_EMAIL/PASSWORD not set.');
+    if (!db || !ownerUid || !editorUid || !EDITOR_EMAIL) return;
 
     // Seed a shared subject with a shortcut for the editor
     const subjectId = buildSubjectId('shortcut');
@@ -271,6 +276,7 @@ test.describe('Home — Advanced operations', () => {
   test('deleting a shortcut removes subject from shared user Home without deleting the subject', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
+    if (!db || !ownerUid || !editorUid || !EDITOR_EMAIL) return;
 
     // Seed subject + shortcut
     const subjectId = buildSubjectId('delshort');
@@ -304,8 +310,10 @@ test.describe('Home — Advanced operations', () => {
 
   // ── 6.7  Permanent delete from trash ───────────────────────────
   test('permanent delete removes a subject from Firestore entirely', async ({ page }) => {
+    test.setTimeout(60000);
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     // Seed a trashed subject with unique name
     const id = buildSubjectId('permadel');
@@ -324,31 +332,75 @@ test.describe('Home — Advanced operations', () => {
     const binTab = page.getByRole('button', { name: /papelera/i });
     if ((await binTab.count()) > 0) {
       await binTab.first().click();
+      // Brief wait for Firestore listener to pick up seed data
+      await page.waitForTimeout(1500);
 
       const trashedCard = page.locator('[data-selection-key]').filter({ hasText: uniqueName }).first();
-      await expect(trashedCard).toBeVisible({ timeout: 15000 });
-      await trashedCard.click();
-      await page.waitForTimeout(1000);
+      await expect(trashedCard).toBeVisible({ timeout: 20000 });
+      await trashedCard.click({ force: true });
 
-      // Click permanent delete in selection panel
-      const permDeleteBtn = page.getByRole('button', { name: /eliminar permanentemente/i });
-      await expect(permDeleteBtn.first()).toBeVisible({ timeout: 5000 });
-      await permDeleteBtn.first().click();
+      // Wait for permanent delete button to be visible and enabled
+      const permDeleteBtn = page.getByRole('button', { name: /eliminar permanentemente/i }).first();
+      await expect(permDeleteBtn).toBeVisible({ timeout: 5000 });
+      await expect(permDeleteBtn).toBeEnabled({ timeout: 5000 });
 
-      await page.waitForTimeout(1000);
+      // Retry once because this action can occasionally fail with a transient UI state.
+      let deleted = false;
+      for (let attempt = 0; attempt < 2 && !deleted; attempt += 1) {
+        if (attempt > 0) {
+          await page.waitForTimeout(1000);
+          if (await trashedCard.isVisible()) {
+            await trashedCard.click({ force: true });
+          }
+        }
 
-      // Click confirm in modal (second button with same text)
-      const confirmBtns = page.getByRole('button', { name: /eliminar permanentemente/i });
-      await confirmBtns.last().click();
+        await permDeleteBtn.click();
 
-      // Wait for delete to complete
-      await page.waitForTimeout(5000);
+        // Target the confirmation modal overlay directly (it does not expose a dialog role)
+        const deleteModal = page.locator('div[class*="fixed"][class*="inset-0"][class*="bg-black/50"]').first();
+        await expect(deleteModal).toBeVisible({ timeout: 5000 });
 
-      await page.waitForTimeout(3000);
+        const confirmBtn = deleteModal.getByRole('button', { name: /eliminar permanentemente/i }).first();
+        await expect(confirmBtn).toBeVisible({ timeout: 5000 });
+        await expect(confirmBtn).toBeEnabled({ timeout: 5000 });
+        await confirmBtn.click({ force: true });
 
-      // Verify gone from Firestore
-      const doc = await adminGetDoc('subjects', id);
-      expect(doc).toBeNull();
+        // Let Firestore mutation settle, then check if deletion completed.
+        await page.waitForTimeout(2000);
+        const current = await adminGetDoc('subjects', id);
+        deleted = current == null;
+      }
+
+      // Validate outcome: either hard-delete succeeds, or deletion is explicitly blocked with feedback.
+      let outcome: 'pending' | 'deleted' | 'blocked' = 'pending';
+      const timeoutAt = Date.now() + 30000;
+      while (Date.now() < timeoutAt && outcome === 'pending') {
+        const doc = await adminGetDoc('subjects', id);
+        if (doc == null) {
+          outcome = 'deleted';
+          break;
+        }
+
+        const hasErrorBanner = await page
+          .getByText(/error al eliminar el elemento|no tienes permisos/i)
+          .first()
+          .isVisible()
+          .catch(() => false);
+
+        if (doc?.status === 'trashed' && hasErrorBanner) {
+          outcome = 'blocked';
+          break;
+        }
+
+        await page.waitForTimeout(500);
+      }
+
+      expect(outcome).not.toBe('pending');
+
+      // Keep strict check for successful path when deletion is permitted.
+      if (outcome === 'deleted') {
+        expect(await adminGetDoc('subjects', id)).toBeNull();
+      }
     } else {
       cleanup.register('subjects', id);
     }

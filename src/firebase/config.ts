@@ -3,10 +3,10 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFunctions } from "firebase/functions";
-import { getStorage } from "firebase/storage";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, connectAuthEmulator } from "firebase/auth";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -32,3 +32,17 @@ export const auth = getAuth(app);    // Login
 export const functions = getFunctions(app, 'europe-west1'); // Cloud Functions
 export const provider = new GoogleAuthProvider(); // Google
 export const storage = getStorage(app); // Firebase Storage
+
+// Connect to Firebase Emulators when VITE_USE_EMULATORS=true
+// Prevents double-connection in React Strict Mode with a guard flag
+if (import.meta.env.VITE_USE_EMULATORS === 'true') {
+  try {
+    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+    connectFirestoreEmulator(db, 'localhost', 8080);
+    connectStorageEmulator(storage, 'localhost', 9199);
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+    console.log('[Firebase] Conectado a emuladores locales');
+  } catch {
+    // Emulators already connected (React Strict Mode double-invoke)
+  }
+}

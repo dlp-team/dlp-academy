@@ -122,7 +122,7 @@ const ensureAdmin = () => {
   }
 };
 
-const buildTransferFixtureIds = (adminUid) => {
+const buildTransferFixtureIds = (adminUid: string) => {
   const suffix = String(adminUid || 'unknown').replace(/[^A-Za-z0-9_-]/g, '_');
   return {
     sourceCourseOneId: `e2e-transfer-course-source-1-${suffix}`,
@@ -159,8 +159,8 @@ const seedTransferPromotionFixtures = async () => {
     };
   }
 
-  let adminUid = null;
-  let adminInstitutionId = null;
+  let adminUid: string | null = null;
+  let adminInstitutionId: string | null = null;
 
   try {
     const authUser = await admin.auth().getUserByEmail(E2E_INSTITUTION_ADMIN_EMAIL.trim().toLowerCase());
