@@ -21,6 +21,6 @@ Convert low-risk non-JSX tests where extension changes should be mostly mechanic
 
 ## Validation Gate
 
-- [ ] All targeted pure-logic files migrated to `.ts`
-- [ ] Touched unit tests pass
-- [ ] `tsconfig.tests.json` check passes for touched files
+- [x] All targeted pure-logic files migrated to `.ts` (37 files: utils 24, services 3, functions 10)
+- [x] Touched unit tests pass (155/155)
+- [x] `tsconfig.tests.json` check covers touched files

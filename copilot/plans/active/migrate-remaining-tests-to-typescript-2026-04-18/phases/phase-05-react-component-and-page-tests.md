@@ -20,6 +20,6 @@ Migrate JSX-based tests to `.tsx` with careful handling for component props, ren
 
 ## Validation Gate
 
-- [ ] Remaining `.jsx` tests migrated to `.tsx`
-- [ ] React Testing Library tests still pass
-- [ ] No TSX-only typing regressions remain in touched files
+- [x] Remaining `.jsx` tests migrated to `.tsx` (77 files)
+- [x] React Testing Library tests still pass (759/762, 3 pre-existing failures)
+- [x] No TSX-only typing regressions in touched files

@@ -19,6 +19,6 @@ Migrate hook-heavy tests and other non-JSX unit tests that may rely on typed moc
 
 ## Validation Gate
 
-- [ ] Hook test files migrated cleanly
-- [ ] No new runtime failures from typed mocks or globals
-- [ ] Targeted test suites pass
+- [x] Hook test files migrated cleanly (29 files in hooks + 22 in pages)
+- [x] No new runtime failures from typed mocks or globals
+- [x] Targeted test suites pass (284+ tests)

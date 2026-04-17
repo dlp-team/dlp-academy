@@ -1,8 +1,9 @@
 <!-- copilot/plans/active/migrate-remaining-tests-to-typescript-2026-04-18/README.md -->
 # Migrate Remaining Tests to TypeScript
 
-## Status: ACTIVE
+## Status: COMPLETE (pending review)
 ## Created: 2026-04-18
+## Completed: 2026-04-17
 ## Branch: feature/hector/e2e-firebase-emulators-2026-04-17
 
 ## Problem Statement
