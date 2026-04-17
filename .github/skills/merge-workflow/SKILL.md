@@ -193,7 +193,64 @@ ACTION SEQUENCE:
 
 ---
 
-### STEP M6: Validate PR (Tests & Checks)
+### STEP M6: Deep PR Review (MANDATORY)
+
+**Purpose:** Thoroughly review ALL changes before merge. No merge without a complete review.
+
+**This step is NOT optional. Copilot must review the PR as if it were a human code reviewer.**
+
+```
+ACTION SEQUENCE:
+
+1. METADATA CHECK:
+   a. gh pr view <PR#> --json title,body,baseRefName,headRefName,state,additions,deletions,changedFiles,mergeable
+   b. Verify: baseRefName == parent-branch from BRANCH_LOG.md
+   c. Verify: mergeable == "MERGEABLE"
+   d. Verify: additions/deletions/changedFiles are proportional to expected scope
+
+2. CHANGE CATEGORIZATION:
+   a. Get local diff stats: git diff --name-status $(git merge-base HEAD origin/<parent>) HEAD
+   b. Categorize ALL files:
+      - Renames (R): Verify content-identical (0 additions, 0 deletions)
+      - Added (A): Verify each new file is expected and belongs to the task scope
+      - Modified (M): DEEP REVIEW required (see step 3)
+      - Deleted (D): Verify deletion is intentional and documented
+
+3. DEEP REVIEW OF MODIFIED SOURCE FILES:
+   For EACH modified file that is NOT a test, plan, or copilot doc:
+   a. git diff <merge-base> HEAD -- <file-path>
+   b. Check for:
+      - Credential leaks (API keys, tokens, passwords, private keys)
+      - Security regressions (removed auth checks, weakened validation)
+      - Unintentional changes (debug code, commented-out logic, leftover console.log)
+      - Breaking changes to existing APIs or interfaces
+      - Hardcoded values that should be environment variables
+   c. Document each change's purpose and risk level
+
+4. TEST FILE REVIEW:
+   a. Verify new test files have proper imports and assertions
+   b. Verify renamed test files have identical content (rename-only)
+   c. Verify no test files were accidentally deleted
+
+5. CONFIGURATION FILE REVIEW:
+   a. Check package.json for unexpected dependency changes
+   b. Check .env.example for proper documentation of new env vars
+   c. Check build configs (vite, tsconfig) for correct settings
+
+6. SECURITY SCAN:
+   a. npm run security:scan:staged (if available)
+   b. Manual scan: search diff for patterns: AIza, AKIA, private_key, password, secret, token
+   c. Verify .gitignore covers all sensitive file patterns
+```
+
+**Decision gate:**
+- IF review passes with no issues → Continue to STEP M6.5
+- IF issues found → Fix on feature branch, commit, push, re-review
+- IF security issue found → HARD STOP, remediate immediately
+
+---
+
+### STEP M6.5: Validate PR CI/CD (Tests & Checks)
 
 **Purpose:** Ensure CI/CD passes on the PR.
 
@@ -340,10 +397,12 @@ STEP M4: Update BRANCH_LOG.md → ready-for-merge
     ↓
 STEP M5: Create PR targeting parent-branch
     ↓
-STEP M6: Wait for CI to pass
+STEP M6: Deep PR review (metadata, diffs, security scan)  ⚠️ MANDATORY
+    ↓
+STEP M6.5: Wait for CI to pass
     ↓
 STEP M7: Human approval gate → merge when approved
-    ↓  (includes BRANCH_LOG.md cleanup on development)
+    ↓  (includes BRANCH_LOG.md cleanup on parent branch)
 STEP M8: Update BRANCHES_STATUS.md → pending-delete  ⚠️ NEVER SKIP
     ↓
 STEP M9: Clean up expired branches
@@ -368,6 +427,8 @@ STEP M9: Clean up expired branches
 | Security scan fails | STOP — remove credentials |
 | Same test failure 3 times | STOP — log issue, ask user |
 | On `main` branch | STOP — never merge to main |
+| PR review finds credential leak | STOP — remediate immediately, rotate keys |
+| PR review finds unexpected source changes | STOP — verify scope with user |
 
 ---
 
