@@ -245,26 +245,29 @@ test.describe('Home — Subject CRUD operations', () => {
     test.skip((await binTab.count()) === 0, 'Bin tab not available.');
     await binTab.first().click();
 
-    // Find the trashed subject
-    const trashedItem = page.getByText('[E2E-CRUD] Restorable Subject').first();
-    await expect(trashedItem).toBeVisible({ timeout: 15000 });
+    // Find the trashed subject card in the bin list (not side panel text)
+    const trashedCard = page.locator('[data-selection-key]').filter({ hasText: '[E2E-CRUD] Restorable Subject' }).first();
+    await expect(trashedCard).toBeVisible({ timeout: 15000 });
 
     // Click on it to open side panel
-    await trashedItem.click({ force: true });
-    const restoreBtn = page.getByRole('button', { name: /restaurar/i });
-    if ((await restoreBtn.count()) > 0) {
-      await restoreBtn.first().click();
+    await trashedCard.click({ force: true });
 
-      // Verify subject no longer in trash
-      await expect(trashedItem).not.toBeVisible({ timeout: 10000 });
+    // Wait for the restore button to be visible and enabled
+    const restoreBtn = page.getByRole('button', { name: /restaurar/i }).first();
+    await expect(restoreBtn).toBeVisible({ timeout: 5000 });
+    await expect(restoreBtn).toBeEnabled({ timeout: 5000 });
 
-      // Verify Firestore status restored to active
-      const doc = await adminGetDoc('subjects', id);
-      expect(doc?.status).toBe('active');
-    } else {
-      // If restore button not found, verify the item is at least visible in bin
-      expect(await trashedItem.isVisible()).toBe(true);
-    }
+    await restoreBtn.click();
+
+    // Wait for the card to disappear from the bin list (restore completes)
+    await expect(trashedCard).not.toBeVisible({ timeout: 15000 });
+
+    // Small settle wait for Firestore writes to flush
+    await page.waitForTimeout(1000);
+
+    // Verify Firestore status restored to active
+    const doc = await adminGetDoc('subjects', id);
+    expect(doc?.status).toBe('active');
   });
 
   // ── 2.5  Mark Subject as Completed ─────────────────────────────

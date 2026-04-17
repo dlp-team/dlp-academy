@@ -327,24 +327,24 @@ test.describe('Home — Advanced operations', () => {
 
       const trashedCard = page.locator('[data-selection-key]').filter({ hasText: uniqueName }).first();
       await expect(trashedCard).toBeVisible({ timeout: 15000 });
-      await trashedCard.click();
-      await page.waitForTimeout(1000);
+      await trashedCard.click({ force: true });
 
-      // Click permanent delete in selection panel
-      const permDeleteBtn = page.getByRole('button', { name: /eliminar permanentemente/i });
-      await expect(permDeleteBtn.first()).toBeVisible({ timeout: 5000 });
-      await permDeleteBtn.first().click();
+      // Wait for permanent delete button to be visible and enabled
+      const permDeleteBtn = page.getByRole('button', { name: /eliminar permanentemente/i }).first();
+      await expect(permDeleteBtn).toBeVisible({ timeout: 5000 });
+      await expect(permDeleteBtn).toBeEnabled({ timeout: 5000 });
+      await permDeleteBtn.click();
 
-      await page.waitForTimeout(1000);
+      // Click confirm in modal (the modal's confirm button)
+      const confirmBtn = page.getByRole('button', { name: /eliminar permanentemente/i }).last();
+      await expect(confirmBtn).toBeVisible({ timeout: 5000 });
+      await confirmBtn.click();
 
-      // Click confirm in modal (second button with same text)
-      const confirmBtns = page.getByRole('button', { name: /eliminar permanentemente/i });
-      await confirmBtns.last().click();
+      // Wait for the card to disappear from the bin list
+      await expect(trashedCard).not.toBeVisible({ timeout: 15000 });
 
-      // Wait for delete to complete
-      await page.waitForTimeout(5000);
-
-      await page.waitForTimeout(3000);
+      // Settle wait for Firestore writes to flush
+      await page.waitForTimeout(2000);
 
       // Verify gone from Firestore
       const doc = await adminGetDoc('subjects', id);

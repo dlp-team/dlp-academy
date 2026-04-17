@@ -264,19 +264,21 @@ test.describe('Home — Folder CRUD operations', () => {
     // Click on it to open side panel
     await trashedItem.click({ force: true });
 
-    // Click restore
-    const restoreBtn = page.getByRole('button', { name: /restaurar/i });
-    if ((await restoreBtn.count()) > 0) {
-      await restoreBtn.first().click();
-      await expect(trashedItem).not.toBeVisible({ timeout: 10000 });
+    // Wait for restore button to be visible and enabled
+    const restoreBtn = page.getByRole('button', { name: /restaurar/i }).first();
+    await expect(restoreBtn).toBeVisible({ timeout: 5000 });
+    await expect(restoreBtn).toBeEnabled({ timeout: 5000 });
+    await restoreBtn.click();
 
-      // Wait for Firestore write
-      await page.waitForTimeout(2000);
+    // Wait for the item to disappear from the bin list
+    await expect(trashedItem).not.toBeVisible({ timeout: 15000 });
 
-      // Verify Firestore status
-      const doc = await adminGetDoc('folders', id);
-      expect(doc?.status).toBe('active');
-    }
+    // Settle wait for Firestore writes to flush
+    await page.waitForTimeout(2000);
+
+    // Verify Firestore status
+    const doc = await adminGetDoc('folders', id);
+    expect(doc?.status).toBe('active');
   });
 
   // ── 3.6  Delete Folder — Children Move to Root ─────────────────

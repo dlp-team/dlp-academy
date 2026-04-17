@@ -1,6 +1,7 @@
 // tests/e2e/home-sharing-roles.spec.js
 import { test, expect } from '@playwright/test';
 import admin from 'firebase-admin';
+import { ensureAdmin, resolveUidByEmail } from './helpers/e2e-firebase-admin.js';
 
 const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL;
 const OWNER_PASSWORD = process.env.E2E_OWNER_PASSWORD;
@@ -10,34 +11,6 @@ const VIEWER_EMAIL = process.env.E2E_VIEWER_EMAIL;
 const VIEWER_PASSWORD = process.env.E2E_VIEWER_PASSWORD;
 const SHARED_FOLDER_ID = process.env.E2E_SHARED_FOLDER_ID;
 const SHARED_DRAG_SUBJECT_ID = SHARED_FOLDER_ID ? `e2e-shared-drag-${SHARED_FOLDER_ID}` : null;
-
-const ensureAdmin = () => {
-  const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  if (!serviceAccountRaw) return null;
-
-  try {
-    const normalized = serviceAccountRaw.trim().replace(/^'/, '').replace(/'$/, '');
-    const serviceAccount = JSON.parse(normalized);
-    if (!admin.apps.length) {
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-    }
-    return admin.firestore();
-  } catch {
-    return null;
-  }
-};
-
-const resolveUidByEmail = async (email) => {
-  if (!email) return null;
-  try {
-    const authUser = await admin.auth().getUserByEmail(String(email).trim().toLowerCase());
-    return authUser?.uid || null;
-  } catch {
-    return null;
-  }
-};
 
 const seedSharedDraggableSubject = async () => {
   if (!SHARED_FOLDER_ID) return;
@@ -230,6 +203,9 @@ test.describe('Home sharing role journeys', () => {
 
     await createFolderInCurrentContext(sourceFolderName);
     await createFolderInCurrentContext(targetFolderName);
+
+    // Settle wait for Firestore writes to flush before Admin SDK queries
+    await page.waitForTimeout(2000);
 
     const confirmMoveButtons = [
       /mover y fusionar usuarios/i,
