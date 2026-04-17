@@ -93,10 +93,10 @@ tests/e2e/
 ├── home-sharing-operations.spec.ts  # Sharing tests
 ├── home-bulk-operations.spec.ts # Bulk selection tests
 ├── home-advanced-operations.spec.ts # Advanced ops tests
-├── profile-settings.spec.js     # Profile/settings tests
-├── quiz-lifecycle.spec.js       # Quiz flow tests
-├── study-flow.spec.js           # Study navigation tests
-├── admin-guardrails.spec.js     # Admin access tests
-├── subject-topic-content.spec.js # Content navigation tests
+├── profile-settings.spec.ts     # Profile/settings tests
+├── quiz-lifecycle.spec.ts       # Quiz flow tests
+├── study-flow.spec.ts           # Study navigation tests
+├── admin-guardrails.spec.ts     # Admin access tests
+├── subject-topic-content.spec.ts # Content navigation tests
 └── onboarding-flow.spec.ts      # Onboarding tests
 ```
