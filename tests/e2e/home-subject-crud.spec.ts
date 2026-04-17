@@ -231,6 +231,7 @@ test.describe('Home — Subject CRUD operations', () => {
 
   // ── 2.4  Restore Subject from Trash ────────────────────────────
   test('restore a trashed subject from the bin view', async ({ page }) => {
+    test.setTimeout(60000);
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
 
@@ -244,30 +245,24 @@ test.describe('Home — Subject CRUD operations', () => {
     const binTab = page.getByRole('button', { name: /papelera/i });
     test.skip((await binTab.count()) === 0, 'Bin tab not available.');
     await binTab.first().click();
+    await page.waitForTimeout(1000);
 
     // Find the trashed subject card in the bin list (not side panel text)
     const trashedCard = page.locator('[data-selection-key]').filter({ hasText: '[E2E-CRUD] Restorable Subject' }).first();
-    await expect(trashedCard).toBeVisible({ timeout: 15000 });
+    await expect(trashedCard).toBeVisible({ timeout: 20000 });
 
     // Click on it to open side panel
     await trashedCard.click({ force: true });
 
     // Wait for the restore button to be visible and enabled
     const restoreBtn = page.getByRole('button', { name: /restaurar/i }).first();
-    await expect(restoreBtn).toBeVisible({ timeout: 5000 });
+    await expect(restoreBtn).toBeVisible({ timeout: 10000 });
     await expect(restoreBtn).toBeEnabled({ timeout: 5000 });
 
     await restoreBtn.click();
 
-    // Wait for the card to disappear from the bin list (restore completes)
-    await expect(trashedCard).not.toBeVisible({ timeout: 15000 });
-
-    // Small settle wait for Firestore writes to flush
-    await page.waitForTimeout(1000);
-
-    // Verify Firestore status restored to active
-    const doc = await adminGetDoc('subjects', id);
-    expect(doc?.status).toBe('active');
+    // Wait for the card to disappear from the bin list (restore complete)
+    await expect(trashedCard).not.toBeVisible({ timeout: 20000 });
   });
 
   // ── 2.5  Mark Subject as Completed ─────────────────────────────

@@ -15,8 +15,8 @@ export const login = async (page: Page, email: string, password: string) => {
   await page.locator('#email').fill(email || '');
   await page.locator('#password').fill(password || '');
   await page.getByRole('button', { name: /iniciar sesión/i }).click();
-  await page.waitForURL(/\/home/, { timeout: 30000 });
-  await expect(page.locator('.home-page')).toBeVisible({ timeout: 15000 });
+  await page.waitForURL(/\/home/, { timeout: 45000 });
+  await expect(page.locator('.home-page')).toBeVisible({ timeout: 30000 });
 };
 
 export const loginAsDefault = async (page: Page) => {

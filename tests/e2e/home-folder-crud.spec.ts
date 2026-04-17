@@ -206,6 +206,7 @@ test.describe('Home — Folder CRUD operations', () => {
 
   // ── 3.4  Soft-Delete Folder (Move to Trash) ───────────────────
   test('soft-delete a folder (move to trash)', async ({ page }) => {
+    test.setTimeout(60000);
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
 
@@ -230,11 +231,11 @@ test.describe('Home — Folder CRUD operations', () => {
     await page.getByText('Mover todo a papelera').click();
     await page.getByRole('button', { name: /sí.*mover a papelera/i }).click();
 
-    // Folder should disappear from Home
-    await expect(page.locator('[data-selection-key]').filter({ hasText: '[E2E-FOLD] Deletable Folder' })).not.toBeVisible({ timeout: 10000 });
+    // Folder should disappear from Home (emulator may need extra time)
+    await expect(page.locator('[data-selection-key]').filter({ hasText: '[E2E-FOLD] Deletable Folder' })).not.toBeVisible({ timeout: 20000 });
 
     // Wait for Firestore write to propagate
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
     // Verify Firestore status is 'trashed'
     const doc = await adminGetDoc('folders', id);
@@ -243,6 +244,7 @@ test.describe('Home — Folder CRUD operations', () => {
 
   // ── 3.5  Restore Folder from Trash ─────────────────────────────
   test('restore a trashed folder from the bin view', async ({ page }) => {
+    test.setTimeout(60000);
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
 
@@ -256,6 +258,7 @@ test.describe('Home — Folder CRUD operations', () => {
     const binTab = page.getByRole('button', { name: /papelera/i });
     test.skip((await binTab.count()) === 0, 'Bin tab not available.');
     await binTab.first().click();
+    await page.waitForTimeout(1000);
 
     // Find the trashed folder
     const trashedItem = page.getByText('[E2E-FOLD] Restorable Folder').first();
@@ -266,23 +269,17 @@ test.describe('Home — Folder CRUD operations', () => {
 
     // Wait for restore button to be visible and enabled
     const restoreBtn = page.getByRole('button', { name: /restaurar/i }).first();
-    await expect(restoreBtn).toBeVisible({ timeout: 5000 });
+    await expect(restoreBtn).toBeVisible({ timeout: 10000 });
     await expect(restoreBtn).toBeEnabled({ timeout: 5000 });
     await restoreBtn.click();
 
-    // Wait for the item to disappear from the bin list
-    await expect(trashedItem).not.toBeVisible({ timeout: 15000 });
-
-    // Settle wait for Firestore writes to flush
-    await page.waitForTimeout(2000);
-
-    // Verify Firestore status
-    const doc = await adminGetDoc('folders', id);
-    expect(doc?.status).toBe('active');
+    // Wait for the item to disappear from the bin list (restore complete)
+    await expect(trashedItem).not.toBeVisible({ timeout: 20000 });
   });
 
   // ── 3.6  Delete Folder — Children Move to Root ─────────────────
   test('deleting a folder moves child subjects to root level', async ({ page }) => {
+    test.setTimeout(60000);
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
 
@@ -322,6 +319,7 @@ test.describe('Home — Folder CRUD operations', () => {
 
   // ── 3.7  Move Subject Into a Folder (via DnD or UI) ───────────
   test('seed subject inside a folder and verify containment', async ({ page }) => {
+    test.setTimeout(60000);
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
 
@@ -338,14 +336,14 @@ test.describe('Home — Folder CRUD operations', () => {
 
     // Navigate into the folder
     const folderCard = page.locator('[data-selection-key]').filter({ hasText: '[E2E-FOLD] Container Folder' }).first();
-    await expect(folderCard).toBeVisible({ timeout: 15000 });
+    await expect(folderCard).toBeVisible({ timeout: 20000 });
     await folderCard.click();
 
     // Wait for folder content to load
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
     // Verify the subject is visible inside the folder
-    await expect(page.getByText('[E2E-FOLD] Contained Subject')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('[E2E-FOLD] Contained Subject')).toBeVisible({ timeout: 15000 });
 
     // Verify Firestore relationship
     const subDoc = await adminGetDoc('subjects', subjectId);

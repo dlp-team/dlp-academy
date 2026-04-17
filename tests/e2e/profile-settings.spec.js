@@ -172,6 +172,7 @@ test.describe('Profile and settings coverage', () => {
   });
 
   test('settings persist after reload for theme, language, and notifications', async ({ page }) => {
+    test.setTimeout(60000);
     await login(page);
 
     await page.goto('/settings');
@@ -195,17 +196,25 @@ test.describe('Profile and settings coverage', () => {
       .poll(async () => emailToggle.evaluate((btn) => btn.className.includes('bg-indigo-')))
       .toBe(!wasEnabled);
 
+    // Wait for Firestore write to fully flush before reload
+    await page.waitForTimeout(3000);
+
     await page.reload();
     await page.waitForURL(/\/settings/);
 
-    await expect(languageSelect).toHaveValue(initialLanguage);
+    // Wait for user preferences to load from Firestore after reload
+    await expect(languageSelect).toHaveValue(initialLanguage, { timeout: 15000 });
     await expect(page.getByRole('button', { name: /oscuro/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /claro/i })).toBeVisible();
 
     const notifSectionAfterReload = page.locator('section').filter({ hasText: /notificaciones/i }).first();
     const emailRowAfterReload = notifSectionAfterReload.locator('div.p-4').filter({ hasText: /notificaciones por email/i }).first();
     const emailToggleAfterReload = emailRowAfterReload.getByRole('button');
-    const isEnabledAfterReload = await emailToggleAfterReload.evaluate((btn) => btn.className.includes('bg-indigo-'));
-    expect(isEnabledAfterReload).toBe(!wasEnabled);
+    await expect
+      .poll(async () => emailToggleAfterReload.evaluate((btn) => btn.className.includes('bg-indigo-')), {
+        timeout: 15000,
+        message: 'Expected email notification toggle state to persist after reload',
+      })
+      .toBe(!wasEnabled);
   });
 });

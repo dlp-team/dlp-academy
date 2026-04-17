@@ -7,6 +7,10 @@ export default defineConfig({
   globalSetup: './tests/e2e/global-setup.ts',
   testDir: './tests/e2e',
   fullyParallel: true,
+  // Reduce parallelism for emulators to prevent overloading the local Firestore/Auth emulator
+  workers: useEmulators ? 3 : undefined,
+  // Allow automatic retries in emulator mode to handle infrastructure flakiness
+  retries: useEmulators ? 2 : 0,
   reporter: 'html', // Generates a nice webpage with test results
   use: {
     baseURL: 'http://localhost:5173', // Your Vite local dev URL

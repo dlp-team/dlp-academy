@@ -107,6 +107,9 @@ test.describe('Home — Bulk operations', () => {
     await page.waitForTimeout(500);
     await itemB.click({ force: true });
 
+    // Ensure both items are selected before executing bulk delete
+    await expect(page.getByText(/2 seleccionados/)).toBeVisible({ timeout: 5000 });
+
     // Should show "2 seleccionados"
     await expect(page.getByText(/2 seleccionados/)).toBeVisible({ timeout: 5000 });
 
@@ -140,6 +143,9 @@ test.describe('Home — Bulk operations', () => {
     await page.waitForTimeout(500);
     await itemB.click({ force: true });
 
+    // Ensure both items are selected before executing bulk move
+    await expect(page.getByText(/2 seleccionados/)).toBeVisible({ timeout: 5000 });
+
     // Click "Mover a papelera"
     const deleteBtn = page.getByRole('button', { name: /mover a papelera/i });
     await expect(deleteBtn).toBeEnabled();
@@ -151,14 +157,20 @@ test.describe('Home — Bulk operations', () => {
       await confirmBtn.first().click();
     }
 
-    // Wait for operation
-    await page.waitForTimeout(3000);
-
-    // Verify both are trashed in Firestore
-    const docA = await adminGetDoc('subjects', idA);
-    const docB = await adminGetDoc('subjects', idB);
-    expect(docA?.status).toBe('trashed');
-    expect(docB?.status).toBe('trashed');
+    // Verify both are eventually trashed in Firestore
+    await expect
+      .poll(async () => {
+        const docA = await adminGetDoc('subjects', idA);
+        const docB = await adminGetDoc('subjects', idB);
+        return {
+          statusA: docA?.status ?? null,
+          statusB: docB?.status ?? null,
+        };
+      }, {
+        timeout: 30000,
+        message: 'Expected both selected subjects to be moved to trash',
+      })
+      .toEqual({ statusA: 'trashed', statusB: 'trashed' });
   });
 
   // ── 5.4  Bulk move to a folder ─────────────────────────────────
@@ -167,9 +179,12 @@ test.describe('Home — Bulk operations', () => {
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
 
     // Seed a target folder and two subjects
+    const uniqueTag = Date.now().toString().slice(-6);
     const { id: folderId } = await seedFolder(db, ownerUid, { name: '[E2E-BULK] Target Folder' });
-    const { id: idA } = await seedSubject(db, ownerUid, { name: '[E2E-BULK] Move A' });
-    const { id: idB } = await seedSubject(db, ownerUid, { name: '[E2E-BULK] Move B' });
+    const moveNameA = `[E2E-BULK] Move A ${uniqueTag}`;
+    const moveNameB = `[E2E-BULK] Move B ${uniqueTag}`;
+    const { id: idA } = await seedSubject(db, ownerUid, { name: moveNameA });
+    const { id: idB } = await seedSubject(db, ownerUid, { name: moveNameB });
 
     await loginAsOwner(page);
     await navigateToHome(page);
@@ -178,8 +193,8 @@ test.describe('Home — Bulk operations', () => {
     await page.getByRole('button', { name: /modo selección/i }).click();
 
     // Select both subjects
-    const itemA = page.getByText('[E2E-BULK] Move A');
-    const itemB = page.getByText('[E2E-BULK] Move B');
+    const itemA = page.getByText(moveNameA).first();
+    const itemB = page.getByText(moveNameB).first();
     await expect(itemA).toBeVisible({ timeout: 15000 });
     await itemA.click({ force: true });
     await page.waitForTimeout(500);
@@ -200,14 +215,20 @@ test.describe('Home — Bulk operations', () => {
         await confirmBtn.first().click();
       }
 
-      // Wait for operation
-      await page.waitForTimeout(3000);
-
-      // Verify subjects moved into folder
-      const docA = await adminGetDoc('subjects', idA);
-      const docB = await adminGetDoc('subjects', idB);
-      expect(docA?.folderId).toBe(folderId);
-      expect(docB?.folderId).toBe(folderId);
+      // Verify both subjects eventually move into the target folder
+      await expect
+        .poll(async () => {
+          const docA = await adminGetDoc('subjects', idA);
+          const docB = await adminGetDoc('subjects', idB);
+          return {
+            folderA: docA?.folderId ?? null,
+            folderB: docB?.folderId ?? null,
+          };
+        }, {
+          timeout: 30000,
+          message: 'Expected both selected subjects to be moved into target folder',
+        })
+        .toEqual({ folderA: folderId, folderB: folderId });
     }
   });
 
