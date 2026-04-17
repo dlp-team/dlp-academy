@@ -85,10 +85,10 @@ describe('InstitutionCustomizationMockView', () => {
     const swatch = screen.getByTestId('color-field-swatch-primary');
 
     fireEvent.click(swatch);
-    expect(within(primaryField).queryByText(/activo/i)).toBeNull();
+    expect(primaryField.getAttribute('data-color-field-active')).toBe('false');
 
     fireEvent.click(within(primaryField).getByText(/color primario/i));
-    expect(within(primaryField).getByText(/activo/i)).toBeTruthy();
+    expect(primaryField.getAttribute('data-color-field-active')).toBe('true');
   });
 
   it('accepts typed hex updates once a valid value is completed', () => {
@@ -455,11 +455,9 @@ describe('InstitutionCustomizationMockView', () => {
 
     fireEvent.click(screen.getByText('Planificación semanal'));
     expect(screen.getByText('Laboratorio')).toBeTruthy();
+    expect(screen.getByText('Historia')).toBeTruthy();
 
-    fireEvent.click(screen.getByText('Laboratorio'));
-    expect(screen.getByText('Ciencias')).toBeTruthy();
-
-    fireEvent.click(screen.getByText('Ciencias'));
+    fireEvent.click(screen.getByText('Historia'));
     expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: /volver a asignaturas/i })).toBeTruthy();
   });
