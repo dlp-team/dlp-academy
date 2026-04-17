@@ -63,6 +63,7 @@ This workspace also uses scoped file instructions in `.github/instructions/` to 
    - Test remediation: `test-stabilization`
    - Documentation sync: `docs-sync` and `explain-code`
    - Branching/commit/push discipline: `git-workflow`
+   - Branch merging: `merge-workflow`
    - Final closure leverage: `askquestions-leverage`
 
 ## Prompts Routing (Reusable Instruction Templates)
