@@ -15,7 +15,23 @@ Migrate the highest-coupling test infrastructure files first so later test-file 
 
 ## Validation Gate
 
-- [ ] Setup file resolves correctly in Vitest
-- [ ] Mock alias still resolves from `vitest.config.js`
-- [ ] Rules tests pass after migration
-- [ ] No module-resolution regressions introduced
+- [x] Setup file resolves correctly in Vitest
+- [x] Mock alias still resolves from `vitest.config.js`
+- [x] Rules tests pass after migration
+- [x] No module-resolution regressions introduced
+
+## Status: COMPLETE (2026-04-18)
+
+## Validation Evidence
+
+- `npm run test:unit -- tests/unit/utils/stringUtils.test.js`
+- `npm run test:rules`
+- `npm run test:types`
+
+## Implementation Notes
+
+- Renamed `tests/setup.js` to `tests/setup.ts`.
+- Renamed `tests/mocks/firebase-functions-v2-https.js` to `tests/mocks/firebase-functions-v2-https.ts`.
+- Renamed both rules test files to `.ts`.
+- Updated `vitest.config.js` to reference the renamed setup and mock files.
+- Fixed the only post-rename typing issue in `tests/rules/storage.rules.test.ts`.

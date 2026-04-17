@@ -27,7 +27,7 @@ This file is the source of truth for status tracking, sequencing, and closure re
 ### Phase Status Tracker
 
 - [x] Phase 1: Inventory and Type-Check Foundation (inventory captured, `tsconfig.tests.json`, `test:types` script, validated on 2026-04-18)
-- [ ] Phase 2: Setup, Mocks, and Rules Tests
+- [x] Phase 2: Setup, Mocks, and Rules Tests (renamed setup/mock/rules files to TS, validated on 2026-04-18)
 - [ ] Phase 3: Pure Logic Tests (`utils`, `services`, `functions`)
 - [ ] Phase 4: Hook Tests and Non-JSX Unit Tests
 - [ ] Phase 5: React Component and Page Tests (`.jsx` to `.tsx`)

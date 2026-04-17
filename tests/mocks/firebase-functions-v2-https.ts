@@ -1,6 +1,8 @@
-// tests/mocks/firebase-functions-v2-https.js
+// tests/mocks/firebase-functions-v2-https.ts
 export class HttpsError extends Error {
-  constructor(code, message) {
+  code: string;
+
+  constructor(code: string, message: string) {
     super(message);
     this.name = 'HttpsError';
     this.code = code;

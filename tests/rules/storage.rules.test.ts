@@ -1,4 +1,4 @@
-// tests/rules/storage.rules.test.js
+// tests/rules/storage.rules.test.ts
 import { describe, it, beforeAll, afterAll, afterEach } from 'vitest';
 import {
   initializeTestEnvironment,
@@ -23,7 +23,7 @@ const storageRef = (context, objectPath) => {
 const uploadString = (fileRef, value) => fileRef.putString(value);
 const getDownloadURL = (fileRef) => fileRef.getDownloadURL();
 
-const authContext = (uid, { role, institutionId } = {}) => testEnv.authenticatedContext(uid, {
+const authContext = (uid, { role, institutionId }: { role?: string; institutionId?: string } = {}) => testEnv.authenticatedContext(uid, {
   sub: uid,
   role,
   institutionId,
