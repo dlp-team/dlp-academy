@@ -1,4 +1,4 @@
-// tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx
+// tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.tsx
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
