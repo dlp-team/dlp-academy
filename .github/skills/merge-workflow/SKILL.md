@@ -165,10 +165,17 @@ ACTION SEQUENCE:
 **PRE-REQUISITE CHECK:**
 ```
 1. Verify gh CLI is available: gh --version
-2. IF gh is not installed or not authenticated:
+2. IF gh is not installed:
    a. Log to PENDING_COMMANDS.md: "gh pr create requires GitHub CLI"
    b. Ask user to create PR manually via GitHub UI
    c. User provides PR URL → continue to STEP M6
+3. IF gh is not authenticated:
+   a. Check for GITHUB_PAT environment variable: $env:GITHUB_PAT (PowerShell) or $GITHUB_PAT (bash)
+   b. IF GITHUB_PAT exists: echo $env:GITHUB_PAT | gh auth login --with-token
+   c. IF GITHUB_PAT does not exist: Ask user to either:
+      - Set GITHUB_PAT env variable with a PAT (scopes: repo, read:org, workflow)
+      - Or run `gh auth login` interactively
+   d. Verify auth succeeded: gh auth status
 ```
 
 ```
