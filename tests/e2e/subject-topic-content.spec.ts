@@ -7,9 +7,9 @@ const E2E_SUBJECT_ID = process.env.E2E_SUBJECT_ID;
 const E2E_TOPIC_ID = process.env.E2E_TOPIC_ID;
 const E2E_INSTITUTION_ID = process.env.E2E_INSTITUTION_ID;
 
-const buildE2eSubjectId = (ownerId) => `e2e-subject-${ownerId}`;
-const buildE2eTopicId = (ownerId, subjectId) => `e2e-topic-${ownerId}-${subjectId}`;
-const buildE2eSummaryId = (topicId) => `e2e-summary-${topicId}`;
+const buildE2eSubjectId = (ownerId: string) => `e2e-subject-${ownerId}`;
+const buildE2eTopicId = (ownerId: string, subjectId: string) => `e2e-topic-${ownerId}-${subjectId}`;
+const buildE2eSummaryId = (topicId: string) => `e2e-summary-${topicId}`;
 
 const ensureAdmin = () => {
   const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
@@ -29,7 +29,7 @@ const ensureAdmin = () => {
   }
 };
 
-const createSubjectSeed = async (db, ownerId, institutionId) => {
+const createSubjectSeed = async (db: FirebaseFirestore.Firestore, ownerId: string, institutionId: string | null) => {
   const subjectId = buildE2eSubjectId(ownerId);
   const subjectPayload = {
     name: 'E2E Subject Seed',
@@ -46,7 +46,7 @@ const createSubjectSeed = async (db, ownerId, institutionId) => {
   return subjectId;
 };
 
-const createTopicSeed = async (db, subjectId, ownerId, institutionId) => {
+const createTopicSeed = async (db: FirebaseFirestore.Firestore, subjectId: string, ownerId: string, institutionId: string | null) => {
   const topicId = buildE2eTopicId(ownerId, subjectId);
   const topicPayload = {
     name: 'E2E Topic Seed',
@@ -89,7 +89,7 @@ const createTopicSeed = async (db, subjectId, ownerId, institutionId) => {
   return topicId;
 };
 
-const canAccessSubject = (subjectData, ownerId) => {
+const canAccessSubject = (subjectData: Record<string, any> | undefined, ownerId: string | null) => {
   if (!subjectData || !ownerId) return false;
   if (subjectData.ownerId === ownerId || subjectData.uid === ownerId) return true;
   if (Array.isArray(subjectData.editorUids) && subjectData.editorUids.includes(ownerId)) return true;
@@ -98,7 +98,7 @@ const canAccessSubject = (subjectData, ownerId) => {
   return false;
 };
 
-const ensureTopicHasSeededContent = async (db, subjectId, topicId, ownerId, institutionId) => {
+const ensureTopicHasSeededContent = async (db: FirebaseFirestore.Firestore | null, subjectId: string | null, topicId: string | null, ownerId: string | null, institutionId: string | null) => {
   if (!db || !subjectId || !topicId || !ownerId) return;
 
   const resumenSnap = await db.collection('resumen').where('topicId', '==', topicId).limit(1).get();
@@ -125,7 +125,7 @@ const resolveSubjectAndTopic = async () => {
     return { subjectId: E2E_SUBJECT_ID || null, topicId: E2E_TOPIC_ID || null };
   }
 
-  let ownerId = null;
+  let ownerId: string | null = null;
   try {
     const authUser = await admin.auth().getUserByEmail(E2E_EMAIL.trim().toLowerCase());
     ownerId = authUser.uid;
@@ -133,7 +133,7 @@ const resolveSubjectAndTopic = async () => {
     ownerId = null;
   }
 
-  let userData = {};
+  let userData: Record<string, any> = {};
 
   if (ownerId) {
     const userByUidDoc = await db.collection('users').doc(ownerId).get();
@@ -192,7 +192,7 @@ const resolveSubjectAndTopic = async () => {
 test.describe('Subject topic content navigation', () => {
   let discoveredSubjectId = E2E_SUBJECT_ID || null;
   let discoveredTopicId = E2E_TOPIC_ID || null;
-  let discoveredGuideId = null;
+  let discoveredGuideId: string | null = null;
 
   test.skip(!E2E_EMAIL || !E2E_PASSWORD, 'Set E2E_EMAIL and E2E_PASSWORD to run Subject/Topic navigation tests.');
 

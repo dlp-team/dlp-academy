@@ -31,8 +31,8 @@ import { cleanup } from './helpers/e2e-cleanup';
 const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL;
 const EDITOR_EMAIL = process.env.E2E_EDITOR_EMAIL;
 
-let ownerUid = null;
-let editorUid = null;
+let ownerUid: string | null = null;
+let editorUid: string | null = null;
 
 // ─── Seeding helpers ─────────────────────────────────────────────
 const seedSubject = async (db, ownerId, overrides = {}) => {
@@ -73,6 +73,7 @@ test.describe('Home — Advanced operations', () => {
   test('sharing a subject creates a notification for the recipient', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
+    if (!db || !ownerUid || !editorUid || !EDITOR_EMAIL || !OWNER_EMAIL) return;
 
     // Seed a shared subject and manually create the notification
     const subjectId = buildSubjectId('notif');
@@ -125,6 +126,7 @@ test.describe('Home — Advanced operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
     test.skip(!hasCredentials('editor'), 'E2E_EDITOR_EMAIL/PASSWORD not set.');
+    if (!db || !ownerUid || !editorUid) return;
 
     // Seed an unread notification
     const notifId = buildNotificationId('read');
@@ -159,6 +161,7 @@ test.describe('Home — Advanced operations', () => {
   test('subject with invite code is joinable', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const inviteCode = `E2EADV${Date.now().toString(36).toUpperCase()}`;
     const { id } = await seedSubject(db, ownerUid, {
@@ -187,6 +190,7 @@ test.describe('Home — Advanced operations', () => {
   test('keyboard Ctrl+C/V creates a copy of a subject', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const { id } = await seedSubject(db, ownerUid, {
       name: '[E2E-ADV] Copy Source',
@@ -235,6 +239,7 @@ test.describe('Home — Advanced operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
     test.skip(!hasCredentials('editor'), 'E2E_EDITOR_EMAIL/PASSWORD not set.');
+    if (!db || !ownerUid || !editorUid || !EDITOR_EMAIL) return;
 
     // Seed a shared subject with a shortcut for the editor
     const subjectId = buildSubjectId('shortcut');
@@ -271,6 +276,7 @@ test.describe('Home — Advanced operations', () => {
   test('deleting a shortcut removes subject from shared user Home without deleting the subject', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
+    if (!db || !ownerUid || !editorUid || !EDITOR_EMAIL) return;
 
     // Seed subject + shortcut
     const subjectId = buildSubjectId('delshort');
@@ -307,6 +313,7 @@ test.describe('Home — Advanced operations', () => {
     test.setTimeout(60000);
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     // Seed a trashed subject with unique name
     const id = buildSubjectId('permadel');

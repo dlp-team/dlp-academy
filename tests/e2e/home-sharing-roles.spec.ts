@@ -1,4 +1,4 @@
-// tests/e2e/home-sharing-roles.spec.js
+// tests/e2e/home-sharing-roles.spec.ts
 import { test, expect } from '@playwright/test';
 import admin from 'firebase-admin';
 import { ensureAdmin, resolveUidByEmail } from './helpers/e2e-firebase-admin.js';
@@ -13,7 +13,7 @@ const SHARED_FOLDER_ID = process.env.E2E_SHARED_FOLDER_ID;
 const SHARED_DRAG_SUBJECT_ID = SHARED_FOLDER_ID ? `e2e-shared-drag-${SHARED_FOLDER_ID}` : null;
 
 const seedSharedDraggableSubject = async () => {
-  if (!SHARED_FOLDER_ID) return;
+  if (!SHARED_FOLDER_ID || !SHARED_DRAG_SUBJECT_ID) return;
   const db = ensureAdmin();
   if (!db) return;
 

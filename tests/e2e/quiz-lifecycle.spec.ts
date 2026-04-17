@@ -9,9 +9,9 @@ const E2E_TOPIC_ID = process.env.E2E_TOPIC_ID;
 const E2E_QUIZ_ID = process.env.E2E_QUIZ_ID;
 const E2E_INSTITUTION_ID = process.env.E2E_INSTITUTION_ID;
 
-const buildE2eSubjectId = (ownerId) => `e2e-subject-${ownerId}`;
-const buildE2eTopicId = (ownerId, subjectId) => `e2e-topic-${ownerId}-${subjectId}`;
-const buildE2eQuizId = (ownerId, topicId) => `e2e-quiz-${ownerId}-${topicId}`;
+const buildE2eSubjectId = (ownerId: string) => `e2e-subject-${ownerId}`;
+const buildE2eTopicId = (ownerId: string, subjectId: string) => `e2e-topic-${ownerId}-${subjectId}`;
+const buildE2eQuizId = (ownerId: string, topicId: string) => `e2e-quiz-${ownerId}-${topicId}`;
 
 const ensureAdmin = () => {
   const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
@@ -31,7 +31,7 @@ const ensureAdmin = () => {
   }
 };
 
-const canAccessSubject = (subjectData, ownerId) => {
+const canAccessSubject = (subjectData: Record<string, any> | undefined, ownerId: string | null) => {
   if (!subjectData || !ownerId) return false;
   if (subjectData.ownerId === ownerId || subjectData.uid === ownerId) return true;
   if (Array.isArray(subjectData.editorUids) && subjectData.editorUids.includes(ownerId)) return true;
@@ -40,7 +40,7 @@ const canAccessSubject = (subjectData, ownerId) => {
   return false;
 };
 
-const createSubjectSeed = async (db, ownerId, institutionId) => {
+const createSubjectSeed = async (db: FirebaseFirestore.Firestore, ownerId: string, institutionId: string | null) => {
   const subjectId = buildE2eSubjectId(ownerId);
   await db.collection('subjects').doc(subjectId).set({
     name: 'E2E Quiz Subject',
@@ -56,7 +56,7 @@ const createSubjectSeed = async (db, ownerId, institutionId) => {
   return subjectId;
 };
 
-const createTopicSeed = async (db, subjectId, ownerId, institutionId) => {
+const createTopicSeed = async (db: FirebaseFirestore.Firestore, subjectId: string, ownerId: string, institutionId: string | null) => {
   const topicId = buildE2eTopicId(ownerId, subjectId);
   await db.collection('topics').doc(topicId).set({
     name: 'E2E Quiz Topic',
@@ -83,7 +83,7 @@ const createTopicSeed = async (db, subjectId, ownerId, institutionId) => {
   return topicId;
 };
 
-const createQuizSeed = async (db, subjectId, topicId, ownerId, institutionId) => {
+const createQuizSeed = async (db: FirebaseFirestore.Firestore, subjectId: string, topicId: string, ownerId: string, institutionId: string | null) => {
   const quizId = buildE2eQuizId(ownerId, topicId);
   await db.collection('quizzes').doc(quizId).set({
     name: 'E2E Quiz',
@@ -125,7 +125,7 @@ const resolveSeeds = async () => {
     };
   }
 
-  let ownerId = null;
+  let ownerId: string | null = null;
   try {
     const authUser = await admin.auth().getUserByEmail(E2E_EMAIL.trim().toLowerCase());
     ownerId = authUser.uid;
@@ -133,7 +133,7 @@ const resolveSeeds = async () => {
     ownerId = null;
   }
 
-  let userData = {};
+  let userData: Record<string, any> = {};
   if (ownerId) {
     const userDoc = await db.collection('users').doc(ownerId).get();
     if (userDoc.exists) {
@@ -202,10 +202,10 @@ const resolveSeeds = async () => {
 };
 
 test.describe('Quiz lifecycle', () => {
-  let discoveredSubjectId = E2E_SUBJECT_ID || null;
-  let discoveredTopicId = E2E_TOPIC_ID || null;
-  let discoveredQuizId = E2E_QUIZ_ID || null;
-  let discoveredOwnerId = null;
+  let discoveredSubjectId: string | null = E2E_SUBJECT_ID || null;
+  let discoveredTopicId: string | null = E2E_TOPIC_ID || null;
+  let discoveredQuizId: string | null = E2E_QUIZ_ID || null;
+  let discoveredOwnerId: string | null = null;
 
   test.skip(!E2E_EMAIL || !E2E_PASSWORD, 'Set E2E_EMAIL and E2E_PASSWORD to run quiz lifecycle tests.');
 
@@ -290,6 +290,7 @@ test.describe('Quiz lifecycle', () => {
 
     const db = ensureAdmin();
     test.skip(!db, 'Missing Firebase Admin context for quiz result assertion.');
+    if (!db || !discoveredSubjectId || !discoveredTopicId || !discoveredQuizId || !discoveredOwnerId) return;
 
     const resultRef = db
       .collection('subjects')

@@ -32,9 +32,9 @@ const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL;
 const EDITOR_EMAIL = process.env.E2E_EDITOR_EMAIL;
 const VIEWER_EMAIL = process.env.E2E_VIEWER_EMAIL;
 
-let ownerUid = null;
-let editorUid = null;
-let viewerUid = null;
+let ownerUid: string | null = null;
+let editorUid: string | null = null;
+let viewerUid: string | null = null;
 
 // ─── Seeding helpers ─────────────────────────────────────────────
 const seedSharedSubject = async (db, ownerId, sharedUid, role, overrides = {}) => {
@@ -105,6 +105,7 @@ test.describe('Home — Sharing operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
     test.skip(!hasCredentials('editor'), 'E2E_EDITOR_EMAIL/PASSWORD not set.');
+    if (!db || !ownerUid || !editorUid) return;
 
     const { id } = await seedSharedSubject(db, ownerUid, editorUid, 'editor', {
       name: '[E2E-SHARE] Editor Subject',
@@ -128,6 +129,7 @@ test.describe('Home — Sharing operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !viewerUid, 'Missing owner/viewer UIDs.');
     test.skip(!hasCredentials('viewer'), 'E2E_VIEWER_EMAIL/PASSWORD not set.');
+    if (!db || !ownerUid || !viewerUid) return;
 
     const { id } = await seedSharedSubject(db, ownerUid, viewerUid, 'viewer', {
       name: '[E2E-SHARE] Viewer Subject',
@@ -147,6 +149,8 @@ test.describe('Home — Sharing operations', () => {
   test('owner shares a subject with an editor via the edit modal', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
+    test.skip(!EDITOR_EMAIL, 'E2E_EDITOR_EMAIL not set.');
+    if (!db || !ownerUid || !editorUid || !EDITOR_EMAIL) return;
 
     // Seed a non-shared subject
     const id = buildSubjectId('toshare');
@@ -217,6 +221,7 @@ test.describe('Home — Sharing operations', () => {
   test('owner removes a shared user from a subject via Firestore', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
+    if (!db || !ownerUid || !editorUid) return;
 
     // Seed a shared subject
     const { id, shortcutId } = await seedSharedSubject(db, ownerUid, editorUid, 'editor', {
@@ -264,6 +269,7 @@ test.describe('Home — Sharing operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
     test.skip(!hasCredentials('editor'), 'E2E_EDITOR_EMAIL/PASSWORD not set.');
+    if (!db || !ownerUid || !editorUid) return;
 
     const { id } = await seedSharedFolder(db, ownerUid, editorUid, 'editor', {
       name: '[E2E-SHARE] Editor Folder',
@@ -283,6 +289,7 @@ test.describe('Home — Sharing operations', () => {
   test('unsharing a folder removes it from the shared user view', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
+    if (!db || !ownerUid || !editorUid) return;
 
     const { id, shortcutId } = await seedSharedFolder(db, ownerUid, editorUid, 'editor', {
       name: '[E2E-SHARE] Unshare Folder',
@@ -318,6 +325,7 @@ test.describe('Home — Sharing operations', () => {
   test('transfer subject ownership via Firestore and verify', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
+    if (!db || !ownerUid || !editorUid) return;
 
     // Seed a subject owned by owner
     const id = buildSubjectId('transfer');
@@ -348,6 +356,7 @@ test.describe('Home — Sharing operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid || !editorUid, 'Missing owner/editor UIDs.');
     test.skip(!hasCredentials('editor'), 'E2E_EDITOR_EMAIL/PASSWORD not set.');
+    if (!db || !ownerUid || !editorUid) return;
 
     const { id } = await seedSharedSubject(db, ownerUid, editorUid, 'editor', {
       name: '[E2E-SHARE] No Delete Subject',

@@ -33,8 +33,8 @@ const OWNER_PASSWORD = process.env.E2E_OWNER_PASSWORD;
 const EDITOR_EMAIL = process.env.E2E_EDITOR_EMAIL;
 
 // ─── Fixture variables ───────────────────────────────────────────
-let ownerUid = null;
-let editorUid = null;
+let ownerUid: string | null = null;
+let editorUid: string | null = null;
 
 // ─── Seeding helpers ─────────────────────────────────────────────
 const seedSubject = async (db, ownerId, overrides = {}) => {
@@ -143,6 +143,7 @@ test.describe('Home — Subject CRUD operations', () => {
   test('update subject name via edit modal', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const { id, data } = await seedSubject(db, ownerUid, { name: '[E2E-CRUD] Editable Subject', course: 'E2E Curso' });
 
@@ -196,6 +197,7 @@ test.describe('Home — Subject CRUD operations', () => {
   test('soft-delete a subject (move to trash)', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const { id } = await seedSubject(db, ownerUid, { name: '[E2E-CRUD] Deletable Subject' });
 
@@ -306,6 +308,7 @@ test.describe('Home — Subject CRUD operations', () => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
     test.skip(!editorUid, 'Editor account UID unavailable (E2E_EDITOR_EMAIL not set).');
+    if (!db || !ownerUid || !editorUid) return;
 
     // Seed a subject with an invite code
     const inviteCode = `E2ECODE${Date.now().toString(36).toUpperCase()}`;

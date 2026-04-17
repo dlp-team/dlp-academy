@@ -27,7 +27,7 @@ import { cleanup } from './helpers/e2e-cleanup';
 
 const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL;
 
-let ownerUid = null;
+let ownerUid: string | null = null;
 
 // ─── Seeding helpers ─────────────────────────────────────────────
 const seedFolder = async (db, ownerId, overrides = {}) => {
@@ -113,6 +113,7 @@ test.describe('Home — Folder CRUD operations', () => {
   test('create a nested subfolder inside an existing folder', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     // Seed a parent folder
     const { id: parentId } = await seedFolder(db, ownerUid, {
@@ -163,6 +164,7 @@ test.describe('Home — Folder CRUD operations', () => {
   test('rename a folder via the edit modal', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const { id } = await seedFolder(db, ownerUid, {
       name: '[E2E-FOLD] Editable Folder',
@@ -209,6 +211,7 @@ test.describe('Home — Folder CRUD operations', () => {
     test.setTimeout(60000);
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const { id } = await seedFolder(db, ownerUid, {
       name: '[E2E-FOLD] Deletable Folder',

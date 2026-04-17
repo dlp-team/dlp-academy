@@ -11,6 +11,7 @@
     "test": "npm run test:unit",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
+    "test:types": "tsc --noEmit -p tsconfig.tests.json",
     "test:rules": "firebase emulators:exec --only firestore,storage \"npm run test:rules:unit\"",
     "test:rules:unit": "vitest run --config vitest.rules.config.js",
     "test:e2e": "npx cross-env VITE_USE_EMULATORS=true FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 playwright test",

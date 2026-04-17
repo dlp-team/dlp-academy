@@ -26,8 +26,8 @@ const ensureAdmin = () => {
 test.describe('Profile and settings coverage', () => {
   test.skip(!E2E_EMAIL || !E2E_PASSWORD, 'Set E2E_EMAIL and E2E_PASSWORD to run profile/settings tests.');
 
-  let rollbackUserUid = null;
-  let rollbackProfile = null;
+  let rollbackUserUid: string | null = null;
+  let rollbackProfile: { displayName: string; country: string; role: string; photoURL: string } | null = null;
 
   test.beforeAll(async () => {
     const db = ensureAdmin();

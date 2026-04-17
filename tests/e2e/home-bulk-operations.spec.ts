@@ -23,7 +23,7 @@ import { cleanup } from './helpers/e2e-cleanup';
 
 const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL;
 
-let ownerUid = null;
+let ownerUid: string | null = null;
 
 // ─── Seeding helpers ─────────────────────────────────────────────
 const seedSubject = async (db, ownerId, overrides = {}) => {
@@ -83,6 +83,7 @@ test.describe('Home — Bulk operations', () => {
   test('select multiple subjects in selection mode', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     // Seed two subjects
     await seedSubject(db, ownerUid, { name: '[E2E-BULK] Select A' });
@@ -125,6 +126,7 @@ test.describe('Home — Bulk operations', () => {
   test('bulk delete moves selected subjects to trash', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const { id: idA } = await seedSubject(db, ownerUid, { name: '[E2E-BULK] Delete A' });
     const { id: idB } = await seedSubject(db, ownerUid, { name: '[E2E-BULK] Delete B' });
@@ -177,6 +179,7 @@ test.describe('Home — Bulk operations', () => {
   test('bulk move selected subjects into a folder', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     // Seed a target folder and two subjects
     const uniqueTag = Date.now().toString().slice(-6);
@@ -236,6 +239,7 @@ test.describe('Home — Bulk operations', () => {
   test('create a new folder from selected subjects', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     const { id: idA } = await seedSubject(db, ownerUid, { name: '[E2E-BULK] Group A' });
     const { id: idB } = await seedSubject(db, ownerUid, { name: '[E2E-BULK] Group B' });
@@ -291,6 +295,7 @@ test.describe('Home — Bulk operations', () => {
   test('bulk move subjects from a folder back to root', async ({ page }) => {
     const db = ensureAdmin();
     test.skip(!db || !ownerUid, 'Firebase Admin SDK or owner UID unavailable.');
+    if (!db || !ownerUid) return;
 
     // Seed a folder with subjects inside
     const { id: folderId } = await seedFolder(db, ownerUid, { name: '[E2E-BULK] Source Folder' });
