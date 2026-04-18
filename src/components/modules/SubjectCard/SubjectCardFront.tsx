@@ -440,7 +440,7 @@ const SubjectCardFront = ({
                 </div>
             </div>
 
-            {isOrphan && (
+            {isOrphan && !disableAllActions && (
                 <>
                     <div className="absolute bottom-4 left-4 right-4 z-20 pointer-events-none text-center">
                         <span

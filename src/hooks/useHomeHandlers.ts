@@ -290,9 +290,6 @@ export const useHomeHandlers = ({
                 const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
                 const parentFolderId = deleteConfig.item.shortcutParentId ?? deleteConfig.item.folderId ?? deleteConfig.item.parentId ?? null;
                 const unshareBlocked = isInsideSharedFolderTree(parentFolderId);
-                const shouldMoveShortcutToBin =
-                    deleteConfig.item?.isOrphan === true
-                    && (deleteConfig.action === 'deleteShortcut' || deleteConfig.action === 'delete');
 
                 if (deleteConfig.action === 'unshare' && unshareBlocked) {
                     setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
@@ -317,20 +314,13 @@ export const useHomeHandlers = ({
                 } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
                     await setShortcutHiddenInManual(shortcutId, false);
                 } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
-                    if (shouldMoveShortcutToBin) {
-                        await deleteShortcut(shortcutId, { moveToBin: true });
-                    } else {
-                        await deleteShortcut(shortcutId);
-                    }
+                    await deleteShortcut(shortcutId);
                 }
             } else if (deleteConfig.type === 'shortcut-folder' && deleteConfig.item) {
                 const shortcutId = deleteConfig.item.shortcutId;
                 const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
                 const parentFolderId = deleteConfig.item.shortcutParentId ?? deleteConfig.item.parentId ?? null;
                 const unshareBlocked = isInsideSharedFolderTree(parentFolderId);
-                const shouldMoveShortcutToBin =
-                    deleteConfig.item?.isOrphan === true
-                    && (deleteConfig.action === 'deleteShortcut' || deleteConfig.action === 'delete');
 
                 if (deleteConfig.action === 'unshare' && unshareBlocked) {
                     setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
@@ -355,11 +345,7 @@ export const useHomeHandlers = ({
                 } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
                     await setShortcutHiddenInManual(shortcutId, false);
                 } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
-                    if (shouldMoveShortcutToBin) {
-                        await deleteShortcut(shortcutId, { moveToBin: true });
-                    } else {
-                        await deleteShortcut(shortcutId);
-                    }
+                    await deleteShortcut(shortcutId);
                 }
             }
             setDeleteConfig({ isOpen: false, type: null, action: null, item: null });

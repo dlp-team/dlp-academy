@@ -903,7 +903,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                             <div
                                 key={`${item.itemType}-${item.id}`}
                                 data-testid={`bin-list-wrapper-${item.itemType}-${item.id}`}
-                                className={`rounded-xl transition-all duration-200 ease-out ${!isSelected ? dimmingClass : ''} ${showPressedState ? 'relative scale-[1.01] shadow-[0_14px_30px_rgba(15,23,42,0.18)]' : ''}`}
+                                className={`rounded-xl transition-transform duration-200 ease-in-out ${!isSelected ? dimmingClass : ''} ${showPressedState ? 'relative scale-[1.01] shadow-[0_14px_30px_rgba(15,23,42,0.18)]' : ''}`}
                             >
                                 <ListViewItemComponent
                                     user={user}
