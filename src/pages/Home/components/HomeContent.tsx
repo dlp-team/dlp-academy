@@ -541,7 +541,7 @@ const HomeContent = ({
                             </button>
                         )}
 
-                        {(!coursesYearWrappers.enabled || !isYearCollapsed) && (
+                        <AnimatedCollapse isOpen={!coursesYearWrappers.enabled || !isYearCollapsed}>
                     <div className="mb-10">
                         {showCollapsibleGroups && (
                             <button
@@ -1071,7 +1071,7 @@ const HomeContent = ({
                                 )}
                             </AnimatedCollapse>
                     </div>
-                        )}
+                        </AnimatedCollapse>
                     </React.Fragment>
                 );
             })}

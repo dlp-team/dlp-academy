@@ -1,6 +1,8 @@
 // src/pages/Home/components/HomeSelectionToolbar.tsx
 import React from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { CheckSquare, Square, Trash2, FolderPlus, FolderInput, MoveRight } from 'lucide-react';
+import { slideUpVariants } from '../../../utils/animationConfig';
 
 const HomeSelectionToolbar = ({
     visible = false,
@@ -15,8 +17,6 @@ const HomeSelectionToolbar = ({
     onMoveSelection = () => {},
     onClearSelection = () => {},
 }: any) => {
-    if (!visible) return null;
-
     const hasSelection = selectedCount > 0;
     const containerTone = selectMode && hasSelection
         ? 'border-sky-300 dark:border-sky-700 bg-sky-50/70 dark:bg-sky-950/25'
@@ -31,7 +31,15 @@ const HomeSelectionToolbar = ({
         : '';
 
     return (
-        <div className={`mt-4 mb-6 rounded-xl border p-3 flex flex-col gap-3 ${containerTone}`}>
+        <AnimatePresence>
+        {visible && (
+        <motion.div
+            variants={slideUpVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className={`mt-4 mb-6 rounded-xl border p-3 flex flex-col gap-3 ${containerTone}`}
+        >
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex items-center gap-2">
                     <button
@@ -118,7 +126,9 @@ const HomeSelectionToolbar = ({
                     Modo seguro: esta acción mueve elementos a la papelera. La eliminación permanente se gestiona dentro de la pestaña Papelera.
                 </p>
             )}
-        </div>
+        </motion.div>
+        )}
+        </AnimatePresence>
     );
 };
 
