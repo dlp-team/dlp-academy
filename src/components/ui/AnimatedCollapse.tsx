@@ -19,18 +19,23 @@ const AnimatedCollapse = ({
     <AnimatePresence initial={false}>
         {isOpen && (
             <motion.div
-                initial={{ height: 0, opacity: 0 }}
+                initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
                 animate={{
                     height: 'auto',
                     opacity: 1,
-                    transition: { duration, ease: EASING.easeInOut },
+                    overflow: 'visible',
+                    transition: {
+                        duration,
+                        ease: EASING.easeInOut,
+                        overflow: { delay: duration },
+                    },
                 }}
                 exit={{
                     height: 0,
                     opacity: 0,
+                    overflow: 'hidden',
                     transition: { duration, ease: EASING.easeInOut },
                 }}
-                style={{ overflow: 'hidden' }}
                 className={className}
             >
                 {children}
