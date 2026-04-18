@@ -314,7 +314,11 @@ export const useHomeHandlers = ({
                 } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
                     await setShortcutHiddenInManual(shortcutId, false);
                 } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
-                    await deleteShortcut(shortcutId);
+                    if (deleteConfig.item?.isOrphan) {
+                        await deleteShortcut(shortcutId, { moveToBin: true });
+                    } else {
+                        await deleteShortcut(shortcutId);
+                    }
                 }
             } else if (deleteConfig.type === 'shortcut-folder' && deleteConfig.item) {
                 const shortcutId = deleteConfig.item.shortcutId;
@@ -345,7 +349,11 @@ export const useHomeHandlers = ({
                 } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
                     await setShortcutHiddenInManual(shortcutId, false);
                 } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
-                    await deleteShortcut(shortcutId);
+                    if (deleteConfig.item?.isOrphan) {
+                        await deleteShortcut(shortcutId, { moveToBin: true });
+                    } else {
+                        await deleteShortcut(shortcutId);
+                    }
                 }
             }
             setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
