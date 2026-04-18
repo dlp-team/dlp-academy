@@ -16,6 +16,7 @@ import { mergeSourceAndShortcutItems } from '../../../utils/mergeUtils';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 import { getHomeUnselectedDimmingClass } from '../../../utils/selectionVisualUtils';
 import { getDraggedSelectionKeyFromDropArgs, shouldHandleSelectionDrop } from '../utils/homeSelectionDropUtils';
+import AnimatedCollapse from '../../../components/ui/AnimatedCollapse';
 
 const FolderCardComponent: any = FolderCard;
 const SubjectCardComponent: any = SubjectCard;
@@ -565,8 +566,7 @@ const HomeContent = ({
                             </button>
                         )}
 
-                        {!isCollapsed && (
-                            <>
+                        <AnimatedCollapse isOpen={!isCollapsed}>
                                 {/* GRID LAYOUT */}
                                 {layoutMode === 'grid' && (
                                     <div className="mb-10">
@@ -1069,8 +1069,7 @@ const HomeContent = ({
 
                                     </div>
                                 )}
-                            </>
-                        )}
+                            </AnimatedCollapse>
                     </div>
                         )}
                     </React.Fragment>
