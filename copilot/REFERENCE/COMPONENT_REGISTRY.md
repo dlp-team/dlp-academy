@@ -13,12 +13,22 @@ CRITICAL COPILOT DIRECTIVE: before creating any new UI element (modal, overlay, 
 5. All visible UI text must be in Spanish.
 6. Use icons, never emojis.
 
+## Animation Primitives
+
+### AnimatedCollapse
+- File: src/components/ui/AnimatedCollapse.tsx
+- Status: Active
+- Purpose: Reusable animated height expand/collapse wrapper using framer-motion. Animates height 0↔auto with opacity.
+- Props: `isOpen` (boolean), `children`, `duration` (optional, default DURATION.normal), `className` (optional)
+- Current adopters:
+  - src/pages/Home/components/HomeContent.tsx (group collapse, year collapse)
+
 ## Overlays and Modals
 
 ### BaseModal
 - File: src/components/ui/BaseModal.tsx
 - Status: Active
-- Purpose: low-level modal primitive (backdrop, content wrapper, close guard hooks).
+- Purpose: low-level modal primitive (backdrop, content wrapper, close guard hooks). Animated with framer-motion (backdrop fade, content scale+fade, AnimatePresence for mount/unmount).
 - Current adopters:
   - src/components/modals/DeleteModal.tsx
   - src/components/modals/FolderDeleteModal.tsx
@@ -143,6 +153,7 @@ When creating a reusable component:
 | Shared gradient submit CTA | ModalGradientSubmitButton | Active |
 | Menu positioning | menuPositionUtils | Active |
 | Unified three-dots portal shell | ContextActionMenuPortal | Active |
+| Animated height collapse | AnimatedCollapse | Active |
 | Generic primary/secondary/danger buttons | Not implemented yet | Planned |
 
 ## Registry Maintenance
