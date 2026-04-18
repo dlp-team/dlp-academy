@@ -1,6 +1,8 @@
 // src/components/ui/BaseModal.tsx
 import React from 'react';
 import type { CSSProperties, ReactNode } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { backdropVariants, scaleVariants } from '../../utils/animationConfig';
 
 type ModalCloseReason = 'backdrop';
 
@@ -43,10 +45,6 @@ const BaseModal = ({
   wrapperTestId = 'base-modal-wrapper',
   contentTestId = 'base-modal-content',
 }: BaseModalProps) => {
-  if (!isOpen) {
-    return null;
-  }
-
   const handleBackdropClick = () => {
     if (!closeOnBackdropClick) {
       return;
@@ -68,26 +66,45 @@ const BaseModal = ({
   };
 
   return (
-    <div className={rootClassName} style={rootStyle}>
-      <div
+    <AnimatePresence>
+    {isOpen && (
+    <motion.div
+      className={rootClassName}
+      style={rootStyle}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <motion.div
         aria-hidden="true"
         className={backdropClassName}
         data-testid={backdropTestId}
         onClick={handleBackdropClick}
+        variants={backdropVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
       />
       <div className={contentWrapperClassName} data-testid={wrapperTestId} style={contentWrapperStyle}>
-        <div
+        <motion.div
           aria-modal="true"
           className={contentClassName}
           data-testid={contentTestId}
           role="dialog"
           style={contentStyle}
           onClick={handleContentClick}
+          variants={scaleVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
         >
           {children}
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
+    )}
+    </AnimatePresence>
   );
 };
 
