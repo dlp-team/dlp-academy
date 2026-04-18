@@ -2,6 +2,7 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
+import { MotionConfig } from 'framer-motion';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'; // Import Firestore functions
 import { auth, db } from './firebase/config'; // Import db
@@ -469,6 +470,7 @@ body[data-dlp-preview-highlight]::after {
   }, []);
 
   return (
+    <MotionConfig reducedMotion="user">
     <OverlayScrollbarsComponent
       defer
       className="app-global-scrollbar"
@@ -745,6 +747,7 @@ body[data-dlp-preview-highlight]::after {
         </Routes>
       </BrowserRouter>
     </OverlayScrollbarsComponent>
+    </MotionConfig>
   );
 }
 
