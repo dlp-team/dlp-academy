@@ -953,8 +953,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
     const hasOpenCloseGuardSnapshot = openCloseGuardSnapshotRef.current.length > 0;
     const hasUnsavedGeneralChanges =
-        !isEditing
-        && isOpen
+        isOpen
         && hasOpenCloseGuardSnapshot
         && serializedCloseGuardState !== openCloseGuardSnapshotRef.current;
 
