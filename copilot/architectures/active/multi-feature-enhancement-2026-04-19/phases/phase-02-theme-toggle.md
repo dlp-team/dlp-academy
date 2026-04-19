@@ -89,10 +89,9 @@ Eliminate lag when toggling the theme. All elements should transition smoothly. 
 | Unit tests pass | ✅ No changes needed |
 
 ### Implementation Notes
-- **No code changes required** — audit confirmed all components already implement smooth transitions:
-  - `Toggle.tsx`: Ball has `transition-transform duration-300` + `will-change-transform`
-  - `Toggle.tsx`: Container has `transition-colors duration-300`
-  - `index.css`: `html.theme-switching` applies transitions to all elements (color, bg, border, shadow, gradients)
-  - `themeMode.ts`: `beginThemeTransition()` adds class before toggle, removes 320ms after (260+60 buffer)
-  - `Header.tsx`: `handleThemeToggle` calls `applyThemeToDom` with `animate: true`
-  - Reduced-motion media query properly reduces duration to 1ms
+- **App.tsx onSnapshot optimization**: Skip `setUser()` when only `theme` or `settings.theme` changed in the Firestore user doc, preventing cascading re-renders that re-fire Firestore listeners in Topic.tsx, StudyGuide.tsx, etc.
+- **themeMode.ts buffer increase**: Cleanup timer buffer raised from 60ms to 200ms so no element snaps at the end of the transition
+- **index.css**: Added `outline-color` to `theme-switching` transition properties
+- Toggle ball already had `transition-transform duration-300 ease-in-out will-change-transform` ✅
+- Container already had `transition-colors duration-300 ease-in-out` ✅
+- `applyThemeToDom` already added `theme-switching` before class toggle ✅
