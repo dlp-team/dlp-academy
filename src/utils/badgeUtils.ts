@@ -126,3 +126,110 @@ export const upsertCourseBadge = ({ badgesByCourse, courseId, badge }: { badgesB
     },
   };
 };
+
+// --- Phase 08: Grade Computation & Auto-Badge Style System ---
+
+export type BadgeStyleLevel = 'threshold' | 'mid' | 'high' | 'near-perfect' | 'perfect';
+
+export interface BadgeStyleConfig {
+  gradient: string;
+  glow: string;
+  label: string;
+  isPerfect: boolean;
+  level: BadgeStyleLevel;
+}
+
+/**
+ * Returns the default institution badge threshold (8 out of 10).
+ */
+export const getDefaultBadgeThreshold = (): number => 8;
+
+/**
+ * Compute style level based on score relative to threshold.
+ * threshold (e.g. 8) → 'threshold'
+ * threshold+0.5 (e.g. 8.5) → 'mid'
+ * threshold+1.0 (e.g. 9) → 'high'
+ * threshold+1.5 (e.g. 9.5) → 'near-perfect'
+ * 10 (perfect) → 'perfect'
+ */
+export const computeBadgeStyleLevel = (score: number, threshold: number = 8): BadgeStyleLevel => {
+  if (score >= 10) return 'perfect';
+  if (score >= threshold + 1.5) return 'near-perfect';
+  if (score >= threshold + 1.0) return 'high';
+  if (score >= threshold + 0.5) return 'mid';
+  return 'threshold';
+};
+
+/**
+ * Returns Tailwind gradient and glow classes for a given style level.
+ */
+export const getBadgeStyleColors = (level: BadgeStyleLevel): BadgeStyleConfig => {
+  switch (level) {
+    case 'perfect':
+      return {
+        gradient: 'from-yellow-300 to-amber-400',
+        glow: 'shadow-yellow-400/50',
+        label: 'Perfecto',
+        isPerfect: true,
+        level,
+      };
+    case 'near-perfect':
+      return {
+        gradient: 'from-orange-400 to-amber-500',
+        glow: 'shadow-orange-400/40',
+        label: 'Casi perfecto',
+        isPerfect: false,
+        level,
+      };
+    case 'high':
+      return {
+        gradient: 'from-amber-400 to-yellow-500',
+        glow: 'shadow-amber-400/40',
+        label: 'Excelente',
+        isPerfect: false,
+        level,
+      };
+    case 'mid':
+      return {
+        gradient: 'from-lime-400 to-green-500',
+        glow: 'shadow-lime-400/40',
+        label: 'Notable',
+        isPerfect: false,
+        level,
+      };
+    default: // threshold
+      return {
+        gradient: 'from-green-400 to-emerald-500',
+        glow: 'shadow-green-400/40',
+        label: 'Sobresaliente',
+        isPerfect: false,
+        level: 'threshold',
+      };
+  }
+};
+
+/**
+ * Compute style config for a given score and threshold.
+ */
+export const getStyleForScore = (score: number, threshold: number = 8): BadgeStyleConfig => {
+  const level = computeBadgeStyleLevel(score, threshold);
+  return getBadgeStyleColors(level);
+};
+
+/**
+ * Compute arithmetic mean from an array of numbers.
+ * Returns NaN for empty arrays.
+ */
+export const computeGradeMean = (grades: number[]): number => {
+  if (!grades || grades.length === 0) return NaN;
+  const validGrades = grades.filter((g) => Number.isFinite(g));
+  if (validGrades.length === 0) return NaN;
+  return validGrades.reduce((sum, g) => sum + g, 0) / validGrades.length;
+};
+
+/**
+ * Determine if a score is eligible for an enhanced (auto) badge.
+ */
+export const isEligibleForAutoBadge = (score: number, threshold: number = 8): boolean => {
+  return Number.isFinite(score) && score >= threshold;
+};
