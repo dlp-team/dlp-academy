@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import Header from '../../../components/layout/Header';
+import AnimatedPage from '../../../components/layout/AnimatedPage';
 import { getCourseDisplayLabel } from '../../../utils/courseLabelUtils';
 
 const normalizeId = (value: any) => String(value || '').trim();
@@ -351,9 +351,8 @@ const UserDetailView = ({ user, userType }: any) => {
   }
 
   return (
+    <AnimatedPage>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <Header user={user} />
-
       <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
         <button
           onClick={() => navigate('/institution-admin-dashboard')}
@@ -574,6 +573,7 @@ const UserDetailView = ({ user, userType }: any) => {
         </div>
       </main>
     </div>
+    </AnimatedPage>
   );
 };
 

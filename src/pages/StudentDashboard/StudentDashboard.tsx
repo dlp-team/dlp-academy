@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, GraduationCap, Clock, BarChart3 } from 'lucide-react';
-import Header from '../../components/layout/Header';
 import AnimatedPage from '../../components/layout/AnimatedPage';
 import StaggerChildren from '../../components/ui/StaggerChildren';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
@@ -23,8 +22,6 @@ const StudentDashboard = ({ user }: any) => {
   return (
     <AnimatedPage>
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
-      <Header user={user} />
-
       <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>

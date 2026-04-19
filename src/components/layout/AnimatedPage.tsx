@@ -8,14 +8,13 @@ interface AnimatedPageProps {
 }
 
 /**
- * Standard page-level layout wrapper that provides:
- *  - Route-level entrance / exit crossfade (via PageTransition)
- *  - Consistent min-height so short pages don't collapse during exit
+ * Page-level transition wrapper.
  *
- * Usage: wrap the outermost JSX return of any page component.
+ * When used inside `AuthenticatedLayout` the Header is already rendered
+ * persistently — this wrapper only crossfades the page content.
  */
 const AnimatedPage: React.FC<AnimatedPageProps> = ({ children, className }) => (
-  <PageTransition className={`min-h-screen ${className ?? ''}`}>
+  <PageTransition className={className}>
     {children}
   </PageTransition>
 );

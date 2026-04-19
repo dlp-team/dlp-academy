@@ -18,7 +18,6 @@ import { useHomeCreationGuards } from './hooks/useHomeCreationGuards';
 
 
 // Layout & Global Components
-import Header from '../../components/layout/Header';
 import AnimatedPage from '../../components/layout/AnimatedPage';
 
 
@@ -328,8 +327,6 @@ const Home = ({ user }: any) => {
             className="home-page min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 font-sans transition-colors"
             style={homeThemeTokens.cssVariables}
         >
-            <Header user={user} />
-
             <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 {/* Drag Up Zone (Omitted for brevity, logic same) */}
                 <div 

@@ -2,9 +2,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDarkMode } from '../../hooks/useDarkMode';
-import { Eye, GraduationCap, Loader2, AlertCircle } from 'lucide-react';
-import Header from '../../components/layout/Header';
+import { Eye, GraduationCap, AlertCircle } from 'lucide-react';
 import AnimatedPage from '../../components/layout/AnimatedPage';
+import TopicSkeleton from './components/TopicSkeleton';
 import { useTopicLogic } from './hooks/useTopicLogic';
 import { useTopicFailedQuestions } from './hooks/useTopicFailedQuestions';
 import { useClassMembers } from '../Subject/hooks/useClassMembers';
@@ -464,17 +464,12 @@ const Topic = ({ user }: any) => {
     }, [logic.permissions, previewAsStudent, isBinReadOnlyView]);
 
     if (!user || logic.loading || !logic.topic || !logic.subject) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" strokeWidth={2} />
-            </div>
-        );
+        return <TopicSkeleton />;
     }
 
     return (
         <AnimatedPage>
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
-            <Header user={user} />
             <main className="pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 {isBinReadOnlyView && (
                     <div className="mb-4 rounded-2xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm font-medium text-amber-800 dark:text-amber-300">
