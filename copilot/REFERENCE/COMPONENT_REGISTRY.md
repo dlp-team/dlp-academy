@@ -54,6 +54,32 @@ CRITICAL COPILOT DIRECTIVE: before creating any new UI element (modal, overlay, 
 - Purpose: optional future unified API alias for modal wrappers.
 - Note: do not import until implementation exists.
 
+### UnsavedChangesConfirmModal
+- File: src/components/ui/UnsavedChangesConfirmModal.tsx
+- Status: Active
+- Purpose: Reusable confirmation dialog for unsaved changes. Supports two render modes: `inline` (absolute, inside an existing overlay) and fixed (viewport-level via BaseModal). Customizable title, message, and button labels.
+- Props: `isOpen`, `onDiscard`, `onCancel`, `title?`, `message?`, `discardLabel?`, `cancelLabel?`, `inline?`
+- Current adopters:
+  - src/pages/Subject/modals/SubjectFormModal.tsx (inline mode)
+  - src/pages/Home/components/FolderManager.tsx (inline mode)
+
+### GuardedOverlay
+- File: src/components/ui/GuardedOverlay.tsx
+- Status: Active
+- Purpose: Wrapper that intercepts backdrop clicks and Escape key when `isDirty` is true, showing `UnsavedChangesConfirmModal` before allowing close. For overlays that need unsaved-changes protection without using DashboardOverlayShell.
+- Props: `isOpen`, `onClose`, `isDirty`, `children`, `className?`, `unsavedTitle?`, `unsavedMessage?`
+- Current adopters:
+  - src/pages/Subject/modals/TopicFormModal.tsx
+  - src/pages/Subject/modals/EditTopicModal.tsx
+
+### useUnsavedChangesGuard (Hook)
+- File: src/hooks/useUnsavedChangesGuard.ts
+- Status: Active
+- Purpose: Deep-equality-based dirty state detection hook. Returns `isDirty`, `showConfirmation`, `requestClose`, `confirmDiscard`, `cancelDiscard`, `resetDirty`. Compares `initialValues` vs `currentValues` via deep-equal.
+- Current adopters:
+  - src/pages/Subject/modals/TopicFormModal.tsx
+  - src/pages/Subject/modals/EditTopicModal.tsx
+
 ## Menus and Action Overlays
 
 ### shortcutMenuConfig

@@ -7,6 +7,7 @@ import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firesto
 import { db } from '../../../firebase/config';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 import BaseModal from '../../../components/ui/BaseModal';
+import UnsavedChangesConfirmModal from '../../../components/ui/UnsavedChangesConfirmModal';
 import { canCloseSharingModal } from '../../../utils/modalCloseGuardUtils';
 
 const FolderManager = ({
@@ -1233,33 +1234,13 @@ const FolderManager = ({
                         </div>
                     )}
 
-                    {showDiscardPendingConfirm && (
-                        <div className="absolute inset-0 z-40 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-                            <div className="absolute inset-0 bg-black/55" onClick={(e: any) => { e.stopPropagation(); setShowDiscardPendingConfirm(false); }} />
-                            <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                                <h4 className="text-base font-semibold text-gray-900 dark:text-white">Descartar cambios sin guardar</h4>
-                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                                    Tienes cambios pendientes en Compartir. ¿Quieres descartarlos y cerrar la ventana?
-                                </p>
-                                <div className="mt-5 flex justify-end gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowDiscardPendingConfirm(false)}
-                                        className="px-3 py-1.5 text-sm rounded-md bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={discardPendingAndClose}
-                                        className="px-3 py-1.5 text-sm rounded-md bg-red-600 hover:bg-red-700 text-white"
-                                    >
-                                        Descartar y cerrar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <UnsavedChangesConfirmModal
+                        isOpen={showDiscardPendingConfirm}
+                        onDiscard={discardPendingAndClose}
+                        onCancel={() => setShowDiscardPendingConfirm(false)}
+                        message="Tienes cambios pendientes en Compartir. ¿Quieres descartarlos y cerrar la ventana?"
+                        inline
+                    />
         </BaseModal>
     );
 };
