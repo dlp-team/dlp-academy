@@ -92,7 +92,7 @@ const TagFilter = ({
         <div className="relative" ref={triggerRef}>
             <button
                 onClick={() => handleSetShowFilter(!showFilter)}
-                className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium shadow-sm cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium shadow-sm ${
                     hasActiveFilters
                         ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-300 dark:border-pink-700 text-pink-700 dark:text-pink-300'
                         : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
@@ -126,7 +126,7 @@ const TagFilter = ({
                             {!hideSharedScopeToggle && (
                                 <button
                                     onClick={() => onSharedScopeChange(!sharedScopeSelected)}
-                                    className={`absolute top-0 right-0 inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-colors cursor-pointer ${
+                                    className={`absolute top-0 right-0 inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-colors ${
                                         sharedScopeSelected
                                             ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400'
                                             : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
@@ -156,7 +156,7 @@ const TagFilter = ({
                                     <button
                                         key={tag}
                                         onClick={() => toggleTag(tag)}
-                                        className={`flex-1 min-w-[45%] max-w-[48%] flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer m-0.5
+                                        className={`flex-1 min-w-[45%] max-w-[48%] flex items-center justify-between p-2.5 rounded-lg text-sm transition-all m-0.5
                                             ${isSelected
                                                 ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 ring-2 ring-pink-500 dark:ring-pink-400'
                                                 : 'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'}
@@ -178,7 +178,7 @@ const TagFilter = ({
                             <div className="flex justify-end mt-3">
                                 <button
                                     onClick={clearFilters}
-                                    className="text-xs text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 font-medium cursor-pointer"
+                                    className="text-xs text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 font-medium"
                                 >
                                     Borrar filtros
                                 </button>

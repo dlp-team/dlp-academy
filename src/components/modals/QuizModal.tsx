@@ -122,7 +122,7 @@ const QuizModal = ({
                     
                     <button 
                         onClick={(e: any) => { e.preventDefault(); handleClose(); }} 
-                        className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/25 text-white rounded-full transition-all duration-300 backdrop-blur-sm shadow-inner hover:rotate-90 hover:scale-110 active:scale-95 z-50 cursor-pointer"
+                        className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/25 text-white rounded-full transition-all duration-300 backdrop-blur-sm shadow-inner hover:rotate-90 hover:scale-110 active:scale-95 z-50"
                         type="button"
                     >
                         <X className="w-5 h-5" />
@@ -157,7 +157,7 @@ const QuizModal = ({
                                     <select 
                                         value={formData.level} 
                                         onChange={e => setFormData({...formData, level: e.target.value})} 
-                                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold text-slate-700 dark:text-slate-300 appearance-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50"
+                                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold text-slate-700 dark:text-slate-300 appearance-none hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50"
         
                                     >
                                         <option value="Principiante">Básico</option>

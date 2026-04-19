@@ -18,7 +18,7 @@ const ViewLayoutSelector = ({ layoutMode, setLayoutMode }: any) => {
                     className={`p-2 rounded-lg transition-all ${
                         layoutMode === layout.id
                             ? 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200'
-                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800/50 cursor-pointer'
+                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800/50'
                     }`}
                     title={layout.label}
                 >
