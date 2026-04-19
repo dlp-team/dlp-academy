@@ -1,4 +1,5 @@
 // src/pages/Notifications/Notifications.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {

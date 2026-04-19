@@ -130,3 +130,36 @@ export const collapseVariants: Variants = {
     transition: { duration: DURATION.normal, ease: EASING.easeInOut },
   },
 };
+
+// ---------------------------------------------------------------------------
+// Page-level transitions
+// ---------------------------------------------------------------------------
+
+/** Page transition preset — slightly slower crossfade with subtle y-shift */
+export const transitionPage: Transition = {
+  duration: 0.2,
+  ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+};
+
+/** Route crossfade: subtle opacity + micro y-shift for spatial context */
+export const pageTransitionVariants: Variants = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0, transition: transitionPage },
+  exit: { opacity: 0, y: -4, transition: { duration: 0.15, ease: EASING.easeIn } },
+};
+
+/** Skeleton pulse animation (for loading placeholders) */
+export const skeletonPulseVariants: Variants = {
+  initial: { opacity: 0.4 },
+  animate: {
+    opacity: [0.4, 0.7, 0.4],
+    transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
+  },
+};
+
+/** Tab active indicator — designed for Framer Motion layoutId */
+export const tabIndicatorTransition: Transition = {
+  type: 'spring',
+  stiffness: 500,
+  damping: 35,
+};

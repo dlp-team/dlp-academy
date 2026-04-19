@@ -13,6 +13,9 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
+import AnimatedPage from '../../components/layout/AnimatedPage';
+import AnimatedTabs, { AnimatedTabContent } from '../../components/ui/AnimatedTabs';
+import StaggerChildren from '../../components/ui/StaggerChildren';
 import TablePagination from '../../components/ui/TablePagination';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { usePersistentState } from '../../hooks/usePersistentState';
@@ -32,9 +35,9 @@ const OverviewTab = ({ classes, students, loading }: any) => {
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <StaggerChildren className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {cards.map((card: any) => (
-                    <div key={card.label} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                    <div key={card.label} className="interactive-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
                         <div className={`w-10 h-10 rounded-xl ${card.bg} flex items-center justify-center mb-4`}>
                             <card.icon className={`w-5 h-5 ${card.color}`} />
                         </div>
@@ -44,7 +47,7 @@ const OverviewTab = ({ classes, students, loading }: any) => {
                         <div className="text-sm text-slate-500 dark:text-slate-400">{card.label}</div>
                     </div>
                 ))}
-            </div>
+            </StaggerChildren>
 
             {/* Classes quick view */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden mb-6">
@@ -671,6 +674,7 @@ const TeacherDashboard = ({ user }: any) => {
     ];
 
     return (
+        <AnimatedPage>
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
             <Header user={user} />
 
@@ -690,35 +694,27 @@ const TeacherDashboard = ({ user }: any) => {
                 </div>
 
                 {/* Underline tabs */}
-                <div className="flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800 overflow-x-auto whitespace-nowrap pb-px no-scrollbar">
-                    {TABS.map((tab: any) => (
-                        <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 border-b-2 -mb-px transition-colors ${
-                                activeTab === tab.key
-                                    ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                            }`}>
-                            <tab.icon className="w-4 h-4" /> {tab.label}
-                        </button>
-                    ))}
-                </div>
+                <AnimatedTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} className="overflow-x-auto whitespace-nowrap no-scrollbar" />
 
-                {activeTab === 'overview'   && <OverviewTab classes={myClasses} students={allStudents} loading={loading} />}
-                {activeTab === 'subjects'   && <SubjectsTab subjects={subjectsSummary} loading={loading} />}
-                {activeTab === 'classes'    && <MyClassesTab classes={myClasses} allStudents={allStudents} loading={loading} />}
-                {activeTab === 'students'   && (
-                    <MyStudentsTab
-                        allStudents={allStudents}
-                        loading={loading}
-                        actionMessage={studentActionMessage}
-                        isActionPending={isActionPending}
-                        onSetBehaviorScore={handleSetBehaviorScore}
-                        onAwardBadge={handleAwardBadge}
-                    />
-                )}
-                {activeTab === 'correction' && <ExamCorrectionTool user={user} />}
+                <AnimatedTabContent tabKey={activeTab}>
+                    {activeTab === 'overview'   && <OverviewTab classes={myClasses} students={allStudents} loading={loading} />}
+                    {activeTab === 'subjects'   && <SubjectsTab subjects={subjectsSummary} loading={loading} />}
+                    {activeTab === 'classes'    && <MyClassesTab classes={myClasses} allStudents={allStudents} loading={loading} />}
+                    {activeTab === 'students'   && (
+                        <MyStudentsTab
+                            allStudents={allStudents}
+                            loading={loading}
+                            actionMessage={studentActionMessage}
+                            isActionPending={isActionPending}
+                            onSetBehaviorScore={handleSetBehaviorScore}
+                            onAwardBadge={handleAwardBadge}
+                        />
+                    )}
+                    {activeTab === 'correction' && <ExamCorrectionTool user={user} />}
+                </AnimatedTabContent>
             </main>
         </div>
+        </AnimatedPage>
     );
 };
 

@@ -1,4 +1,5 @@
 // src/pages/Content/StudyGuideEditor.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {

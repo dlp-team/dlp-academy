@@ -3,6 +3,8 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, GraduationCap, Clock, BarChart3 } from 'lucide-react';
 import Header from '../../components/layout/Header';
+import AnimatedPage from '../../components/layout/AnimatedPage';
+import StaggerChildren from '../../components/ui/StaggerChildren';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { getActiveRole } from '../../utils/permissionUtils';
 
@@ -19,6 +21,7 @@ const StudentDashboard = ({ user }: any) => {
   }, [user, activeRole, navigate]);
 
   return (
+    <AnimatedPage>
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
       <Header user={user} />
 
@@ -35,36 +38,36 @@ const StudentDashboard = ({ user }: any) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+        <StaggerChildren className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="interactive-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
             <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center mb-4">
               <BookOpen className="w-5 h-5 text-indigo-600" />
             </div>
             <div className="text-3xl font-black text-slate-900 dark:text-white mb-0.5">—</div>
             <div className="text-sm text-slate-500 dark:text-slate-400">Asignaturas</div>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+          <div className="interactive-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4">
               <BarChart3 className="w-5 h-5 text-emerald-600" />
             </div>
             <div className="text-3xl font-black text-slate-900 dark:text-white mb-0.5">—</div>
             <div className="text-sm text-slate-500 dark:text-slate-400">Progreso Global</div>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+          <div className="interactive-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
             <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center mb-4">
               <Clock className="w-5 h-5 text-amber-600" />
             </div>
             <div className="text-3xl font-black text-slate-900 dark:text-white mb-0.5">—</div>
             <div className="text-sm text-slate-500 dark:text-slate-400">Tiempo de Estudio</div>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+          <div className="interactive-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
             <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mb-4">
               <GraduationCap className="w-5 h-5 text-blue-600" />
             </div>
             <div className="text-3xl font-black text-slate-900 dark:text-white mb-0.5">—</div>
             <div className="text-sm text-slate-500 dark:text-slate-400">Evaluaciones</div>
           </div>
-        </div>
+        </StaggerChildren>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-10 text-center">
           <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -73,6 +76,7 @@ const StudentDashboard = ({ user }: any) => {
         </div>
       </main>
     </div>
+    </AnimatedPage>
   );
 };
 

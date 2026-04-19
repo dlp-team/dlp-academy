@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import Header from '../../components/layout/Header';
+import AnimatedPage from '../../components/layout/AnimatedPage';
 
 // Hooks
 import { useProfile } from './hooks/useProfile';
@@ -73,6 +74,7 @@ const Profile = ({ user }: any) => {
   }
 
   return (
+    <AnimatedPage>
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-12 transition-colors">
       <Header user={headerUser} />
 
@@ -150,6 +152,7 @@ const Profile = ({ user }: any) => {
         }}
       />
     </div>
+    </AnimatedPage>
   );
 };
 

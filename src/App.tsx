@@ -2,7 +2,7 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
-import { MotionConfig } from 'framer-motion';
+import { AnimatePresence, MotionConfig } from 'framer-motion';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'; // Import Firestore functions
 import { auth, db } from './firebase/config'; // Import db
@@ -172,8 +172,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // 1. Wait for Auth & Database Fetch
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 animate-pulse" />
+          <div className="w-24 h-2 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+        </div>
       </div>
     );
   }
@@ -209,6 +212,232 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   
   return children;
 };
+
+/**
+ * AnimatedRoutes — wraps all <Routes> inside AnimatePresence so route
+ * changes trigger a crossfade page transition.  useLocation() must be
+ * called inside <BrowserRouter>, hence the separate component.
+ */
+function AnimatedRoutes({ user, loading }: { user: AppUser | null; loading: boolean }) {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Public Routes */}
+        <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" />} />
+        <Route path="/register" element={!user ? <Register /> : <Navigate to="/home" />} />
+        <Route path="/verify-email" element={user ? <EmailVerificationPage /> : <Navigate to="/login" />} />
+        <Route path="/theme-preview/*" element={<ThemePreviewPage />} />
+        <Route path="/" element={<Navigate to={user ? "/home" : "/login"} />} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <HomePage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/home/subject/:subjectId"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <SubjectPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <TopicPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Quiz Routes */}
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <QuizzesPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/resumen/:guideId/edit"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <StudyGuideEditorPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId/edit"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <EditQuizPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId/review"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <QuizReviewPageAny user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/quizzes/repaso"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <QuizRepasoPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* User Profile & Settings */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <ProfilePage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <SettingsPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <NotificationsPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* --- ADMIN DASHBOARD --- */}
+        <Route
+          path="/admin-dashboard"
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="admin" allowedRoles={['admin']}>
+              <AdminDashboardPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* --- INSTITUTION ADMIN DASHBOARD --- */}
+        <Route
+          path="/institution-admin-dashboard"
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="institutionadmin" allowedRoles={['institutionadmin', 'admin']}>
+              <InstitutionAdminDashboardPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/institution-admin-dashboard/teacher/:teacherId"
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="institutionadmin" allowedRoles={['institutionadmin', 'admin']}>
+              <TeacherDetailViewPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/institution-admin-dashboard/student/:studentId"
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="institutionadmin" allowedRoles={['institutionadmin', 'admin']}>
+              <StudentDetailViewPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* --- TEACHER DASHBOARD --- */}
+        <Route
+          path="/teacher-dashboard"
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="teacher" allowedRoles={['teacher']}>
+              <TeacherDashboardPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher-dashboard/student/:studentId"
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="teacher" allowedRoles={['teacher']}>
+              <TeacherStudentDetailViewPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/student-dashboard"
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="student" allowedRoles={['student']}>
+              <StudentDashboardPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* --- RUTAS DE VISUALIZACIÓN DE CONTENIDO --- */}
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/resumen/:fileId"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <StudyGuidePage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/resource/:fileId"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <StudyGuidePage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/guide/:guideId"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <StudyGuidePage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/formulas/:fileId"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <FormulaPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/exam/:examId"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <ExamPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/home" />} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
 
 function App() {
   const [user, setUser] = useState<AppUser | null>(null);
@@ -483,268 +712,7 @@ body[data-dlp-preview-highlight]::after {
         {user && <OnboardingWizard user={user} />}
         {user && <AdminPasswordWizard user={user} />}
 
-        <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" />} />
-        <Route path="/register" element={!user ? <Register /> : <Navigate to="/home" />} />
-        <Route path="/verify-email" element={user ? <EmailVerificationPage /> : <Navigate to="/login" />} />
-        <Route path="/theme-preview/*" element={<ThemePreviewPage />} />
-        <Route path="/" element={<Navigate to={user ? "/home" : "/login"} />} />
-
-        {/* Protected Routes */}
-        <Route 
-          path="/home" 
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <HomePage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/home/subject/:subjectId" 
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <SubjectPage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/home/subject/:subjectId/topic/:topicId" 
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <TopicPage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Quiz Routes */}
-        <Route 
-          path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId" 
-          element={
-             <ProtectedRoute user={user} loading={loading}>
-                 <QuizzesPage user={user} />
-             </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/home/subject/:subjectId/topic/:topicId/resumen/:guideId/edit" 
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <StudyGuideEditorPage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId/edit" 
-          element={
-             <ProtectedRoute user={user} loading={loading}>
-                 <EditQuizPage user={user} />
-             </ProtectedRoute>
-          } 
-        />
-
-          <Route
-           path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId/review"
-           element={
-             <ProtectedRoute user={user} loading={loading}>
-               <QuizReviewPageAny user={user} />
-             </ProtectedRoute>
-           }
-          />
-
-          <Route
-           path="/home/subject/:subjectId/topic/:topicId/quizzes/repaso"
-           element={
-             <ProtectedRoute user={user} loading={loading}>
-               <QuizRepasoPage user={user} />
-             </ProtectedRoute>
-           }
-          />
-
-        {/* User Profile & Settings */}
-        <Route 
-          path="/profile" 
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <ProfilePage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="/settings" 
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <SettingsPage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route
-          path="/notifications"
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <NotificationsPage user={user} />
-            </ProtectedRoute>
-          }
-        />
-        
-        {/* --- ADMIN DASHBOARD --- */}
-        <Route 
-          path="/admin-dashboard" 
-          element={
-            <ProtectedRoute
-              user={user}
-              loading={loading}
-              requiredRole="admin"
-              allowedRoles={['admin']}
-            >
-              <AdminDashboardPage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* --- INSTITUTION ADMIN DASHBOARD --- */}
-        <Route 
-          path="/institution-admin-dashboard" 
-          element={
-            <ProtectedRoute
-              user={user}
-              loading={loading}
-              requiredRole="institutionadmin"
-              allowedRoles={['institutionadmin', 'admin']}
-            >
-              <InstitutionAdminDashboardPage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route
-          path="/institution-admin-dashboard/teacher/:teacherId"
-          element={
-            <ProtectedRoute
-              user={user}
-              loading={loading}
-              requiredRole="institutionadmin"
-              allowedRoles={['institutionadmin', 'admin']}
-            >
-              <TeacherDetailViewPage user={user} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/institution-admin-dashboard/student/:studentId"
-          element={
-            <ProtectedRoute
-              user={user}
-              loading={loading}
-              requiredRole="institutionadmin"
-              allowedRoles={['institutionadmin', 'admin']}
-            >
-              <StudentDetailViewPage user={user} />
-            </ProtectedRoute>
-          }
-        />
-        
-        {/* --- TEACHER DASHBOARD --- */}
-        <Route 
-          path="/teacher-dashboard" 
-          element={
-            <ProtectedRoute
-              user={user}
-              loading={loading}
-              requiredRole="teacher"
-              allowedRoles={['teacher']}
-            >
-              <TeacherDashboardPage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-        <Route
-          path="/teacher-dashboard/student/:studentId"
-          element={
-            <ProtectedRoute
-              user={user}
-              loading={loading}
-              requiredRole="teacher"
-              allowedRoles={['teacher']}
-            >
-              <TeacherStudentDetailViewPage user={user} />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/student-dashboard"
-          element={
-            <ProtectedRoute
-              user={user}
-              loading={loading}
-              requiredRole="student"
-              allowedRoles={['student']}
-            >
-              <StudentDashboardPage user={user} />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* --- RUTAS DE VISUALIZACIÓN DE CONTENIDO (NUEVAS) --- */}
-        
-        {/* 1. Ruta para Resúmenes/Guías generadas (Coincide con FileCard) */}
-        <Route 
-          path="/home/subject/:subjectId/topic/:topicId/resumen/:fileId" 
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <StudyGuidePage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-
-        {/* 2. Ruta para Recursos/Archivos subidos (Coincide con FileCard) */}
-        <Route 
-          path="/home/subject/:subjectId/topic/:topicId/resource/:fileId" 
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <StudyGuidePage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-
-        {/* Ruta legacy (por compatibilidad) */}
-        <Route 
-          path="/home/subject/:subjectId/topic/:topicId/guide/:guideId" 
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <StudyGuidePage user={user} />
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Ruta para Fórmulas (nueva) */}
-        <Route
-          path="/home/subject/:subjectId/topic/:topicId/formulas/:fileId"
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <FormulaPage user={user} />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Ruta para Exámenes de Prueba */}
-        <Route
-          path="/home/subject/:subjectId/topic/:topicId/exam/:examId"
-          element={
-            <ProtectedRoute user={user} loading={loading}>
-              <ExamPage user={user} />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Catch-all: Si no coincide ninguna, vuelve a Home */}
-        <Route path="*" element={<Navigate to="/home" />} />
-        </Routes>
+        <AnimatedRoutes user={user} loading={loading} />
       </BrowserRouter>
     </OverlayScrollbarsComponent>
     </MotionConfig>

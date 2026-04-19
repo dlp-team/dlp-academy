@@ -10,6 +10,7 @@ import { useClassMembers } from './hooks/useClassMembers';
 
 // Layout
 import Header from '../../components/layout/Header';
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import SubjectHeader from './components/SubjectHeader';
 import TopicGrid from './components/TopicGrid';
 import SubjectGradesPanel from './components/SubjectGradesPanel';
@@ -173,6 +174,7 @@ const Subject = ({ user }: any) => {
     }
 
     return (
+        <AnimatedPage>
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 font-sans transition-colors">
             <Header user={user} />
 
@@ -301,8 +303,7 @@ const Subject = ({ user }: any) => {
                     )}
                 </>
             )}
-        </div>
-    );
+        </div>        </AnimatedPage>    );
 };
 
 export default Subject;

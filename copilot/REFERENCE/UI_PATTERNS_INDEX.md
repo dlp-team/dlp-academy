@@ -75,7 +75,7 @@ Este índice es la referencia rápida canónica para todos los patrones de UI de
 
 | Estado | Elementos clave |
 |--------|----------------|
-| Loading pantalla | `animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600` |
+| Loading pantalla (skeleton) | `DashboardSkeleton` component or `SkeletonGrid`/`SkeletonList` from Skeleton.tsx |
 | Loading sección | `Loader2 className="w-8 h-8 animate-spin"` |
 | Loading botón | `Loader2 className="w-4 h-4 animate-spin"` |
 | Empty state | `border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50` |
@@ -86,8 +86,24 @@ Este índice es la referencia rápida canónica para todos los patrones de UI de
 
 | Tipo | Activo | Inactivo |
 |------|--------|---------|
+| Animated (preferred) | `AnimatedTabs` component with layoutId sliding indicator | Auto-handled |
 | Pill | `bg-slate-900 dark:bg-slate-100 text-white border-slate-900` | `bg-white dark:bg-slate-900 text-slate-500 border-slate-200` |
 | Underline | `text-indigo-600 border-b-2 border-indigo-600` | `text-slate-500 hover:text-slate-700` |
+
+### Animation & Interactions
+
+| Patrón | Clase / Componente |
+|--------|--------------------|
+| Page transition | `AnimatedPage` wrapper (opacity + y shift, 200ms Apple easing) |
+| Page crossfade | `AnimatePresence mode="wait"` in App.tsx AnimatedRoutes |
+| Tab content swap | `AnimatedTabContent` (crossfade on tab key change) |
+| Stagger entrance | `StaggerChildren` wrapper (0.06s delay per child) |
+| Card hover lift | `.interactive-card` (translate-y -2px + shadow on hover, scale 0.98 on press) |
+| Button press | `.interactive-button` (scale 0.97 on active) |
+| Row hover | `.interactive-row` (bg-slate-50 on hover) |
+| Keyboard focus | `.focus-glow` (indigo ring-2 on focus-visible) |
+| Skeleton loading | `Skeleton.tsx` primitives (CSS animate-pulse, no JS) |
+| Reduced motion | MotionConfig reducedMotion="user" at root + CSS `@media (prefers-reduced-motion)` |
 
 ---
 
@@ -112,6 +128,13 @@ Este índice es la referencia rápida canónica para todos los patrones de UI de
 | Tabs Underline | `src/pages/Subject/modals/SubjectFormModal.tsx` |
 | Formulario settings | `src/pages/InstitutionAdminDashboard/components/SettingsTabContent.tsx` |
 | Empty state | `src/pages/Topic/components/TopicContent.tsx` |
-| Loading spinner app | `src/App.tsx` línea 175 |
+| Loading spinner app | `src/App.tsx` (pulse placeholder) |
 | Pagination buttons | `src/components/ui/TablePagination.tsx` |
 | Modal submit button | `src/components/modals/shared/ModalGradientSubmitButton.tsx` |
+| Animation config | `src/utils/animationConfig.ts` |
+| Page wrapper | `src/components/layout/AnimatedPage.tsx` |
+| Animated tabs | `src/components/ui/AnimatedTabs.tsx` |
+| Stagger wrapper | `src/components/ui/StaggerChildren.tsx` |
+| Skeleton primitives | `src/components/ui/Skeleton.tsx` |
+| Dashboard skeleton | `src/components/ui/DashboardSkeleton.tsx` |
+| Micro-interaction CSS | `src/index.css` líneas 315–385 |

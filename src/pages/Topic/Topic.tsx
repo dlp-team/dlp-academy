@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { Eye, GraduationCap, Loader2, AlertCircle } from 'lucide-react';
 import Header from '../../components/layout/Header';
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import { useTopicLogic } from './hooks/useTopicLogic';
 import { useTopicFailedQuestions } from './hooks/useTopicFailedQuestions';
 import { useClassMembers } from '../Subject/hooks/useClassMembers';
@@ -471,6 +472,7 @@ const Topic = ({ user }: any) => {
     }
 
     return (
+        <AnimatedPage>
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
             <Header user={user} />
             <main className="pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -562,6 +564,7 @@ const Topic = ({ user }: any) => {
                 />
             )}
         </div>
+        </AnimatedPage>
     );
 };
 

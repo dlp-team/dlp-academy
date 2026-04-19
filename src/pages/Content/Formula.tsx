@@ -1,4 +1,5 @@
 // src/pages/Content/Formula.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Calculator, List, ArrowUp } from 'lucide-react';

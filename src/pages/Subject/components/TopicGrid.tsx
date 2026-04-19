@@ -3,6 +3,7 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import TopicCard from '../../../components/modules/TopicCard/TopicCard';
 import useTopicGridDnD from '../hooks/useTopicGridDnD';
+import StaggerChildren from '../../../components/ui/StaggerChildren';
 
 const TopicGrid = ({
     topics,
@@ -19,7 +20,7 @@ const TopicGrid = ({
     const { handleDragStart, handleDragOver, handleDrop } = useTopicGridDnD(onReorderTopics);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+        <StaggerChildren className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
             
             {/* Create Button - Only show if we have the handler */}
             {onOpenCreateModal && (
@@ -56,7 +57,7 @@ const TopicGrid = ({
                     onDrop={onReorderTopics ? (e) => handleDrop(e, topic.id) : undefined}
                 />
             ))}
-        </div>
+        </StaggerChildren>
     );
 };
 
