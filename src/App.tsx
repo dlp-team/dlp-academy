@@ -445,7 +445,22 @@ body[data-dlp-preview-highlight]::after {
                 ...baseUser,
                 ...userData
               };
-              setUser(withActiveRoleContext(mergedUser));
+              const enriched = withActiveRoleContext(mergedUser);
+
+              // Skip setUser when only cosmetic fields changed (e.g. theme toggle)
+              // to avoid cascading re-renders that re-fire Firestore listeners.
+              setUser((prev) => {
+                if (!prev) return enriched;
+                const { theme: _pt, settings: _ps, ...prevRest } = prev as any;
+                const { theme: _nt, settings: _ns, ...nextRest } = enriched as any;
+                const prevSettings = _ps ? { ..._ps } : {};
+                const nextSettings = _ns ? { ..._ns } : {};
+                delete prevSettings.theme;
+                delete nextSettings.theme;
+                const prevKey = JSON.stringify({ ...prevRest, settings: prevSettings });
+                const nextKey = JSON.stringify({ ...nextRest, settings: nextSettings });
+                return prevKey === nextKey ? prev : enriched;
+              });
             } else {
               setUser(withActiveRoleContext(baseUser));
             }

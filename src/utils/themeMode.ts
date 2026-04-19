@@ -21,7 +21,7 @@ const beginThemeTransition = (root: HTMLElement): void => {
 
     transitionCleanupTimer = setTimeout(() => {
         root.classList.remove(THEME_TRANSITION_CLASS);
-    }, THEME_TRANSITION_DURATION_MS + 60);
+    }, THEME_TRANSITION_DURATION_MS + 200);
 };
 
 export type ThemeType = 'light' | 'dark' | 'system' | string | null;
