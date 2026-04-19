@@ -1,8 +1,8 @@
 <!-- copilot/architectures/active/multi-feature-enhancement-2026-04-19/phases/phase-01-cursor-audit.md -->
 # Phase 01: Cursor Pointer Audit & Policy
 
-**Status**: `not-started`
-**Sub-Branch**: `arch/multi-feature-enhancement-2026-04-19/phase-01-cursor-audit`
+**Status**: `completed`
+**Sub-Branch**: `arch/mfe-2026-04-19-phase-01-cursor-audit`
 **Dependencies**: None
 **Threat Refs**: T-UX-04
 
@@ -70,11 +70,15 @@ Ensure every clickable element in the codebase renders `cursor: pointer`. Establ
 
 ## Validation Evidence
 
-_(Fill after implementation)_
-
 | Check | Result |
 |-------|--------|
-| `npm run lint` | |
-| `get_errors` | |
-| Manual spot-check | |
-| grep audit count | |
+| `npm run lint` | ✅ 0 errors |
+| `get_errors` | ✅ Clean |
+| Manual spot-check | ✅ All role="button", button, a[href], select, checkbox/radio covered by global rule |
+| grep audit count | ✅ 200+ onClick occurrences audited, 0 non-semantic elements missing cursor-pointer |
+
+### Implementation Notes
+- Global cursor rule added to `src/index.css` (covers button, [role="button"], a[href], summary, select, checkbox, radio, [data-clickable])
+- Previous `.home-page`-scoped cursor rules removed (now redundant)
+- Audit found all non-semantic interactive divs already had explicit `cursor-pointer` in className
+- UI_PATTERNS_INDEX.md updated with cursor policy rule (#6)

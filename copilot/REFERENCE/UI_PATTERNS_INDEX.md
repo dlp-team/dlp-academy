@@ -98,6 +98,7 @@ Este índice es la referencia rápida canónica para todos los patrones de UI de
 3. **Todo texto visible en español** → ningún label/placeholder/mensaje en inglés
 4. **No hardcodear colores** → usar clases Tailwind de la paleta `slate/indigo/red/emerald/amber`
 5. **Accesibilidad mínima** → `aria-label` en icon buttons, `role="tablist"` en tabs
+6. **Política de cursor** → `cursor: pointer` se aplica globalmente vía `src/index.css` a `button`, `[role="button"]`, `a[href]`, `summary`, `select`, `input[type="checkbox"]`, `input[type="radio"]`, y `[data-clickable="true"]`. Para `<div>` u otros elementos no semánticos con `onClick`, agregar `cursor-pointer` en className manualmente. Estados deshabilitados usan `cursor-not-allowed` automáticamente.
 
 ---
 

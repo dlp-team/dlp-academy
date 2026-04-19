@@ -19,6 +19,24 @@
   initial-value: transparent;
 }
 
+/* ── Global cursor policy ── */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+a[href],
+summary,
+select:not(:disabled),
+input[type='checkbox']:not(:disabled),
+input[type='radio']:not(:disabled),
+[data-clickable='true'] {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled,
+[role='button'][aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
 :root {
   color-scheme: light;
   --app-fixed-header-height: 5rem;
@@ -193,20 +211,7 @@ html.theme-switching *::after {
   background-color: var(--home-secondary-soft-dark);
 }
 
-.home-page button:not(:disabled),
-.home-page [role='button']:not([aria-disabled='true']),
-.home-page a[href],
-.home-page summary,
-.home-page select:not(:disabled),
-.home-page [data-clickable='true'] {
-  cursor: pointer;
-}
-
-.home-page button:disabled,
-.home-page select:disabled,
-.home-page [role='button'][aria-disabled='true'] {
-  cursor: not-allowed;
-}
+/* Home-page cursor rules lifted to global scope above. */
 
 .clean-scrollbar {
   scrollbar-width: none;
