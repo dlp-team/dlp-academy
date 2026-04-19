@@ -49,23 +49,28 @@ const Header = ({ user }: any) => {
   const [headerThemeSliderEnabled, setHeaderThemeSliderEnabled] = useState(true);
 
   // --- NEW: Handle Toggle Click (Updates State + Firestore) ---
-  const handleThemeToggle = async (isDark: any) => {
-    // 1. Update UI immediately
+  const themeWriteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleThemeToggle = (isDark: any) => {
+    // 1. Update UI immediately (DOM + localStorage)
     applyThemeToDom(isDark ? 'dark' : 'light', { animate: true, persist: true });
     setDarkMode(isDark);
     setThemePreference(isDark ? 'dark' : 'light');
 
-    // 2. Update Firestore in background
-    if (user?.uid) {
+    // 2. Debounce Firestore write to avoid onSnapshot → setUser → page re-render
+    if (themeWriteTimer.current) clearTimeout(themeWriteTimer.current);
+    themeWriteTimer.current = setTimeout(async () => {
+      if (user?.uid) {
         try {
-            const userRef = doc(db, 'users', user.uid);
-            await updateDoc(userRef, {
-                theme: isDark ? 'dark' : 'light'
-            });
+          const userRef = doc(db, 'users', user.uid);
+          await updateDoc(userRef, {
+            theme: isDark ? 'dark' : 'light'
+          });
         } catch (error) {
-            console.error("Error saving theme to Firestore:", error);
+          console.error("Error saving theme to Firestore:", error);
         }
-    }
+      }
+    }, 1500);
   };
 
   // --- 2. USER DATA LOGIC (Cached + Live) ---

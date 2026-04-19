@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, useRef, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -212,6 +212,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 function App() {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  // Ref tracking last user snapshot to skip re-renders on theme-only changes
+  const lastUserSnapshotRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -447,21 +449,25 @@ body[data-dlp-preview-highlight]::after {
               };
               const enriched = withActiveRoleContext(mergedUser);
 
-              // Skip setUser when only cosmetic fields changed (e.g. theme toggle)
-              // to avoid cascading re-renders that re-fire Firestore listeners.
-              setUser((prev) => {
-                if (!prev) return enriched;
-                const { theme: _pt, settings: _ps, ...prevRest } = prev as any;
-                const { theme: _nt, settings: _ns, ...nextRest } = enriched as any;
-                const prevSettings = _ps ? { ..._ps } : {};
-                const nextSettings = _ns ? { ..._ns } : {};
-                delete prevSettings.theme;
-                delete nextSettings.theme;
-                const prevKey = JSON.stringify({ ...prevRest, settings: prevSettings });
-                const nextKey = JSON.stringify({ ...nextRest, settings: nextSettings });
-                return prevKey === nextKey ? prev : enriched;
-              });
+              // Build a fingerprint of fields that matter for app behaviour (exclude theme).
+              // If only cosmetic/theme fields changed, skip setUser to avoid cascading
+              // re-renders that re-fire Firestore listeners across pages.
+              const { theme: _t, ...relevantData } = userData as any;
+              const relevantSettings = relevantData.settings ? { ...relevantData.settings } : {};
+              delete relevantSettings.theme;
+              const fingerprint = JSON.stringify({ ...relevantData, settings: relevantSettings });
+
+              if (lastUserSnapshotRef.current === fingerprint) {
+                // Only theme changed — no need to trigger React re-render.
+                // Theme is already applied to DOM via localStorage + applyThemeToDom.
+                setLoading(false);
+                return;
+              }
+              lastUserSnapshotRef.current = fingerprint;
+
+              setUser(enriched);
             } else {
+              lastUserSnapshotRef.current = null;
               setUser(withActiveRoleContext(baseUser));
             }
             setLoading(false);
