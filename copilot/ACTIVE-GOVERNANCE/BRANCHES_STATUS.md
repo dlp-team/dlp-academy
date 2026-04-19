@@ -1,7 +1,7 @@
 <!-- copilot/ACTIVE-GOVERNANCE/BRANCHES_STATUS.md -->
 # Repository Branches Status
 
-**Last Updated:** 2026-04-17
+**Last Updated:** 2026-04-19
 **Purpose:** Global registry of all active feature/fix/chore branches. Single source of truth for understanding what work is happening across the repo.
 
 **Retention Policy:** See [copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md](./BRANCH_RETENTION_POLICY.md) for auto-deletion rules and grace periods.
@@ -19,6 +19,7 @@
 
 | Branch Name | Owner | Type | Status | Pending-Delete Date | Summary | Related Plan | Key Files | Last Updated | Notes |
 |---|---|---|---|---|---|---|---|---|---|
+| arch/multi-feature-enhancement-2026-04-19 | hector | feature | active | — | Architecture: Badges system (auto+manual, general+subject, grade-based dynamic styling), Subject enhancements (uniqueness constraint, cascading field updates), Centralized unsaved-changes confirmation, Theme toggle smoothness, Cursor pointer audit, Teacher dashboard conduct default | copilot/architectures/active/multi-feature-enhancement-2026-04-19/ | src/pages/Profile/components/BadgesSection.jsx, src/pages/TeacherDashboard/**, src/pages/Subject/modals/**, src/components/layout/Header.jsx, src/hooks/useDarkMode.js | 2026-04-19 | Architecture with 8 phases; parent: development |
 | feature/hector/e2e-firebase-emulators-2026-04-17 | hector | feature | pending-delete | 2026-04-17 | Migrate all 75 E2E Playwright tests to use Firebase Auth+Firestore+Storage emulators for full test isolation and CI/CD friendliness | copilot/plans/active/migrate-e2e-to-firebase-emulators-2026-04-17/ | src/firebase/config.ts, playwright.config.js, tests/e2e/global-setup.ts, tests/e2e/emulator-seed.ts, tests/e2e/seed/firestore-seed.ts | 2026-04-17 | Merged into feature/hector/e2e-home-firestore-tests-2026-04-16 on 2026-04-17; will be auto-deleted on 2026-04-24 |
 | feature/hector/e2e-home-firestore-tests-2026-04-16 | hector | feature | pending-delete | 2026-04-17 | E2E Home Firestore tests, TS migration (165 files), merge-workflow skill, 762/762 unit tests | copilot/plans/active/e2e-home-firestore-tests-2026-04-16/ | tests/e2e/**, .github/skills/merge-workflow/**, tests/unit/** | 2026-04-17 | Merged into development on 2026-04-17 (squash); will be auto-deleted on 2026-04-24 |
 | feature/new-features-2026-04-12 | hector | feature | pending-delete | 2026-04-16 | Bulk selection workflows + auth-signin-risk-hardening (8 phases) | selection-mode-bulk-workflows-2026-04-12, auth-signin-risk-hardening-2026-04-16 | firestore.rules, functions/index.js, src/App.tsx, src/components/modals/SudoModal.tsx, src/pages/Auth/hooks/useRegister.ts, src/pages/Auth/hooks/useLogin.ts | 2026-04-16 | Merged into development on 2026-04-16; will be auto-deleted on 2026-04-23 |
