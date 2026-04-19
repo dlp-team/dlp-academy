@@ -3,9 +3,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { ICON_MAP, ICON_KEYS, COLORS } from '../../../utils/subjectConstants';
 import DashboardOverlayShell from '../../../components/ui/DashboardOverlayShell';
+import { checkSubjectUniqueness } from '../../../utils/subjectValidation';
 
 const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }: any) => {
     const [formData, setFormData] = useState(initialData);
+    const [duplicateError, setDuplicateError] = useState('');
+    const [checkingUniqueness, setCheckingUniqueness] = useState(false);
     const openFormSnapshotRef = useRef('');
 
     useEffect(() => {
@@ -21,8 +24,34 @@ const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }: any) => {
     const hasOpenSnapshot = openFormSnapshotRef.current.length > 0;
     const hasUnsavedChanges = isOpen && hasOpenSnapshot && serializedFormData !== openFormSnapshotRef.current;
 
-    const handleSubmit = (e: any) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
+        setDuplicateError('');
+
+        const institutionId = initialData?.institutionId || '';
+        if (institutionId && formData.name && formData.course) {
+            setCheckingUniqueness(true);
+            try {
+                const isUnique = await checkSubjectUniqueness({
+                    name: formData.name,
+                    course: formData.course,
+                    institutionId,
+                    academicYear: formData.academicYear || '',
+                    classIds: Array.isArray(formData.classIds) ? formData.classIds : [],
+                    excludeSubjectId: initialData?.id,
+                });
+                if (!isUnique) {
+                    setDuplicateError('Ya existe una asignatura con este nombre y curso.');
+                    setCheckingUniqueness(false);
+                    return;
+                }
+            } catch {
+                // Allow save on network error
+            } finally {
+                setCheckingUniqueness(false);
+            }
+        }
+
         onSave(formData);
     };
 
@@ -59,10 +88,13 @@ const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }: any) => {
                             <input
                                 type="text"
                                 value={formData.course}
-                                onChange={(e) => setFormData({...formData, course: e.target.value})}
+                                onChange={(e) => { setFormData({...formData, course: e.target.value}); setDuplicateError(''); }}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
                                 required
                             />
+                            {duplicateError ? (
+                                <p className="mt-1 text-xs font-medium text-red-600">{duplicateError}</p>
+                            ) : null}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Icono</label>
@@ -88,7 +120,7 @@ const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }: any) => {
 
                         <div className="flex justify-end gap-3 pt-4">
                             <button type="button" onClick={requestClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl font-medium">Cancelar</button>
-                            <button type="submit" className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-lg shadow-indigo-200">Guardar Cambios</button>
+                            <button type="submit" disabled={checkingUniqueness} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed">Guardar Cambios</button>
                         </div>
                     </form>
                 </>

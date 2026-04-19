@@ -18,6 +18,7 @@ import { canTeacherAssignClassesAndStudents, DEFAULT_ACCESS_POLICIES, normalizeA
 import { generateSubjectInviteCode } from '../../../utils/subjectAccessUtils';
 import { buildSubjectPeriodTimeline } from '../../../utils/subjectPeriodLifecycleUtils';
 import { canCloseSharingModal } from '../../../utils/modalCloseGuardUtils';
+import { checkSubjectUniqueness } from '../../../utils/subjectValidation';
 
 const DEFAULT_SUBJECT_PERIOD_MODE = 'trimester';
 const DEFAULT_POST_COURSE_POLICY = 'retain_all_no_join';
@@ -106,6 +107,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [inviteCodeCopyStatus, setInviteCodeCopyStatus] = useState('');
     const [inviteCodeMenuOpen, setInviteCodeMenuOpen] = useState(false);
     const [validationErrors, setValidationErrors] = useState<any>({});
+    const [checkingUniqueness, setCheckingUniqueness] = useState(false);
     const [availableCourses, setAvailableCourses] = useState<any[]>([]);
     const [coursesLoading, setCoursesLoading] = useState(false);
     const [coursesLoadError, setCoursesLoadError] = useState('');
@@ -794,7 +796,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         }
     };
 
-    const handleSubmit = (e: any) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
 
         if (activeTab !== 'general') return;
@@ -834,6 +836,32 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 }
 
                 return;
+            }
+
+            // Uniqueness check
+            const institutionId = user?.institutionId || initialData?.institutionId || '';
+            if (institutionId && hasName && hasCourse) {
+                setCheckingUniqueness(true);
+                try {
+                    const isUnique = await checkSubjectUniqueness({
+                        name: formData.name,
+                        course: formData.course,
+                        institutionId,
+                        academicYear: formData.academicYear || '',
+                        classIds: Array.isArray(formData.classIds) ? formData.classIds : [],
+                        excludeSubjectId: isEditing ? initialData?.id : undefined,
+                    });
+
+                    if (!isUnique) {
+                        setValidationErrors({ duplicate: 'Ya existe una asignatura con este nombre, curso, año académico y clases.' });
+                        setCheckingUniqueness(false);
+                        return;
+                    }
+                } catch {
+                    // If uniqueness check fails, allow save (don't block on network errors)
+                } finally {
+                    setCheckingUniqueness(false);
+                }
             }
         }
 
@@ -1824,8 +1852,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
                             <button type="button" onClick={handleCloseRequest} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors cursor-pointer">Cancelar</button>
                             {activeTab === 'general' && (
-                                <button type="submit" className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-2 cursor-pointer transition-colors">
-                                    <Save className="w-4 h-4" /> {isEditing ? 'Guardar' : 'Crear'}
+                                <button type="submit" disabled={checkingUniqueness} className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {checkingUniqueness ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} {isEditing ? 'Guardar' : 'Crear'}
                                 </button>
                             )}
                             {activeTab === 'sharing' && canManageSharing && (
