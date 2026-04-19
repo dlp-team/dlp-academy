@@ -96,6 +96,8 @@ When operating in Bypass Approvals or Autopilot mode, you have terminal access. 
    - **REQUIRED**: Always verify current branch before any push (`git branch --show-current`)
    - **REQUIRED**: If on `main`, create new feature branch immediately (see `copilot/ACTIVE-GOVERNANCE/git-workflow-rules.md`)
 6. **NO FORCE PUSHES**: Banned: `git push -f`, `git push --force` (protection for collaborative work, enforced in FORBIDDEN_COMMANDS.md)
+7. **NO RISKY PACKAGE INSTALLS IN AUTOPILOT**: You MUST NOT install new libraries/packages (not already in `package.json`) without explicit user permission. In autopilot mode, you CANNOT use `vscode/askQuestions` for this (because autopilot auto-replies). Instead, log the request in `copilot/ACTIVE-GOVERNANCE/PENDING_COMMANDS.md` and **WAIT** for user approval. If the package is already listed in `package.json` (installed in the repo but not locally), you MAY run `npm install` without asking.
+8. **NO RISKY COMMANDS VIA AUTO-REPLY**: In autopilot mode, `vscode/askQuestions` is auto-replied by the agent. Therefore, you MUST NOT use `vscode/askQuestions` to authorize risky operations (package installs, destructive commands, permission changes). Use `PENDING_COMMANDS.md` for these and wait for human decision.
 
 
 ## 🔄 Autopilot Execution Loop

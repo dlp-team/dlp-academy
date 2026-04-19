@@ -57,6 +57,7 @@ This workspace also uses scoped file instructions in `.github/instructions/` to 
 - Keep this root file focused on global policy; place file-type specifics into `.github/instructions/*.instructions.md`.
 - Preferred skill mapping:
    - Plan work: `create-plan`
+   - Architecture-level work (large, mission-critical): `create-architecture`
    - Surgical implementation: `lossless-change`
    - Complex debugging: `debug-in-depth`
    - Test gap audit: `find-missing-tests`
@@ -468,6 +469,36 @@ plans/
 - `phases/` - One file per phase with objectives and outcomes
 - `reviewing/` - Verification checklists before closure
 
+### 📁 copilot/architectures/ (ARCHITECTURE-LEVEL PLANNING)
+The most comprehensive planning system — 5–30x more thorough than plans. Reserved for large-scale, mission-critical work.
+
+```
+architectures/
+├── todo/           → Architectures drafted but not started
+├── active/         → Currently being executed (always on dedicated branch)
+├── inReview/       → Implementation done, deep verification in progress
+├── finished/       → Fully verified and closed
+└── archived/       → Cancelled or superseded
+```
+
+**Each architecture folder contains:**
+- `README.md` - Problem statement, scope, constraints, branch strategy
+- `strategy-roadmap.md` - Master sequencing, phase status, source of truth
+- `threat-analysis.md` - Security, data integrity, runtime failure analysis
+- `centralization-audit.md` - Code deduplication opportunities
+- `test-strategy.md` - Complete test plan (vitest + Playwright e2e)
+- `branch-strategy.md` - Branch tree: base branch + sub-branches
+- `rollback-playbook.md` - Per-phase rollback procedures
+- `phases/` - One file per phase with objectives, tests, outcomes
+- `reviewing/` - Three-step deep review (optimization, risk, test coverage)
+
+**Key differences from plans:**
+- **Must always run on a dedicated branch** (never main/development)
+- **Multi-branch support**: Base branch + sub-branches per module
+- **Mandatory test creation per phase** (vitest + Playwright e2e)
+- **Threat analysis and centralization audits are required**
+- **Three-step review gate** instead of two-step
+
 ### 📁 copilot/explanations/ (LIVING DOCUMENTATION)
 AI-generated explanations with dual architecture:
 
@@ -713,13 +744,19 @@ Before completing ANY interaction, verify:
 2. **New Feature**: Check plans → Implement → Validate → Update codebase/ explanation → Create temporal/ explanation
 3. **Refactor**: Create plan if multi-step → Follow lossless protocol → Validate exhaustively
 4. **Migration**: ALWAYS create plan → Follow plan protocol → Document in phases/
-5. **Documentation Request**: Check existing explanations → Update codebase/ → Add changelog
+5. **Large/Mission-Critical Work**: Create architecture → Multi-branch execution → Exhaustive testing → Threat analysis → Deep review
+6. **Documentation Request**: Check existing explanations → Update codebase/ → Add changelog
 
 ### Protocol Priority
 1. **Lossless Change Protocol** - Default for everything
-2. **Plan Creation Protocol** - Multi-step or risky work
-3. **Debug Protocol** - Complex issues
-4. **Code Explanation Protocol** - Documentation updates
+2. **Architecture Creation** - Large-scale, mission-critical, multi-module work (5–30x more thorough than plans)
+3. **Plan Creation Protocol** - Multi-step or risky work
+4. **Debug Protocol** - Complex issues
+5. **Code Explanation Protocol** - Documentation updates
+
+### 🔀 Branch Restrictions for Plans & Architectures
+- **Plans**: MUST NOT execute on `main` or `development`. Can execute on any existing feature branch without creating a new one.
+- **Architectures**: MUST ALWAYS execute on a dedicated branch (never `main`/`development`). Must create a new base branch unless the user explicitly overrides this.
 
 ---
 
@@ -777,6 +814,14 @@ User reviews pending command
 - ✅ **Flexibility:** New commands reviewed before execution
 - ✅ **Efficiency:** Approved commands execute without delay
 - ✅ **Failure-Safe:** Unknown defaults to deny (safe default)
+
+### Risky Package Installation Rule (AUTOPILOT CRITICAL)
+
+- **Already in `package.json`** (installed in repo but not locally): Copilot MAY run `npm install` without asking.
+- **NEW dependency not in `package.json`**: Copilot MUST NOT install without explicit user permission.
+- **In autopilot mode**: Copilot CANNOT use `vscode/askQuestions` for this (because autopilot auto-replies itself, which is dangerous). Instead, log the request in `copilot/ACTIVE-GOVERNANCE/PENDING_COMMANDS.md` and **WAIT** for user approval.
+- **In non-autopilot mode**: Copilot may ask the user via `vscode/askQuestions` before installing.
+- **General rule**: `vscode/askQuestions` MUST NOT be used to authorize risky operations (package installs, destructive commands, permission changes) in autopilot mode. Use `PENDING_COMMANDS.md` for these and wait for human decision.
 
 ### Integration with Git Workflow
 

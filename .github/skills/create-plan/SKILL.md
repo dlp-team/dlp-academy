@@ -202,6 +202,33 @@ When both source files exist for the same request (`copilot/plans/ORIGINAL_PLAN.
 	- Ensure top-level duplicates (`copilot/plans/ORIGINAL_PLAN.md`, `copilot/plans/GEMINI_PLAN.md`) are not left behind.
 	- If destination filenames already exist, append a date slug while preserving the naming pattern.
 
+## ⚠️ Architecture Escalation Rule (MANDATORY)
+
+During plan creation, if the scope meets ANY of these criteria, **stop and recommend an architecture** to the user via `vscode/askQuestions`:
+
+- The work spans 5+ files across multiple modules/features
+- Multiple interconnected systems are affected (auth + firestore + UI + permissions)
+- The risk of regressions is high and requires exhaustive test coverage
+- The work benefits from multi-branch isolation (base branch + sub-branches)
+- Security, data integrity, or permission boundaries are being modified
+- The feature is core/critical to the application's functioning
+
+**Action:** Ask the user:
+```
+"This task exceeds plan-level complexity (reason: <specific reason>). 
+I recommend creating an Architecture instead, which provides exhaustive test coverage, 
+multi-branch execution, threat analysis, and centralization audits. 
+Should I proceed as an Architecture or keep it as a Plan?"
+```
+
+Reference skill: `.github/skills/create-architecture/SKILL.md`
+
+## 🔀 Branch Restriction (MANDATORY)
+
+Plans **MUST NOT** execute on `main` or `development` branches. They must always be done on a feature branch (existing or new). Outside of `main`/`development`, plans can execute on whatever branch they are on without needing to create a new branch.
+
+This aligns with the git-workflow-rules but makes it an explicit hard rule at the plan level.
+
 ## Quality gates
 - Include explicit scope and out-of-scope.
 - Include rollback strategy and validation commands.
