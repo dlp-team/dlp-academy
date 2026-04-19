@@ -1,5 +1,5 @@
 // src/pages/Home/components/FolderManager.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Save, Plus, Trash2, Share2, Users, Loader2, CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
 import { COLORS, MODERN_FILL_COLORS } from '../../../utils/subjectConstants';
 import { getPermissionLevel } from '../../../utils/permissionUtils';
@@ -45,6 +45,7 @@ const FolderManager = ({
 
     const [showModernFillOptions, setShowModernFillOptions] = useState(false);
     const folderNameInputRef = React.useRef<any>(null);
+    const openFormSnapshotRef = useRef('');
 
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
     const shortcutPermissionLevel = formData?.shortcutPermissionLevel || 'viewer';
@@ -105,7 +106,7 @@ const FolderManager = ({
         setShowModernFillOptions(false);
 
         if (isEditing && initialData) {
-            setFormData({
+            const nextFormData = {
                 id: initialData.id,
                 ownerId: initialData.ownerId,
                 shortcutId: initialData.shortcutId || null,
@@ -118,13 +119,15 @@ const FolderManager = ({
                 tags: initialData.tags || [],
                 cardStyle: initialData.cardStyle || 'default',
                 modernFillColor: initialData.fillColor || initialData.modernFillColor || MODERN_FILL_COLORS[0].value
-            });
+            };
+            setFormData(nextFormData);
+            openFormSnapshotRef.current = JSON.stringify({ name: nextFormData.name, color: nextFormData.color, tags: nextFormData.tags, cardStyle: nextFormData.cardStyle, modernFillColor: nextFormData.modernFillColor });
             setSharedList(initialData.sharedWith || []);
             setShareQueue([]);
             return;
         }
 
-        setFormData({
+        const nextFormData = {
             shortcutId: null,
             isShortcut: false,
             shortcutPermissionLevel: 'owner',
@@ -133,7 +136,9 @@ const FolderManager = ({
             tags: [],
             cardStyle: 'default',
             modernFillColor: MODERN_FILL_COLORS[0].value
-        });
+        };
+        setFormData(nextFormData);
+        openFormSnapshotRef.current = JSON.stringify({ name: nextFormData.name, color: nextFormData.color, tags: nextFormData.tags, cardStyle: nextFormData.cardStyle, modernFillColor: nextFormData.modernFillColor });
         setSharedList([]);
         setShareQueue([]);
     }, [isOpen, initialData, isEditing, initialTab, user?.uid]);
@@ -397,6 +402,16 @@ const FolderManager = ({
         hasPendingSharingChanges ||
         showSelfUnshareConfirm;
 
+    const serializedFormGuard = useMemo(() => JSON.stringify({
+        name: formData.name, color: formData.color, tags: formData.tags,
+        cardStyle: formData.cardStyle, modernFillColor: formData.modernFillColor,
+    }), [formData.name, formData.color, formData.tags, formData.cardStyle, formData.modernFillColor]);
+
+    const hasUnsavedGeneralChanges =
+        isOpen
+        && openFormSnapshotRef.current.length > 0
+        && serializedFormGuard !== openFormSnapshotRef.current;
+
     const evaluateCloseRequest = () => {
         const closeDecision = canCloseSharingModal({
             pendingShareActionType: pendingShareAction?.type,
@@ -405,6 +420,12 @@ const FolderManager = ({
 
         if (!closeDecision.allowClose && closeDecision.reason === 'unsaved-sharing-changes') {
             setShowDiscardPendingConfirm(true);
+            return false;
+        }
+
+        if (closeDecision.allowClose && hasUnsavedGeneralChanges) {
+            setShowDiscardPendingConfirm(true);
+            return false;
         }
 
         return closeDecision.allowClose;
@@ -1238,7 +1259,11 @@ const FolderManager = ({
                         isOpen={showDiscardPendingConfirm}
                         onDiscard={discardPendingAndClose}
                         onCancel={() => setShowDiscardPendingConfirm(false)}
-                        message="Tienes cambios pendientes en Compartir. ¿Quieres descartarlos y cerrar la ventana?"
+                        message={
+                            hasUnsavedSharingChanges
+                                ? 'Tienes cambios pendientes en Compartir. ¿Quieres descartarlos y cerrar la ventana?'
+                                : 'Tienes cambios sin guardar en esta carpeta. ¿Quieres descartarlos y cerrar la ventana?'
+                        }
                         inline
                     />
         </BaseModal>
