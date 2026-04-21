@@ -98,9 +98,9 @@ html.theme-switching,
 html.theme-switching *,
 html.theme-switching *::before,
 html.theme-switching *::after {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
-  transition-duration: var(--theme-transition-duration);
-  transition-timing-function: var(--theme-transition-easing);
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow, outline-color, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to !important;
+  transition-duration: var(--theme-transition-duration) !important;
+  transition-timing-function: var(--theme-transition-easing) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -108,7 +108,7 @@ html.theme-switching *::after {
   html.theme-switching *,
   html.theme-switching *::before,
   html.theme-switching *::after {
-    transition-duration: 1ms;
+    transition-duration: 1ms !important;
   }
 }
 
