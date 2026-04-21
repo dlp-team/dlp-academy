@@ -161,7 +161,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         return nameMatches.length === 1 ? nameMatches[0] : null;
     }, [availableCourses, formData?.course, formData?.courseId]);
 
-    const subjectAcademicYear = normalizeAcademicYear(initialData?.academicYear)
+    const subjectAcademicYear = normalizeAcademicYear(formData?.academicYear)
+        || normalizeAcademicYear(initialData?.academicYear)
         || normalizeAcademicYear(selectedCourseEntry?.academicYear);
 
     const selectedSubjectPeriodValue = useMemo(() => {
@@ -1800,6 +1801,18 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                             Solo se muestran clases del año académico {subjectAcademicYear}.
                                         </p>
                                     )}
+                                    {(() => {
+                                        const availableIds = new Set(availableClasses.map((c: any) => c.id));
+                                        const orphanedCount = selectedClassIds.filter((id) => !availableIds.has(id)).length;
+                                        if (orphanedCount === 0) return null;
+                                        return (
+                                            <p className="mt-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                                                {orphanedCount === 1
+                                                    ? '1 clase asignada ya no pertenece al año académico seleccionado.'
+                                                    : `${orphanedCount} clases asignadas ya no pertenecen al año académico seleccionado.`}
+                                            </p>
+                                        );
+                                    })()}
                                 </div>
 
                                 {classesActionError && (
