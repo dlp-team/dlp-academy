@@ -91,6 +91,9 @@ const BasicInfoFields = ({
                 {validationErrors?.course ? (
                     <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">{validationErrors.course}</p>
                 ) : null}
+                {validationErrors?.duplicate ? (
+                    <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">{validationErrors.duplicate}</p>
+                ) : null}
             </div>
         </>
     );
