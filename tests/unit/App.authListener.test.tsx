@@ -1,6 +1,7 @@
 // tests/unit/App.authListener.test.jsx
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import { Outlet } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import App from '../../src/App';
 
@@ -70,6 +71,9 @@ vi.mock('../../src/pages/TeacherDashboard/TeacherDashboard', () => ({ default: (
 vi.mock('../../src/pages/StudentDashboard/StudentDashboard', () => ({ default: () => <div>Student Mock</div> }));
 vi.mock('../../src/pages/TeacherDashboard/components/TeacherStudentDetailView', () => ({
   default: () => <div>Teacher Student Detail Mock</div>,
+}));
+vi.mock('../../src/components/layout/AuthenticatedLayout', () => ({
+  default: () => <Outlet />,
 }));
 
 describe('App auth listener fallback', () => {

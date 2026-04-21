@@ -6,6 +6,7 @@ import { addDoc, collection, getDocs, query, where, getDoc, doc, serverTimestamp
 import { db } from '../../../firebase/config';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 import BaseModal from '../../../components/ui/BaseModal';
+import UnsavedChangesConfirmModal from '../../../components/ui/UnsavedChangesConfirmModal';
 
 // Sub-components
 import BasicInfoFields from './subject-form/BasicInfoFields';
@@ -18,6 +19,7 @@ import { canTeacherAssignClassesAndStudents, DEFAULT_ACCESS_POLICIES, normalizeA
 import { generateSubjectInviteCode } from '../../../utils/subjectAccessUtils';
 import { buildSubjectPeriodTimeline } from '../../../utils/subjectPeriodLifecycleUtils';
 import { canCloseSharingModal } from '../../../utils/modalCloseGuardUtils';
+import { checkSubjectUniqueness } from '../../../utils/subjectValidation';
 
 const DEFAULT_SUBJECT_PERIOD_MODE = 'trimester';
 const DEFAULT_POST_COURSE_POLICY = 'retain_all_no_join';
@@ -106,6 +108,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [inviteCodeCopyStatus, setInviteCodeCopyStatus] = useState('');
     const [inviteCodeMenuOpen, setInviteCodeMenuOpen] = useState(false);
     const [validationErrors, setValidationErrors] = useState<any>({});
+    const [checkingUniqueness, setCheckingUniqueness] = useState(false);
     const [availableCourses, setAvailableCourses] = useState<any[]>([]);
     const [coursesLoading, setCoursesLoading] = useState(false);
     const [coursesLoadError, setCoursesLoadError] = useState('');
@@ -158,7 +161,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         return nameMatches.length === 1 ? nameMatches[0] : null;
     }, [availableCourses, formData?.course, formData?.courseId]);
 
-    const subjectAcademicYear = normalizeAcademicYear(initialData?.academicYear)
+    const subjectAcademicYear = normalizeAcademicYear(formData?.academicYear)
+        || normalizeAcademicYear(initialData?.academicYear)
         || normalizeAcademicYear(selectedCourseEntry?.academicYear);
 
     const selectedSubjectPeriodValue = useMemo(() => {
@@ -794,7 +798,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         }
     };
 
-    const handleSubmit = (e: any) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
 
         if (activeTab !== 'general') return;
@@ -834,6 +838,32 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 }
 
                 return;
+            }
+
+            // Uniqueness check
+            const institutionId = user?.institutionId || initialData?.institutionId || '';
+            if (institutionId && hasName && hasCourse) {
+                setCheckingUniqueness(true);
+                try {
+                    const isUnique = await checkSubjectUniqueness({
+                        name: formData.name,
+                        course: formData.course,
+                        institutionId,
+                        academicYear: formData.academicYear || '',
+                        classIds: Array.isArray(formData.classIds) ? formData.classIds : [],
+                        excludeSubjectId: isEditing ? initialData?.id : undefined,
+                    });
+
+                    if (!isUnique) {
+                        setValidationErrors({ duplicate: 'Ya existe una asignatura con este nombre, curso, año académico y clases.' });
+                        setCheckingUniqueness(false);
+                        return;
+                    }
+                } catch {
+                    // If uniqueness check fails, allow save (don't block on network errors)
+                } finally {
+                    setCheckingUniqueness(false);
+                }
             }
         }
 
@@ -952,8 +982,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
     const hasOpenCloseGuardSnapshot = openCloseGuardSnapshotRef.current.length > 0;
     const hasUnsavedGeneralChanges =
-        !isEditing
-        && isOpen
+        isOpen
         && hasOpenCloseGuardSnapshot
         && serializedCloseGuardState !== openCloseGuardSnapshotRef.current;
 
@@ -1772,6 +1801,18 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                             Solo se muestran clases del año académico {subjectAcademicYear}.
                                         </p>
                                     )}
+                                    {(() => {
+                                        const availableIds = new Set(availableClasses.map((c: any) => c.id));
+                                        const orphanedCount = selectedClassIds.filter((id) => !availableIds.has(id)).length;
+                                        if (orphanedCount === 0) return null;
+                                        return (
+                                            <p className="mt-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                                                {orphanedCount === 1
+                                                    ? '1 clase asignada ya no pertenece al año académico seleccionado.'
+                                                    : `${orphanedCount} clases asignadas ya no pertenecen al año académico seleccionado.`}
+                                            </p>
+                                        );
+                                    })()}
                                 </div>
 
                                 {classesActionError && (
@@ -1824,8 +1865,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
                             <button type="button" onClick={handleCloseRequest} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors cursor-pointer">Cancelar</button>
                             {activeTab === 'general' && (
-                                <button type="submit" className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-2 cursor-pointer transition-colors">
-                                    <Save className="w-4 h-4" /> {isEditing ? 'Guardar' : 'Crear'}
+                                <button type="submit" disabled={checkingUniqueness} className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {checkingUniqueness ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} {isEditing ? 'Guardar' : 'Crear'}
                                 </button>
                             )}
                             {activeTab === 'sharing' && canManageSharing && (
@@ -1935,35 +1976,17 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         </div>
                     )}
 
-                    {discardPendingConfirmReason !== null && (
-                        <div className="absolute inset-0 z-40 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-                            <div className="absolute inset-0 bg-black/55" onClick={(e: any) => { e.stopPropagation(); setDiscardPendingConfirmReason(null); }} />
-                            <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                                <h4 className="text-base font-semibold text-gray-900 dark:text-white">Descartar cambios sin guardar</h4>
-                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                                    {discardPendingConfirmReason === 'sharing'
-                                        ? 'Tienes cambios pendientes en Compartir. ¿Quieres descartarlos y cerrar la ventana?'
-                                        : 'Tienes cambios sin guardar en esta asignatura. ¿Quieres descartarlos y cerrar la ventana?'}
-                                </p>
-                                <div className="mt-5 flex justify-end gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setDiscardPendingConfirmReason(null)}
-                                        className="px-3 py-1.5 text-sm rounded-md bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={discardPendingAndClose}
-                                        className="px-3 py-1.5 text-sm rounded-md bg-red-600 hover:bg-red-700 text-white"
-                                    >
-                                        Descartar y cerrar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <UnsavedChangesConfirmModal
+                        isOpen={discardPendingConfirmReason !== null}
+                        onDiscard={discardPendingAndClose}
+                        onCancel={() => setDiscardPendingConfirmReason(null)}
+                        message={
+                            discardPendingConfirmReason === 'sharing'
+                                ? 'Tienes cambios pendientes en Compartir. ¿Quieres descartarlos y cerrar la ventana?'
+                                : 'Tienes cambios sin guardar en esta asignatura. ¿Quieres descartarlos y cerrar la ventana?'
+                        }
+                        inline
+                    />
         </BaseModal>
     );
 };

@@ -1,7 +1,7 @@
 // src/pages/Subject/Subject.jsx
 import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 // Hooks
 import { useSubjectManager } from './hooks/useSubjectManager';
@@ -9,7 +9,8 @@ import useSubjectPageState from './hooks/useSubjectPageState';
 import { useClassMembers } from './hooks/useClassMembers';
 
 // Layout
-import Header from '../../components/layout/Header';
+import AnimatedPage from '../../components/layout/AnimatedPage';
+import SubjectSkeleton from './components/SubjectSkeleton';
 import SubjectHeader from './components/SubjectHeader';
 import TopicGrid from './components/TopicGrid';
 import SubjectGradesPanel from './components/SubjectGradesPanel';
@@ -165,17 +166,12 @@ const Subject = ({ user }: any) => {
     };
 
     if (!user || loading || !subject) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-            </div>
-        );
+        return <SubjectSkeleton />;
     }
 
     return (
+        <AnimatedPage>
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 font-sans transition-colors">
-            <Header user={user} />
-
             <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 <SubjectHeader
                     subject={subject}
@@ -301,8 +297,7 @@ const Subject = ({ user }: any) => {
                     )}
                 </>
             )}
-        </div>
-    );
+        </div>        </AnimatedPage>    );
 };
 
 export default Subject;

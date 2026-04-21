@@ -1,4 +1,5 @@
 // src/pages/Quizzes/QuizEdit.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { sendEmailVerification, signOut } from 'firebase/auth';
 import { auth } from '../../firebase/config';
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import {
     GraduationCap,
     Mail,
@@ -99,6 +100,7 @@ const EmailVerificationPage: React.FC = () => {
     };
 
     return (
+        <AnimatedPage>
         <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
             {/* Left branding panel */}
             <div className="hidden lg:flex lg:w-1/2 bg-indigo-600 dark:bg-indigo-700 relative overflow-hidden flex-col justify-between p-12 text-white">
@@ -232,6 +234,7 @@ const EmailVerificationPage: React.FC = () => {
                 </div>
             </div>
         </div>
+        </AnimatedPage>
     );
 };
 

@@ -1,4 +1,5 @@
 // src/pages/Notifications/Notifications.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -13,7 +14,6 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import Header from '../../components/layout/Header';
 import { useNotifications } from '../../hooks/useNotifications';
 import {
   getNotificationVisualClasses,
@@ -78,9 +78,8 @@ const Notifications = ({ user }: any) => {
   };
 
   return (
+    <AnimatedPage>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 transition-colors">
-      <Header user={user} />
-
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
         <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
@@ -185,6 +184,7 @@ const Notifications = ({ user }: any) => {
         </section>
       </main>
     </div>
+    </AnimatedPage>
   );
 };
 

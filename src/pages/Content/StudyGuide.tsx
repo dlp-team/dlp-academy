@@ -1,4 +1,5 @@
 // src/pages/Content/StudyGuide.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';

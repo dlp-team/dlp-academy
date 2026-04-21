@@ -133,7 +133,7 @@ const AcademicYearRangeFilter = ({
         <div className="relative" ref={triggerRef}>
             <button
                 onClick={() => handleSetShowPanel(!showPanel)}
-                className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium shadow-sm cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium shadow-sm ${
                     hasActiveFilter
                         ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
                         : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
@@ -164,7 +164,7 @@ const AcademicYearRangeFilter = ({
                             {hasActiveFilter && (
                                 <button
                                     onClick={clearRange}
-                                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium cursor-pointer"
+                                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
                                 >
                                     Limpiar
                                 </button>
@@ -178,7 +178,7 @@ const AcademicYearRangeFilter = ({
                         <div className="grid grid-cols-2 gap-2 mb-4">
                             <button
                                 onClick={() => setActiveBound('startYear')}
-                                className={`text-left rounded-lg border px-3 py-2 text-xs cursor-pointer transition-colors ${
+                                className={`text-left rounded-lg border px-3 py-2 text-xs transition-colors ${
                                     activeBound === 'startYear'
                                         ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
                                         : 'border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
@@ -190,7 +190,7 @@ const AcademicYearRangeFilter = ({
 
                             <button
                                 onClick={() => setActiveBound('endYear')}
-                                className={`text-left rounded-lg border px-3 py-2 text-xs cursor-pointer transition-colors ${
+                                className={`text-left rounded-lg border px-3 py-2 text-xs transition-colors ${
                                     activeBound === 'endYear'
                                         ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
                                         : 'border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
@@ -217,7 +217,7 @@ const AcademicYearRangeFilter = ({
                                             <button
                                                 key={academicYear}
                                                 onClick={() => handleSelectYear(academicYear)}
-                                                className={`rounded-lg border px-3 py-2 text-sm text-left cursor-pointer transition-colors ${
+                                                className={`rounded-lg border px-3 py-2 text-sm text-left transition-colors ${
                                                     isSelected
                                                         ? 'border-indigo-500 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
                                                         : 'border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
@@ -240,7 +240,7 @@ const AcademicYearRangeFilter = ({
                                         <button
                                             onClick={() => setPage((previous) => Math.max(0, previous - 1))}
                                             disabled={safePage === 0}
-                                            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <ChevronLeft size={14} />
                                             Anterior
@@ -253,7 +253,7 @@ const AcademicYearRangeFilter = ({
                                         <button
                                             onClick={() => setPage((previous) => Math.min(totalPages - 1, previous + 1))}
                                             disabled={safePage >= totalPages - 1}
-                                            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Siguiente
                                             <ChevronRight size={14} />

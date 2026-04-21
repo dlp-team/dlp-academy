@@ -8,12 +8,14 @@ import { useRegister } from './hooks/useRegister';
 
 // Components
 import UserTypeSelector from './components/UserTypeSelector';
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import PasswordStrengthMeter from './components/PasswordStrengthMeter';
 
 const Register = () => {
     const { formData, strength, loading, error, handleChange, registerUser, setFormData } = useRegister();
 
     return (
+        <AnimatedPage>
         <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
             
             {/* --- LEFT PANEL: Branding & Image --- */}
@@ -193,6 +195,7 @@ const Register = () => {
                 </div>
             </div>
         </div>
+        </AnimatedPage>
     );
 };
 

@@ -1,7 +1,8 @@
-// src/pages/Subject/modals/EditTopicModal.jsx
-import React, { useState } from 'react';
+// src/pages/Subject/modals/EditTopicModal.tsx
+import React, { useState, useMemo } from 'react';
 import { X, Save, Eye, EyeOff, ListOrdered, Type } from 'lucide-react';
-import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
+import GuardedOverlay from '../../../components/ui/GuardedOverlay';
+import useUnsavedChangesGuard from '../../../hooks/useUnsavedChangesGuard';
 
 const getInitialFormData = (topic: any) => ({
     name: topic?.name || topic?.title || '',
@@ -12,6 +13,14 @@ const getInitialFormData = (topic: any) => ({
 
 const EditTopicModalContent = ({ onClose, topic, onSave }: any) => {
     const [formData, setFormData] = useState(() => getInitialFormData(topic));
+
+    const initialFormValues = useMemo(() => getInitialFormData(topic), [topic]);
+
+    const { isDirty, requestClose } = useUnsavedChangesGuard({
+        initialValues: initialFormValues,
+        currentValues: formData,
+        onConfirmDiscard: onClose,
+    });
 
     const handleSubmit = (e: any) => {
         e.preventDefault();
@@ -24,20 +33,14 @@ const EditTopicModalContent = ({ onClose, topic, onSave }: any) => {
     };
 
     return (
-        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto clean-scrollbar" style={OVERLAY_TOP_OFFSET_STYLE}>
-            <div className="flex min-h-full items-center justify-center p-4">
-                <div 
-                    className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
-                    onClick={onClose} 
-                />
-                
-                <div className="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl animate-in fade-in zoom-in duration-200 overflow-hidden">
+        <GuardedOverlay isOpen onClose={onClose} isDirty={isDirty}>
+            <div className="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl animate-in fade-in zoom-in duration-200 overflow-hidden">
                     
                     {/* Header */}
                     <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800/50">
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white">Editar Tema</h3>
                         <button 
-                            onClick={onClose} 
+                            onClick={requestClose} 
                             className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full text-gray-500 dark:text-gray-400 transition-colors"
                         >
                             <X className="w-5 h-5" />
@@ -104,7 +107,7 @@ const EditTopicModalContent = ({ onClose, topic, onSave }: any) => {
                         <div className="flex justify-end gap-3 pt-2">
                             <button 
                                 type="button" 
-                                onClick={onClose} 
+                                onClick={requestClose} 
                                 className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors"
                             >
                                 Cancelar
@@ -118,8 +121,7 @@ const EditTopicModalContent = ({ onClose, topic, onSave }: any) => {
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
+        </GuardedOverlay>
     );
 };
 

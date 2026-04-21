@@ -1,7 +1,7 @@
 // src/pages/Profile/Profile.jsx
 import React, { useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import Header from '../../components/layout/Header';
+import AnimatedPage from '../../components/layout/AnimatedPage';
 
 // Hooks
 import { useProfile } from './hooks/useProfile';
@@ -73,9 +73,8 @@ const Profile = ({ user }: any) => {
   }
 
   return (
+    <AnimatedPage>
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-12 transition-colors">
-      <Header user={headerUser} />
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 space-y-8">
 
         {/* User Card */}
@@ -150,6 +149,7 @@ const Profile = ({ user }: any) => {
         }}
       />
     </div>
+    </AnimatedPage>
   );
 };
 

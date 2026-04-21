@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import Header from '../../../components/layout/Header';
+import AnimatedPage from '../../../components/layout/AnimatedPage';
 
 const formatDate = (timestampValue: any) => {
   try {
@@ -139,9 +139,8 @@ const TeacherStudentDetailView = ({ user }: any) => {
   }
 
   return (
+    <AnimatedPage>
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <Header user={user} />
-
       <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
         <button
           onClick={() => navigate('/teacher-dashboard')}
@@ -245,6 +244,7 @@ const TeacherStudentDetailView = ({ user }: any) => {
         </div>
       </main>
     </div>
+    </AnimatedPage>
   );
 };
 

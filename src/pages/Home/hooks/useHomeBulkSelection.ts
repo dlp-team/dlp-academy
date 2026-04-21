@@ -159,6 +159,30 @@ export const useHomeBulkSelection = ({
         setBulkMoveTargetFolderId('');
     }, []);
 
+    /** Replace the entire selection with the items matching the given data-selection-key strings. */
+    const replaceSelectionByKeys = React.useCallback((keys: Set<string>) => {
+        if (!keys || keys.size === 0) {
+            setSelectedItemsByKey({});
+            return;
+        }
+        const subjects = Array.isArray(logic?.subjects) ? logic.subjects : [];
+        const folders = Array.isArray(logic?.folders) ? logic.folders : [];
+        const shortcuts = Array.isArray(logic?.resolvedShortcuts) ? logic.resolvedShortcuts : [];
+        const allItems = [
+            ...subjects.map((s: any) => ({ item: s, type: 'subject' })),
+            ...folders.map((f: any) => ({ item: f, type: 'folder' })),
+            ...shortcuts.map((sc: any) => ({ item: sc, type: sc?.targetType || 'subject' })),
+        ];
+        const next: any = {};
+        for (const entry of allItems) {
+            const key = buildSelectionKey(entry.item, entry.type);
+            if (keys.has(key)) {
+                next[key] = { key, type: entry.type, item: entry.item };
+            }
+        }
+        setSelectedItemsByKey(next);
+    }, [logic?.subjects, logic?.folders, logic?.resolvedShortcuts, buildSelectionKey]);
+
     const clearUndoToast = React.useCallback(() => {
         if (undoTimeoutRef.current) {
             window.clearTimeout(undoTimeoutRef.current);
@@ -802,6 +826,7 @@ export const useHomeBulkSelection = ({
         availableMoveFolders,
         setBulkMoveTargetFolderId,
         clearSelection,
+        replaceSelectionByKeys,
         undoToast,
         undoLastSelectionAction,
         clearUndoToast,

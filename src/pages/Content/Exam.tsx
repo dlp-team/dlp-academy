@@ -1,4 +1,5 @@
 // src/pages/Content/Exam.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 /* eslint-disable react-hooks/error-boundaries */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
