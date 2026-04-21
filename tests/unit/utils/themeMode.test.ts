@@ -37,7 +37,7 @@ describe('themeMode utils', () => {
     applyThemeToDom('dark', { animate: true, persist: false });
     expect(document.documentElement.classList.contains('theme-switching')).toBe(true);
 
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(500);
     expect(document.documentElement.classList.contains('theme-switching')).toBe(false);
   });
 });

@@ -9,14 +9,14 @@ describe('HomeLoader', () => {
     const { container } = render(<HomeLoader fullPage />);
 
     expect(container.firstChild?.className || '').toContain('min-h-screen');
-    expect(container.querySelector('svg')).not.toBeNull();
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
   });
 
   it('renders inline loader shell by default', () => {
-    render(<HomeLoader />);
+    const { container } = render(<HomeLoader />);
 
-    const spinner = document.querySelector('svg');
-    expect(spinner).not.toBeNull();
+    expect(container.firstChild?.className || '').toContain('py-6');
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
     expect(screen.queryByText(/cargando/i)).toBeNull();
   });
 });
