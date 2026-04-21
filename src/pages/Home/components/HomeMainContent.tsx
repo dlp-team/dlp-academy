@@ -1,5 +1,5 @@
 // src/pages/Home/components/HomeMainContent.tsx
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import BreadcrumbNav from './BreadcrumbNav';
 import SharedView from './SharedView';
 import HomeContent from './HomeContent';
@@ -8,6 +8,7 @@ import HomeLoader from './HomeLoader';
 import HomeShareConfirmModals from './HomeShareConfirmModals';
 import BinView from './BinView';
 import { isShortcutItem } from '../../../utils/permissionUtils';
+import { useRubberBandSelection, RubberBandOverlay } from '../../../hooks/useRubberBandSelection';
 
 type HomeMainContentProps = {
     user: any;
@@ -36,6 +37,8 @@ type HomeMainContentProps = {
     startSelectionWithItem: (item: any, type: any) => void;
     selectRangeToItem: (item: any, type: any, orderedEntries: any[], options?: any) => void;
     runBulkMoveToFolder: (targetFolderId: any) => void;
+    replaceSelectionByKeys: (keys: Set<string>) => void;
+    setSelectMode: (value: boolean | ((prev: boolean) => boolean)) => void;
     handleSetCurrentFolder: (folder: any) => void;
     handleBreadcrumbDrop: any;
     handleOpenSubjectSharing: (subject: any) => void;
@@ -77,6 +80,8 @@ const HomeMainContent = ({
     startSelectionWithItem,
     selectRangeToItem,
     runBulkMoveToFolder,
+    replaceSelectionByKeys,
+    setSelectMode,
     handleSetCurrentFolder,
     handleBreadcrumbDrop,
     handleOpenSubjectSharing,
@@ -90,6 +95,41 @@ const HomeMainContent = ({
     handleCardFocus,
     getCardVisualState
 }: HomeMainContentProps) => {
+    // Snapshot of selection keys captured at the moment a rubber-band drag begins.
+    // Used in additive (Ctrl) mode so the pre-drag selection is preserved as the
+    // band changes, and new items are ADDED rather than replacing the whole selection.
+    const selectionBaseRef = useRef<Set<string>>(new Set());
+
+    const handleRubberBandChange = useCallback((keys: Set<string>, isAdditive: boolean) => {
+        if (isAdditive) {
+            // Union: pre-drag selection + current rubber-band keys.
+            replaceSelectionByKeys(new Set([...selectionBaseRef.current, ...keys]));
+        } else {
+            replaceSelectionByKeys(keys);
+        }
+    }, [replaceSelectionByKeys]);
+
+    const handleRubberBandDragStart = useCallback((isAdditive: boolean) => {
+        // Capture the current selection as the base for additive mode.
+        selectionBaseRef.current = isAdditive ? new Set(selectedItemKeys) : new Set();
+        // Auto-enter selection mode the moment the user starts a rubber-band drag,
+        // even when they haven't toggled the selection toolbar first.
+        setSelectMode(true);
+    }, [setSelectMode, selectedItemKeys]);
+
+    const {
+        containerRef: rubberBandRef,
+        isSelecting: isRubberBandSelecting,
+        rect: rubberBandRect,
+    } = useRubberBandSelection({
+        itemSelector: '[data-selection-key]',
+        // Always enabled — the hook itself guards against clicks on cards/buttons.
+        // This allows rubber-band to work without needing selectMode to be on first.
+        enabled: true,
+        onSelectionChange: handleRubberBandChange,
+        onDragStart: handleRubberBandDragStart,
+    });
+
     if (logic.viewMode === 'bin') {
         return <BinView user={user} cardScale={logic.cardScale} layoutMode={logic.layoutMode} />;
     }
@@ -212,7 +252,10 @@ const HomeMainContent = ({
             {!hasInitialDataLoaded && logic.loading ? (
                 <HomeLoader />
             ) : (
-                <>
+                <div
+                    ref={rubberBandRef}
+                    style={{ userSelect: isRubberBandSelecting ? 'none' : undefined }}
+                >
                     {effectiveHasContent ? (
                         <HomeContent
                             user={user}
@@ -301,7 +344,8 @@ const HomeMainContent = ({
                             currentFolder={logic.currentFolder}
                         />
                     )}
-                </>
+                    <RubberBandOverlay rect={rubberBandRect} />
+                </div>
             )}
         </>
     );

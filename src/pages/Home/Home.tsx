@@ -194,6 +194,7 @@ const Home = ({ user }: any) => {
         availableMoveFolders,
         setBulkMoveTargetFolderId,
         clearSelection,
+        replaceSelectionByKeys,
         undoToast,
         undoLastSelectionAction,
         clearUndoToast,
@@ -465,6 +466,8 @@ const Home = ({ user }: any) => {
                     startSelectionWithItem={startSelectionWithItem}
                     selectRangeToItem={selectRangeToItem}
                     runBulkMoveToFolder={runBulkMoveToFolder}
+                    replaceSelectionByKeys={replaceSelectionByKeys}
+                    setSelectMode={setSelectMode}
                     handleSetCurrentFolder={handleSetCurrentFolder}
                     handleBreadcrumbDrop={handleSelectionAwareBreadcrumbDrop}
                     handleOpenSubjectSharing={handleOpenSubjectSharing}
