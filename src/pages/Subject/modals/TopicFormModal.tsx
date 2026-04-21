@@ -1,7 +1,8 @@
-// src/pages/Subject/modals/TopicFormModal.jsx
-import React, { useState, useEffect, useRef } from 'react';
+// src/pages/Subject/modals/TopicFormModal.tsx
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Sparkles, FileText, Upload, MessageSquare, Type, Trash2, CloudUpload } from 'lucide-react';
-import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
+import GuardedOverlay from '../../../components/ui/GuardedOverlay';
+import useUnsavedChangesGuard from '../../../hooks/useUnsavedChangesGuard';
 
 const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData, subjectColor }: any) => {
     const [formData, setFormData] = useState({ name: '', prompt: '' });
@@ -9,8 +10,26 @@ const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData, subjectColor }
     const [dragActive, setDragActive] = useState(false);
     const fileInputRef = useRef<any>(null);
 
+    const initialFormValues = useMemo(() => ({
+        name: initialData?.name || initialData?.title || '',
+        prompt: initialData?.prompt || '',
+        filesCount: 0,
+    }), [initialData]);
+
+    const currentFormValues = useMemo(() => ({
+        name: formData.name,
+        prompt: formData.prompt,
+        filesCount: files.length,
+    }), [formData, files.length]);
+
+    const { isDirty, requestClose } = useUnsavedChangesGuard({
+        initialValues: initialFormValues,
+        currentValues: currentFormValues,
+        onConfirmDiscard: onClose,
+    });
+
     useEffect(() => {
-        let initTimer;
+        let initTimer: ReturnType<typeof setTimeout>;
         if (isOpen) {
             initTimer = setTimeout(() => {
                 setFormData({
@@ -52,12 +71,8 @@ const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData, subjectColor }
     const headerGradient = subjectColor || 'from-indigo-400 to-indigo-600';
 
     return (
-        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto clean-scrollbar" style={OVERLAY_TOP_OFFSET_STYLE}>
+        <GuardedOverlay isOpen={isOpen} onClose={onClose} isDirty={isDirty}>
             <style>{`
-                @keyframes app-open-backdrop {
-                    0% { opacity: 0; }
-                    100% { opacity: 1; }
-                }
                 @keyframes app-open-modal {
                     0% {
                         opacity: 0;
@@ -75,19 +90,10 @@ const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData, subjectColor }
                         transform: scale(1);
                     }
                 }
-                .app-open-backdrop {
-                    animation: app-open-backdrop 0.25s ease-out forwards;
-                }
                 .app-open-modal {
                     animation: app-open-modal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
                 }
             `}</style>
-            <div className="flex min-h-full items-center justify-center p-4">
-                {/* Backdrop */}
-                <div
-                    className="app-open-backdrop fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
-                    onClick={onClose}
-                />
 
                 {/* Modal */}
                 <div className="app-open-modal relative w-full max-w-lg overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl dark:shadow-black/40">
@@ -100,7 +106,7 @@ const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData, subjectColor }
 
                         {/* Close button */}
                         <button
-                            onClick={onClose}
+                            onClick={requestClose}
                             className="absolute top-4 right-4 p-2 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md text-white/80 hover:text-white transition-all"
                         >
                             <X className="w-5 h-5" />
@@ -242,7 +248,7 @@ const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData, subjectColor }
                         <div className="flex gap-3 pt-2">
                             <button
                                 type="button"
-                                onClick={onClose}
+                                onClick={requestClose}
                                 className="flex-1 py-3.5 rounded-2xl bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 font-bold text-sm hover:bg-gray-200 dark:hover:bg-slate-700 transition-all active:scale-[0.98]"
                             >
                                 Cancelar
@@ -261,8 +267,7 @@ const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData, subjectColor }
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
+        </GuardedOverlay>
     );
 };
 

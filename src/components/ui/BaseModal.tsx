@@ -67,6 +67,12 @@ const BaseModal = ({
     }
   };
 
+  const handleWrapperClick: React.MouseEventHandler<HTMLDivElement> = (event) => {
+    if (event.target === event.currentTarget) {
+      handleBackdropClick();
+    }
+  };
+
   return (
     <div className={rootClassName} style={rootStyle}>
       <div
@@ -75,7 +81,7 @@ const BaseModal = ({
         data-testid={backdropTestId}
         onClick={handleBackdropClick}
       />
-      <div className={contentWrapperClassName} data-testid={wrapperTestId} style={contentWrapperStyle}>
+      <div className={contentWrapperClassName} data-testid={wrapperTestId} style={contentWrapperStyle} onClick={handleWrapperClick}>
         <div
           aria-modal="true"
           className={contentClassName}

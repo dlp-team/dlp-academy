@@ -6,6 +6,7 @@ import { addDoc, collection, getDocs, query, where, getDoc, doc, serverTimestamp
 import { db } from '../../../firebase/config';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 import BaseModal from '../../../components/ui/BaseModal';
+import UnsavedChangesConfirmModal from '../../../components/ui/UnsavedChangesConfirmModal';
 
 // Sub-components
 import BasicInfoFields from './subject-form/BasicInfoFields';
@@ -952,8 +953,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
     const hasOpenCloseGuardSnapshot = openCloseGuardSnapshotRef.current.length > 0;
     const hasUnsavedGeneralChanges =
-        !isEditing
-        && isOpen
+        isOpen
         && hasOpenCloseGuardSnapshot
         && serializedCloseGuardState !== openCloseGuardSnapshotRef.current;
 
@@ -1935,35 +1935,17 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         </div>
                     )}
 
-                    {discardPendingConfirmReason !== null && (
-                        <div className="absolute inset-0 z-40 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-                            <div className="absolute inset-0 bg-black/55" onClick={(e: any) => { e.stopPropagation(); setDiscardPendingConfirmReason(null); }} />
-                            <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                                <h4 className="text-base font-semibold text-gray-900 dark:text-white">Descartar cambios sin guardar</h4>
-                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                                    {discardPendingConfirmReason === 'sharing'
-                                        ? 'Tienes cambios pendientes en Compartir. ¿Quieres descartarlos y cerrar la ventana?'
-                                        : 'Tienes cambios sin guardar en esta asignatura. ¿Quieres descartarlos y cerrar la ventana?'}
-                                </p>
-                                <div className="mt-5 flex justify-end gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setDiscardPendingConfirmReason(null)}
-                                        className="px-3 py-1.5 text-sm rounded-md bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={discardPendingAndClose}
-                                        className="px-3 py-1.5 text-sm rounded-md bg-red-600 hover:bg-red-700 text-white"
-                                    >
-                                        Descartar y cerrar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <UnsavedChangesConfirmModal
+                        isOpen={discardPendingConfirmReason !== null}
+                        onDiscard={discardPendingAndClose}
+                        onCancel={() => setDiscardPendingConfirmReason(null)}
+                        message={
+                            discardPendingConfirmReason === 'sharing'
+                                ? 'Tienes cambios pendientes en Compartir. ¿Quieres descartarlos y cerrar la ventana?'
+                                : 'Tienes cambios sin guardar en esta asignatura. ¿Quieres descartarlos y cerrar la ventana?'
+                        }
+                        inline
+                    />
         </BaseModal>
     );
 };
