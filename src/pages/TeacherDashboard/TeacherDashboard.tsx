@@ -294,7 +294,7 @@ const MyStudentsTab = ({
 
                                         <td className="px-6 py-4" onClick={(event) => event.stopPropagation()}>
                                             <select
-                                                value={Number.isFinite(Number(s.behaviorScore)) ? Number(s.behaviorScore) : 5}
+                                                value={Number.isFinite(Number(s.behaviorScore)) ? Number(s.behaviorScore) : 10}
                                                 disabled={isActionPending(`behavior:${s.id}`)}
                                                 onChange={(event) => onSetBehaviorScore(s.id, Number(event.target.value))}
                                                 className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
