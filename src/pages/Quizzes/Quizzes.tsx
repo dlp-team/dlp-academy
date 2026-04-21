@@ -1,4 +1,5 @@
-// src/pages/Quizzes/Quizzes.jsx
+// src/pages/Quizzes/Quizzes.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 

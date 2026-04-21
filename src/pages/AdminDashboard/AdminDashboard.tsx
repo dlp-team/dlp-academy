@@ -6,6 +6,9 @@ import {
     Loader2, BookOpen, GraduationCap,
     ShieldAlert, Globe, BarChart3
 } from 'lucide-react';
+import AnimatedPage from '../../components/layout/AnimatedPage';
+import AnimatedTabs, { AnimatedTabContent } from '../../components/ui/AnimatedTabs';
+import StaggerChildren from '../../components/ui/StaggerChildren';
 import {
     documentId,
     collection, query, where, getDocs,
@@ -15,7 +18,6 @@ import {
     startAfter,
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import Header from '../../components/layout/Header';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { buildUserScopedPersistenceKey } from '../../utils/pagePersistence';
@@ -71,9 +73,9 @@ const OverviewTab = ({ stats, loading }: any) => {
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <StaggerChildren className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {cards.map(({ label, value, icon, color, bg }: any) => (
-                    <div key={label} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                    <div key={label} className="interactive-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
                         <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-4`}>
                             {React.createElement(icon, { className: `w-5 h-5 ${color}` })}
                         </div>
@@ -83,7 +85,7 @@ const OverviewTab = ({ stats, loading }: any) => {
                         <div className="text-sm text-slate-500 dark:text-slate-400">{label}</div>
                     </div>
                 ))}
-            </div>
+            </StaggerChildren>
 
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 flex flex-col items-center justify-center text-center py-16">
                 <BarChart3 className="w-14 h-14 text-slate-200 dark:text-slate-700 mb-4" />
@@ -603,9 +605,8 @@ const AdminDashboard = ({ user }: any) => {
     ];
 
     return (
+        <AnimatedPage>
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
-            <Header user={user} />
-
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 {/* Page header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -621,24 +622,16 @@ const AdminDashboard = ({ user }: any) => {
                 </div>
 
                 {/* Underline tabs */}
-                <div className="flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800">
-                    {TABS.map(({ key, label, icon }: any) => (
-                        <button key={key} onClick={() => setActiveTab(key)}
-                            className={`px-4 py-2 font-medium text-sm flex items-center gap-2 border-b-2 -mb-px transition-colors ${
-                                activeTab === key
-                                    ? 'border-purple-600 text-purple-600 dark:text-purple-400'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                            }`}>
-                            {React.createElement(icon, { className: 'w-4 h-4' })} {label}
-                        </button>
-                    ))}
-                </div>
+                <AnimatedTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} accent="purple" />
 
-                {activeTab === 'overview' && <OverviewTab stats={stats} loading={statsLoading} />}
-                {activeTab === 'Institutions'  && <InstitutionsTab />}
-                {activeTab === 'users'    && <UsersTab />}
+                <AnimatedTabContent tabKey={activeTab}>
+                    {activeTab === 'overview' && <OverviewTab stats={stats} loading={statsLoading} />}
+                    {activeTab === 'Institutions'  && <InstitutionsTab />}
+                    {activeTab === 'users'    && <UsersTab />}
+                </AnimatedTabContent>
             </main>
         </div>
+        </AnimatedPage>
     );
 };
 

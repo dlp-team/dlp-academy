@@ -79,6 +79,7 @@ Located in `./prompts/` - Use these when starting work in domain areas:
 ### SKILLS (Domain Workflows)
 Located in `./.github/skills/` - Referenced by orchestration:
 - askquestions-leverage - Enforce leverage step protocol
+- create-architecture - Architecture-level planning (large-scale, mission-critical)
 - create-plan - Create multi-phase work plans
 - debug-in-depth - Systematic debugging
 - docs-sync - Synchronize documentation
@@ -90,8 +91,9 @@ Located in `./.github/skills/` - Referenced by orchestration:
 - test-stabilization - Fix failing/flaky tests
 
 ### PLANNING & DOCUMENTATION
-Located in `./plans/` and `./explanations/`:
+Located in `./plans/`, `./architectures/`, and `./explanations/`:
 - **plans/** - Active, in-review, and finished work phases
+- **architectures/** - Architecture-level plans (5–30x more thorough than plans, multi-branch, exhaustive testing)
 - **explanations/codebase/** - Mirror of code patterns and architecture
 - **explanations/temporal/** - Session-specific documentation and lossless reports
 

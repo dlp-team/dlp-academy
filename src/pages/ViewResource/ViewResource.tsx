@@ -1,4 +1,5 @@
-// src/pages/ViewResource/ViewResource.jsx
+// src/pages/ViewResource/ViewResource.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, FileText, Download, AlertTriangle } from 'lucide-react';

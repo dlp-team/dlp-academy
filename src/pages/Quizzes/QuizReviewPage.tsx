@@ -1,4 +1,5 @@
-// src/pages/Quizzes/QuizReviewPage.jsx
+// src/pages/Quizzes/QuizReviewPage.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Loader2, Target, Trophy } from 'lucide-react';

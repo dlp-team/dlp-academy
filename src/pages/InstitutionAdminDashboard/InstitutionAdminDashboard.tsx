@@ -11,7 +11,8 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LayoutGrid, Palette, Settings2, UserPlus, Users } from 'lucide-react';
 
-import Header from '../../components/layout/Header';
+import AnimatedPage from '../../components/layout/AnimatedPage';
+import AnimatedTabs, { AnimatedTabContent } from '../../components/ui/AnimatedTabs';
 import SudoModal from '../../components/modals/SudoModal';
 import ClassesCoursesSection from './components/ClassesCoursesSection';
 import UsersTabContent from './components/UsersTabContent';
@@ -62,9 +63,8 @@ const InstitutionAdminDashboard = ({ user }: any) => {
   const institutionSettings = useInstitutionSettings(user, effectiveInstitutionId);
 
   return (
+    <AnimatedPage>
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
-      <Header user={user} />
-
       <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
         {/* Page header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -87,23 +87,9 @@ const InstitutionAdminDashboard = ({ user }: any) => {
         </div>
 
         {/* Tab nav */}
-        <div className="flex flex-wrap items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800 pb-px">
-            {TABS.map(({ key, label, icon }: any) => (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className={`px-4 py-2 font-medium text-sm flex items-center gap-2 border-b-2 -mb-[2px] transition-colors ${
-                activeTab === key
-                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
-              }`}
-            >
-              {React.createElement(icon, { className: 'w-4 h-4' })} {label}
-            </button>
-          ))}
-        </div>
+        <AnimatedTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {/* ── Users tab ── */}
+        <AnimatedTabContent tabKey={activeTab}>
         {activeTab === 'users' && (
           <UsersTabContent
             userType={users.userType}
@@ -192,6 +178,7 @@ const InstitutionAdminDashboard = ({ user }: any) => {
             onSaveThemeSet={customization.handleSaveThemeSet}
           />
         )}
+        </AnimatedTabContent>
       </main>
 
       {/* ── Add teacher modal ── */}
@@ -215,6 +202,7 @@ const InstitutionAdminDashboard = ({ user }: any) => {
         actionName="guardar las políticas de acceso"
       />
     </div>
+    </AnimatedPage>
   );
 };
 

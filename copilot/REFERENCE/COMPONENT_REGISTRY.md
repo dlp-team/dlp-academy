@@ -13,12 +13,68 @@ CRITICAL COPILOT DIRECTIVE: before creating any new UI element (modal, overlay, 
 5. All visible UI text must be in Spanish.
 6. Use icons, never emojis.
 
+## Animation Primitives
+
+### AnimatedCollapse
+- File: src/components/ui/AnimatedCollapse.tsx
+- Status: Active
+- Purpose: Reusable animated height expand/collapse wrapper using framer-motion. Animates height 0↔auto with opacity.
+- Props: `isOpen` (boolean), `children`, `duration` (optional, default DURATION.normal), `className` (optional)
+- Current adopters:
+  - src/pages/Home/components/HomeContent.tsx (group collapse, year collapse)
+
+### PageTransition
+- File: src/components/layout/PageTransition.tsx
+- Status: Active
+- Purpose: Thin motion.div wrapper using pageTransitionVariants (opacity+y shift) with initial/animate/exit for page-level transitions.
+- Props: `children`, `className` (optional)
+
+### AnimatedPage
+- File: src/components/layout/AnimatedPage.tsx
+- Status: Active
+- Purpose: Standard page wrapper combining min-h-screen + PageTransition. Drop-in for any route-level component.
+- Props: `children`, `className` (optional)
+- Current adopters: All dashboard pages, Home, Subject, Topic, Profile, Settings, Auth pages
+
+### AnimatedTabs
+- File: src/components/ui/AnimatedTabs.tsx
+- Status: Active
+- Purpose: Drop-in tab bar with Framer Motion layoutId sliding indicator and optional accent colour.
+- Props: `tabs` (TabDef[]), `activeTab` (string), `onTabChange` (fn), `accent` (optional, default "indigo"), `className` (optional)
+- Current adopters: AdminDashboard, InstitutionAdminDashboard, TeacherDashboard
+
+### AnimatedTabContent
+- File: src/components/ui/AnimatedTabs.tsx (named export)
+- Status: Active
+- Purpose: Wraps tab panel content with AnimatePresence crossfade animation on tab switch.
+- Props: `tabKey` (string), `children`
+- Current adopters: AdminDashboard, InstitutionAdminDashboard, TeacherDashboard
+
+### StaggerChildren
+- File: src/components/ui/StaggerChildren.tsx
+- Status: Active
+- Purpose: Wraps children with stagger entrance animation (fadeIn + slideUp). Each direct child staggers with configurable delay.
+- Props: `children`, `stagger` (optional, default 0.06), `className` (optional)
+- Current adopters: AdminDashboard OverviewTab, TeacherDashboard OverviewTab, StudentDashboard stat cards, TopicGrid
+
+### Skeleton Primitives
+- File: src/components/ui/Skeleton.tsx
+- Status: Active
+- Purpose: CSS-only skeleton loading primitives (SkeletonBox, SkeletonText, SkeletonCircle, SkeletonCard, SkeletonGrid, SkeletonList, SkeletonStatCard, SkeletonStatRow). Respects prefers-reduced-motion.
+- Current adopters: HomeContentSkeleton, HomeLoader, DashboardSkeleton
+
+### DashboardSkeleton
+- File: src/components/ui/DashboardSkeleton.tsx
+- Status: Active
+- Purpose: Generic dashboard loading skeleton (header + stat row + tab bar + content rows).
+- Props: `statCards` (optional, default 4), `rows` (optional, default 5), `className` (optional)
+
 ## Overlays and Modals
 
 ### BaseModal
 - File: src/components/ui/BaseModal.tsx
 - Status: Active
-- Purpose: low-level modal primitive (backdrop, content wrapper, close guard hooks).
+- Purpose: low-level modal primitive (backdrop, content wrapper, close guard hooks). Animated with framer-motion (backdrop fade, content scale+fade, AnimatePresence for mount/unmount).
 - Current adopters:
   - src/components/modals/DeleteModal.tsx
   - src/components/modals/FolderDeleteModal.tsx
@@ -169,6 +225,7 @@ When creating a reusable component:
 | Shared gradient submit CTA | ModalGradientSubmitButton | Active |
 | Menu positioning | menuPositionUtils | Active |
 | Unified three-dots portal shell | ContextActionMenuPortal | Active |
+| Animated height collapse | AnimatedCollapse | Active |
 | Generic primary/secondary/danger buttons | Not implemented yet | Planned |
 
 ## Registry Maintenance

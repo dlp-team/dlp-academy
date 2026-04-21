@@ -16,6 +16,9 @@ import { mergeSourceAndShortcutItems } from '../../../utils/mergeUtils';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 import { getHomeUnselectedDimmingClass } from '../../../utils/selectionVisualUtils';
 import { getDraggedSelectionKeyFromDropArgs, shouldHandleSelectionDrop } from '../utils/homeSelectionDropUtils';
+import AnimatedCollapse from '../../../components/ui/AnimatedCollapse';
+import { motion } from 'framer-motion';
+import { staggerContainerVariants, staggerItemVariants } from '../../../utils/animationConfig';
 
 const FolderCardComponent: any = FolderCard;
 const SubjectCardComponent: any = SubjectCard;
@@ -540,7 +543,7 @@ const HomeContent = ({
                             </button>
                         )}
 
-                        {(!coursesYearWrappers.enabled || !isYearCollapsed) && (
+                        <AnimatedCollapse isOpen={!coursesYearWrappers.enabled || !isYearCollapsed}>
                     <div className="mb-10">
                         {showCollapsibleGroups && (
                             <button
@@ -565,14 +568,16 @@ const HomeContent = ({
                             </button>
                         )}
 
-                        {!isCollapsed && (
-                            <>
+                        <AnimatedCollapse isOpen={!isCollapsed}>
                                 {/* GRID LAYOUT */}
                                 {layoutMode === 'grid' && (
                                     <div className="mb-10">
-                                        <div 
+                                        <motion.div 
                                             className="grid gap-6"
                                               style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${(320 * cardScale) / 100}px), 1fr))` }}
+                                            variants={staggerContainerVariants}
+                                            initial="initial"
+                                            animate="animate"
                                         >
                                             {/* Create Subject Button for courses/tags view */}
                                             {(viewMode === 'courses' || viewMode === 'tags') && canCreateInCurrentContext && (
@@ -819,7 +824,7 @@ const HomeContent = ({
                                                 </div>
                                             );
                                             })}
-                                        </div>
+                                        </motion.div>
                                     </div>
                                 )}
                                 
@@ -1069,10 +1074,9 @@ const HomeContent = ({
 
                                     </div>
                                 )}
-                            </>
-                        )}
+                            </AnimatedCollapse>
                     </div>
-                        )}
+                        </AnimatedCollapse>
                     </React.Fragment>
                 );
             })}

@@ -1,4 +1,5 @@
-// src/pages/Quizzes/QuizRepaso.jsx
+// src/pages/Quizzes/QuizRepaso.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, Loader2, Target } from 'lucide-react';

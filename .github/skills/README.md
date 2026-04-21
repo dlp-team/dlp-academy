@@ -10,6 +10,7 @@ This folder contains on-demand Copilot skills for specialized workflows.
 
 ## Skill list
 - `create-plan`: Protocol-compliant plan creation and lifecycle transitions.
+- `create-architecture`: Architecture-level planning for large-scale, mission-critical work (5–30x more thorough than plans). Multi-branch execution, exhaustive test coverage, threat analysis, centralization audits.
 - `lossless-change`: Surgical change discipline and regression-safe verification.
 - `debug-in-depth`: Stepwise root-cause analysis for hard failures.
 - `explain-code`: Codebase and temporal explanation updates.

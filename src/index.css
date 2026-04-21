@@ -313,3 +313,62 @@ body.has-fixed-header .app-global-scrollbar > .os-scrollbar-vertical {
   background: rgba(203, 213, 225, 0.56);
   opacity: 0.95;
 }
+
+/* ─── Micro-interaction utilities ─────────────────────────────────────────── */
+
+/* Card: subtle lift on hover, press feedback, focus glow */
+.interactive-card {
+  transition: transform 150ms cubic-bezier(0.25, 0.1, 0.25, 1),
+              box-shadow 150ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.interactive-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.08),
+              0 4px 10px -3px rgba(0, 0, 0, 0.04);
+}
+.interactive-card:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Button: press scale */
+.interactive-button {
+  transition: transform 100ms ease-in;
+}
+.interactive-button:active {
+  transform: scale(0.97);
+}
+
+/* Row: background highlight on hover */
+.interactive-row {
+  transition: background-color 120ms ease-out;
+}
+.interactive-row:hover {
+  background-color: rgba(99, 102, 241, 0.04);
+}
+.dark .interactive-row:hover {
+  background-color: rgba(99, 102, 241, 0.08);
+}
+
+/* Focus glow for keyboard navigation */
+.focus-glow:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
+  border-radius: inherit;
+  transition: box-shadow 150ms ease-out;
+}
+.dark .focus-glow:focus-visible {
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.35);
+}
+
+/* Reduced motion: disable transforms, keep color transitions */
+@media (prefers-reduced-motion: reduce) {
+  .interactive-card,
+  .interactive-button {
+    transition: none;
+  }
+  .interactive-card:hover,
+  .interactive-card:active,
+  .interactive-button:active {
+    transform: none;
+  }
+}

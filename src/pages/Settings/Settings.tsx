@@ -1,4 +1,5 @@
-// src/pages/Settings/Settings.jsx
+// src/pages/Settings/Settings.tsx
+import AnimatedPage from '../../components/layout/AnimatedPage';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, Check, Loader2 } from 'lucide-react';

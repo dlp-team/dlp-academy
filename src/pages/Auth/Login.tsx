@@ -6,6 +6,7 @@ import { Mail, Lock, GraduationCap, ArrowRight, Loader2, AlertCircle } from 'luc
 import { FcGoogle } from 'react-icons/fc';
 
 import { useLogin } from './hooks/useLogin';
+import AnimatedPage from '../../components/layout/AnimatedPage';
 
 
 const Login = () => {
@@ -23,6 +24,7 @@ const Login = () => {
 
 
     return (
+        <AnimatedPage>
         <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
             
             {/* --- LEFT PANEL: Branding (Mirroring Register) --- */}
@@ -160,6 +162,7 @@ const Login = () => {
                 </div>
             </div>
         </div>
+        </AnimatedPage>
     );
 };
 
