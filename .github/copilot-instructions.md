@@ -984,6 +984,51 @@ User confirms all items → Task closure only after confirmation.
 
 **Every session should leave the user thinking: "That was worth it."**
 
+---
+
+## 🏥 ILHP Architecture Update Mandate (MANDATORY)
+
+The project uses the **Institution Lifecycle Health Protocol (ILHP)** — a living set of architecture documents in `copilot/institution-health-protocol/architectures/`. These documents describe the exact code-level behavior of every major feature domain.
+
+**MANDATORY RULE:** When you implement or modify any feature covered by an ILHP architecture document, you MUST update the corresponding architecture document.
+
+### Domains and Their Architecture Files
+
+| Feature Domain | Architecture File |
+|---------------|-------------------|
+| Authentication, signup, login | `architectures/01-auth-signup-login.md` |
+| Institution provisioning, access codes | `architectures/02-institution-provisioning.md` |
+| Teacher invites and onboarding | `architectures/03-teacher-management.md` |
+| Student registration and enrollment | `architectures/04-student-management.md` |
+| Subject creation, invite codes | `architectures/05-subject-creation.md` |
+| Classes, teacher assignment, class-subject linking | `architectures/06-class-teacher-assignment.md` |
+| Topics, documents, quizzes, quiz results | `architectures/07-content-management.md` |
+| Firestore rules, permission boundaries, security | `architectures/08-permission-boundaries.md` |
+
+### What Triggers an Architecture Update
+
+- New Firestore collections or new fields on existing documents
+- Changes to role logic or permission checks
+- New authentication flows
+- Refactors that change file paths, hook names, or utility function names referenced in the architecture
+- Security patches that change Firestore rule behavior
+- New features in any covered domain
+
+### How to Update Architecture Documents
+
+Architecture documents use **append-only changelog entries** at the bottom. Do NOT overwrite prior sections. Add a dated entry:
+
+```markdown
+## Changelog
+
+### YYYY-MM-DD — [Short description of change]
+- [File changed and what was added/modified]
+- [New Firestore field or collection added]
+- [Risk or behavior that changed]
+```
+
+
+
 ### User Preferences
 
 1. **Icons over Emojis**: Avoid using emojis for any visible web elements. Use icons instead for a professional and consistent look.
