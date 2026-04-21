@@ -1,6 +1,7 @@
-// src/pages/Profile/components/BadgesSection.jsx
+// src/pages/Profile/components/BadgesSection.tsx
 import React, { useState } from 'react';
 import { Award, Star, Zap, Target, Flame, BookOpen, Trophy, Users, ChevronDown, ChevronUp, Lock } from 'lucide-react';
+import BadgeChip from './BadgeChip';
 
 /**
  * BadgesSection
@@ -85,46 +86,7 @@ const BADGE_CATALOG = [
     },
 ];
 
-const BadgeChip = ({ badge, earned, earnedAt, compact = false }: any) => {
-    const Icon = badge.icon;
-    return (
-        <div
-            className={`relative flex flex-col items-center gap-1.5 group transition-all duration-200 ${earned ? 'opacity-100' : 'opacity-35 grayscale'}`}
-            title={badge.description}
-        >
-            <div
-                className={`
-                    ${compact ? 'w-10 h-10' : 'w-14 h-14'}
-                    rounded-2xl bg-gradient-to-br ${badge.color}
-                    flex items-center justify-center text-white
-                    shadow-lg ${earned ? badge.glow : ''}
-                    transition-transform duration-200
-                    ${earned ? 'group-hover:scale-110 group-hover:shadow-xl' : ''}
-                `}
-            >
-                {earned ? (
-                    <Icon className={compact ? 'w-5 h-5' : 'w-7 h-7'} />
-                ) : (
-                    <Lock className={compact ? 'w-4 h-4' : 'w-6 h-6'} />
-                )}
-            </div>
-            {!compact && (
-                <>
-                    <span className={`text-xs font-semibold text-center leading-tight ${earned ? badge.textColor : 'text-gray-400 dark:text-gray-600'}`}>
-                        {badge.label}
-                    </span>
-                    {earned && earnedAt && (
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-4 whitespace-nowrap">
-                            {new Date(earnedAt?.toDate ? earnedAt.toDate() : earnedAt).toLocaleDateString()}
-                        </span>
-                    )}
-                </>
-            )}
-        </div>
-    );
-};
-
-const BadgesSection = ({ badges = [], role = 'student', students = [], onAwardBadge }: any) => {
+const BadgesSection = ({ badges = [], role = 'student', students = [], onAwardBadge, threshold = 8 }: any) => {
     const [expanded, setExpanded] = useState(false);
     const [awardingStudent, setAwardingStudent] = useState<any>(null);
     const [awarding, setAwarding] = useState(false);
@@ -193,19 +155,44 @@ const BadgesSection = ({ badges = [], role = 'student', students = [], onAwardBa
             {expanded && (
                 <div className="px-6 pb-6 border-t border-gray-100 dark:border-gray-700 pt-4">
                     {role === 'student' ? (
-                        /* Student view: grid of all badges */
-                        <div className="grid grid-cols-4 sm:grid-cols-7 gap-6 mt-2">
-                            {BADGE_CATALOG.map((badge: any) => {
-                                const earnedBadge = (badges || []).find((b: any) => b.key === badge.key);
-                                return (
-                                    <BadgeChip
-                                        key={badge.key}
-                                        badge={badge}
-                                        earned={!!earnedBadge}
-                                        earnedAt={earnedBadge?.earnedAt}
-                                    />
-                                );
-                            })}
+                        /* Student view: separated auto and manual badges */
+                        <div className="space-y-5 mt-2">
+                            {/* Auto badges */}
+                            <div>
+                                <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Automáticas</h4>
+                                <div className="grid grid-cols-4 sm:grid-cols-7 gap-6">
+                                    {BADGE_CATALOG.filter(b => b.auto).map((badge: any) => {
+                                        const earnedBadge = (badges || []).find((b: any) => b.key === badge.key);
+                                        return (
+                                            <BadgeChip
+                                                key={badge.key}
+                                                badge={badge}
+                                                earned={!!earnedBadge}
+                                                earnedAt={earnedBadge?.earnedAt}
+                                                score={earnedBadge?.averageTenScale}
+                                                threshold={threshold}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            {/* Manual badges */}
+                            <div>
+                                <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Otorgadas por el profesor</h4>
+                                <div className="grid grid-cols-4 sm:grid-cols-7 gap-6">
+                                    {BADGE_CATALOG.filter(b => !b.auto).map((badge: any) => {
+                                        const earnedBadge = (badges || []).find((b: any) => b.key === badge.key);
+                                        return (
+                                            <BadgeChip
+                                                key={badge.key}
+                                                badge={badge}
+                                                earned={!!earnedBadge}
+                                                earnedAt={earnedBadge?.earnedAt}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         /* Teacher view: list of students + ability to award */

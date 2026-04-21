@@ -127,12 +127,19 @@ export const upsertCourseBadge = ({ badgesByCourse, courseId, badge }: { badgesB
   };
 };
 
-// --- Enhanced Badge System (Phase 07) ---
+// --- Phase 07 + 08: Badge Style System ---
 
 import type { BadgeStyleLevel, InstitutionBadgeConfig } from '../types/badges';
 
+export interface BadgeStyleConfig {
+  gradient: string;
+  glow: string;
+  label: string;
+  isPerfect: boolean;
+  level: BadgeStyleLevel;
+}
+
 const DEFAULT_BADGE_THRESHOLD = 8;
-const DEFAULT_PERFECT_SCORE = 10;
 
 export const getDefaultBadgeThreshold = (config?: InstitutionBadgeConfig | null): number => {
     if (config && Number.isFinite(config.gradeThreshold) && config.gradeThreshold > 0) {
@@ -141,56 +148,46 @@ export const getDefaultBadgeThreshold = (config?: InstitutionBadgeConfig | null)
     return DEFAULT_BADGE_THRESHOLD;
 };
 
-export const computeBadgeStyleLevel = (
-    score: number,
-    threshold: number = DEFAULT_BADGE_THRESHOLD,
-    perfectScore: number = DEFAULT_PERFECT_SCORE,
-): BadgeStyleLevel => {
-    if (!Number.isFinite(score) || !Number.isFinite(threshold) || !Number.isFinite(perfectScore)) {
-        return null;
-    }
-    if (score < threshold) return null;
-    if (score >= perfectScore) return 'perfect';
-
-    const range = perfectScore - threshold;
-    if (range <= 0) return score >= threshold ? 'perfect' : null;
-
-    const ratio = (score - threshold) / range;
-    if (ratio <= 0) return 'threshold';
-    if (ratio < 0.4) return 'mid';
-    if (ratio < 0.75) return 'high';
-    if (ratio < 1) return 'near-perfect';
-    return 'perfect';
+export const computeBadgeStyleLevel = (score: number, threshold: number = DEFAULT_BADGE_THRESHOLD): BadgeStyleLevel => {
+  if (score >= 10) return 'perfect';
+  if (score >= threshold + 1.5) return 'near-perfect';
+  if (score >= threshold + 1.0) return 'high';
+  if (score >= threshold + 0.5) return 'mid';
+  return 'threshold';
 };
 
-export const getBadgeStyleColors = (level: BadgeStyleLevel): { gradient: string; glow: string } => {
-    switch (level) {
-        case 'threshold':
-            return { gradient: 'from-green-400 to-green-600', glow: 'shadow-green-200' };
-        case 'mid':
-            return { gradient: 'from-lime-400 to-lime-600', glow: 'shadow-lime-200' };
-        case 'high':
-            return { gradient: 'from-amber-400 to-amber-600', glow: 'shadow-amber-200' };
-        case 'near-perfect':
-            return { gradient: 'from-orange-400 to-orange-600', glow: 'shadow-orange-200' };
-        case 'perfect':
-            return { gradient: 'from-yellow-300 to-yellow-500', glow: 'shadow-yellow-200' };
-        default:
-            return { gradient: 'from-gray-300 to-gray-400', glow: 'shadow-gray-100' };
-    }
+export const getBadgeStyleColors = (level: BadgeStyleLevel): BadgeStyleConfig => {
+  switch (level) {
+    case 'perfect':
+      return { gradient: 'from-yellow-300 to-amber-400', glow: 'shadow-yellow-400/50', label: 'Perfecto', isPerfect: true, level };
+    case 'near-perfect':
+      return { gradient: 'from-orange-400 to-amber-500', glow: 'shadow-orange-400/40', label: 'Casi perfecto', isPerfect: false, level };
+    case 'high':
+      return { gradient: 'from-amber-400 to-yellow-500', glow: 'shadow-amber-400/40', label: 'Excelente', isPerfect: false, level };
+    case 'mid':
+      return { gradient: 'from-lime-400 to-green-500', glow: 'shadow-lime-400/40', label: 'Notable', isPerfect: false, level };
+    default:
+      return { gradient: 'from-green-400 to-emerald-500', glow: 'shadow-green-400/40', label: 'Sobresaliente', isPerfect: false, level: 'threshold' };
+  }
+};
+
+export const getStyleForScore = (score: number, threshold: number = DEFAULT_BADGE_THRESHOLD): BadgeStyleConfig => {
+  return getBadgeStyleColors(computeBadgeStyleLevel(score, threshold));
 };
 
 export const computeGradeMean = (grades: number[]): number => {
-    if (!Array.isArray(grades) || grades.length === 0) return NaN;
-    const valid = grades.filter((g) => Number.isFinite(g));
-    if (valid.length === 0) return NaN;
-    return valid.reduce((sum, g) => sum + g, 0) / valid.length;
+  if (!Array.isArray(grades) || grades.length === 0) return NaN;
+  const valid = grades.filter((g) => Number.isFinite(g));
+  if (valid.length === 0) return NaN;
+  return valid.reduce((sum, g) => sum + g, 0) / valid.length;
 };
 
-export const isEligibleForEnhancedBadge = (mean: number, threshold: number): boolean => {
-    if (!Number.isFinite(mean) || !Number.isFinite(threshold)) return false;
-    return mean >= threshold;
+export const isEligibleForAutoBadge = (score: number, threshold: number = DEFAULT_BADGE_THRESHOLD): boolean => {
+  return Number.isFinite(score) && score >= threshold;
 };
+
+/** Alias for backwards compatibility with Phase 07 consumers */
+export const isEligibleForEnhancedBadge = isEligibleForAutoBadge;
 
 export const getDefaultBadgeTemplates = (): Array<{
     name: string;
@@ -201,40 +198,8 @@ export const getDefaultBadgeTemplates = (): Array<{
     category: string;
     isDefault: true;
 }> => [
-    {
-        name: 'Excelencia académica',
-        description: 'Rendimiento sobresaliente en la asignatura',
-        icon: 'Award',
-        type: 'auto',
-        scope: 'subject',
-        category: 'grades',
-        isDefault: true,
-    },
-    {
-        name: 'Participación destacada',
-        description: 'Contribución activa en clase',
-        icon: 'Hand',
-        type: 'manual',
-        scope: 'subject',
-        category: 'participation',
-        isDefault: true,
-    },
-    {
-        name: 'Buena conducta',
-        description: 'Comportamiento ejemplar',
-        icon: 'Star',
-        type: 'manual',
-        scope: 'general',
-        category: 'behavior',
-        isDefault: true,
-    },
-    {
-        name: 'Esfuerzo continuo',
-        description: 'Dedicación y constancia en el aprendizaje',
-        icon: 'TrendingUp',
-        type: 'manual',
-        scope: 'general',
-        category: 'custom',
-        isDefault: true,
-    },
+    { name: 'Excelencia académica', description: 'Rendimiento sobresaliente en la asignatura', icon: 'Award', type: 'auto', scope: 'subject', category: 'grades', isDefault: true },
+    { name: 'Participación destacada', description: 'Contribución activa en clase', icon: 'Hand', type: 'manual', scope: 'subject', category: 'participation', isDefault: true },
+    { name: 'Buena conducta', description: 'Comportamiento ejemplar', icon: 'Star', type: 'manual', scope: 'general', category: 'behavior', isDefault: true },
+    { name: 'Esfuerzo continuo', description: 'Dedicación y constancia en el aprendizaje', icon: 'TrendingUp', type: 'manual', scope: 'general', category: 'custom', isDefault: true },
 ];
