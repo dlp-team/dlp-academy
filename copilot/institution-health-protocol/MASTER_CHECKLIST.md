@@ -44,6 +44,7 @@
 | 0.8 | ⬜ | **No leftover Auth users:** Verify Firebase Auth has no `lia-admin@`, `lia-teacher-*`, or `lia-student-*` accounts from previous runs | `[HYBRID]` `[CRITICAL]` |
 | 0.9 | ⬜ | **App runs in browser:** Navigate to `http://localhost:5173` (or configured port) and verify app loads without console errors | `[MANUAL]` `[CRITICAL]` |
 | 0.10 | ⬜ | **Complete environment-snapshot.md:** Record git branch, commit hash, Firebase target, and date before starting | `[MANUAL]` `[CRITICAL]` |
+| 0.11 | ⬜ | **Open live pages in VSCode:** Open the DLP web app (`http://localhost:5173`) and Firebase Emulator UI (`http://127.0.0.1:4000`) using the VSCode Simple Browser (Ctrl+Shift+P → "Simple Browser: Show"). Confirm both are accessible and visible before proceeding. *(You may use an external browser instead — document your choice in environment-snapshot.md.)* | `[MANUAL]` `[HIGH]` |
 
 ---
 
@@ -89,6 +90,37 @@
 | 2.15 | ⬜ | **Verify customization in Firestore:** Check `institutions/{id}.customization` has correct color and display name values. | `[HYBRID]` `[MEDIUM]` |
 | 2.16 | ⬜ | **Branding applied in UI:** Reload the institution admin dashboard. Verify institution display name and primary color appear in the header/theme. | `[MANUAL]` `[MEDIUM]` |
 | 2.17 | ⬜ | **Access code management — view existing code:** In the Users tab, verify the institutional access code `LIA-TEST-2026` is visible (or its masked/partial form). | `[MANUAL]` `[MEDIUM]` |
+
+---
+
+### PHASE 2B — Institution Admin Deep Feature Audit
+
+> These steps extend Phase 2 with in-depth verification of all institution admin capabilities. Steps that test features not yet implemented must be logged as **GAP items** in `findings.md` — not as failures unless the feature is `[CRITICAL]`.
+
+| # | Status | Step | Tags |
+|---|--------|------|------|
+| 2.18 | ⬜ | **Organization tab renders:** Verify the Organization tab is accessible from the dashboard and shows class management controls (class list, create class button). | `[MANUAL]` `[HIGH]` |
+| 2.19 | ⬜ | **Pending teacher invites list:** In Users → Profesores, verify pending (unaccepted) invites are distinguishable from active teachers (shown as "Pendiente" or equivalent). If absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 2.20 | ⬜ | **Cancel pending invite:** Attempt to cancel a pending teacher invite before the teacher accepts it. Verify invite doc is deleted in Firestore. If UI control is absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 2.21 | ⬜ | **Remove teacher from institution:** Verify institution admin can remove (deactivate or delete) a teacher via the Users tab. Verify Firestore user doc reflects removal. If absent, log as GAP. | `[MANUAL]` `[HIGH]` |
+| 2.22 | ⬜ | **Remove student from institution:** Verify same removal capability for students. If absent, log as GAP. | `[MANUAL]` `[HIGH]` |
+| 2.23 | ⬜ | **Regenerate institutional access code:** In Users → Alumnos, trigger access code regeneration. Verify new code is issued (8 chars, no I/O/0/1), and old code no longer enrolls students. Verify Firestore `institution_invites` updated. | `[HYBRID]` `[HIGH]` |
+| 2.24 | ⬜ | **Disable institutional access code:** Verify institution admin can disable the access code to block new student self-registration. Attempt registration with a disabled code — must fail. If UI control absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 2.25 | ⬜ | **Settings — all policy toggles save and persist:** Toggle every available policy (beyond teacher subject creation). Reload page. Verify all states persist in Firestore `institutions/{id}.accessPolicies`. | `[HYBRID]` `[HIGH]` |
+| 2.26 | ⬜ | **Settings — academic calendar configuration:** Verify academic calendar settings are accessible (start/end date, term/period labels, cycle type). Test save and persistence in Firestore. If absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 2.27 | ⬜ | **Settings — automation settings:** Verify automation options are present (e.g., auto-enroll on class assignment, welcome email trigger). Test save. If absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 2.28 | ⬜ | **Settings — granular teacher permissions:** Verify if teacher permissions can be configured individually (e.g., can create quizzes, can delete content, can view all student grades). If absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 2.29 | ⬜ | **Customization — logo upload:** Attempt to upload an institution logo image. Verify upload to Firebase Storage succeeds. Verify logo appears in dashboard header/customization preview. If UI control absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 2.30 | ⬜ | **Customization — live color preview:** Verify that changing primary/secondary colors in the Customization tab shows a real-time preview without requiring save-and-reload. | `[MANUAL]` `[HIGH]` |
+| 2.31 | ⬜ | **Customization — save and full-reload persistence:** After saving customization, hard-reload the page. Verify custom colors and institution display name are applied in the dashboard header/theme. Check `institutions/{id}.customization` in Firestore. | `[HYBRID]` `[HIGH]` |
+| 2.32 | ⬜ | **Customization — student-facing theme application:** Log in as a student from this institution. Verify the institution's custom branding (primary color, institution name) is applied to the student-facing home page. | `[MANUAL]` `[HIGH]` |
+| 2.33 | ⬜ | **Customization — reset to defaults:** Verify a "reset branding" or "restore defaults" option is available. If present, test it removes custom settings. If absent, log as GAP. | `[MANUAL]` `[LOW]` |
+| 2.34 | ⬜ | **User search and filter:** In the Users tab, verify searching for a user by name or email filters the list accurately and responsively. If absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 2.35 | ⬜ | **Bulk user management:** Verify if bulk operations are available (select multiple, bulk deactivate, bulk export). If absent, log as GAP. | `[MANUAL]` `[LOW]` |
+| 2.36 | ⬜ | **Audit / activity log:** Verify if an admin activity log is accessible showing recent actions (invites sent, settings changed, users removed). If absent, log as GAP. | `[MANUAL]` `[LOW]` |
+| 2.37 | ⬜ | **User profile detail view:** From the Users tab, click on a specific teacher or student. Verify a user detail view opens with: role, institution, email, display name, join date, and status. If absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+
+**Phase 2B Result:** ⬜ PASS / ❌ FAIL / ⚠️ PARTIAL
 
 ---
 
@@ -144,6 +176,16 @@
 | 5.8 | ⬜ | **Subject validation — duplicate name guard:** Attempt to create a second subject named `Matemáticas Test` as Teacher A. Verify validation error appears (if uniqueness is enforced). | `[MANUAL]` `[MEDIUM]` |
 | 5.9 | ⬜ | **Subject invite code rotation (if UI available):** In subject settings, verify invite code rotation interval is configurable and saving works. | `[MANUAL]` `[MEDIUM]` |
 | 5.10 | ⬜ | **Teacher cannot create subject if institution policy disables it:** Change institution policy to `allowTeacherAutonomousSubjectCreation: false`. Verify Teacher A gets a permission error on subject creation. Reset policy to `true` after. | `[HYBRID]` `[HIGH]` |
+| 5.11 | ⬜ | **Subject settings page accessible:** Navigate to an existing subject's settings or edit view. Verify name, description, invite code, and visibility settings are accessible and editable. | `[MANUAL]` `[HIGH]` |
+| 5.12 | ⬜ | **Edit subject name and description:** Update the subject name and/or description. Save. Verify changes reflected in Firestore `subjects/{id}` and on the teacher's home page. | `[MANUAL]` `[MEDIUM]` |
+| 5.13 | ⬜ | **Subject invite code enable/disable:** Toggle the invite code off in subject settings. Attempt student self-enrollment using the old code — must fail. Re-enable the code. Verify enrollment works again. | `[MANUAL]` `[HIGH]` |
+| 5.14 | ⬜ | **Subject invite code rotation:** Rotate (regenerate) the subject invite code. Verify old code is invalidated. Verify new code follows 8-char format. Verify `subjectInviteCodes` collection updated atomically. | `[HYBRID]` `[HIGH]` |
+| 5.15 | ⬜ | **Subject folder/section creation (if applicable):** Verify if subjects support organizing topics into folders or sections. Attempt to create a folder named "Unidad 1". If absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 5.16 | ⬜ | **Subject visibility to institution admin:** Verify institution admin can see ALL subjects across all teachers within their institution — not just their own. | `[MANUAL]` `[HIGH]` |
+| 5.17 | ⬜ | **Subject archive/deactivation:** Verify if a subject can be archived or deactivated without being deleted. Verify archived subjects are hidden from students. If absent, log as GAP. | `[MANUAL]` `[HIGH]` |
+| 5.18 | ⬜ | **Subject deletion — enrolled students behavior:** Attempt to delete a subject that has enrolled students. Verify system prevents deletion or shows a meaningful warning. Log actual behavior observed. | `[MANUAL]` `[HIGH]` |
+| 5.19 | ⬜ | **Enrolled students list in subject:** Verify teacher can see the list of students currently enrolled in the subject from the subject page or settings view. If absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 5.20 | ⬜ | **Subject course metadata:** Verify if subjects support course-level metadata (academic level, course code, credits, academic year). If absent, log as GAP. | `[MANUAL]` `[LOW]` |
 
 ---
 
@@ -168,6 +210,18 @@
 | 6.13 | ⬜ | **Student access via class enrollment:** Login as Student 1 (in Clase A). Verify Matemáticas Test appears in their subjects. Verify Ciencias Test (Clase B only) does NOT appear. | `[MANUAL]` `[CRITICAL]` |
 | 6.14 | ⬜ | **Student 5 sees subjects from both classes.** | `[MANUAL]` `[HIGH]` |
 | 6.15 | ⬜ | **Student self-enrollment via invite code:** Login as Student 3. Manually enter the Historia Test invite code. Verify student is added to `subjects/{id}.enrolledStudentUids`. | `[MANUAL]` `[HIGH]` |
+| 6.16 | ⬜ | **Class rename:** Rename "Clase A Test" to "Clase A — Editada". Save. Verify updated in Firestore `classes/{id}.name` and reflected in the admin Organization tab. | `[MANUAL]` `[MEDIUM]` |
+| 6.17 | ⬜ | **Remove student from class:** Remove Student 2 from Clase A. Verify `classes/{claseAId}.studentIds` no longer contains Student 2's UID. | `[HYBRID]` `[HIGH]` |
+| 6.18 | ⬜ | **Removed student loses subject access:** After removing Student 2 from Clase A, login as Student 2. Verify Matemáticas Test (linked to Clase A) no longer appears in Student 2's home page subjects. | `[MANUAL]` `[CRITICAL]` |
+| 6.19 | ⬜ | **Class roster view:** Verify institution admin can view the full student roster per class (all students with names/emails) from the Organization tab. If absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 6.20 | ⬜ | **Subject-to-class unlink:** Unlink Ciencias Test from Clase B Test. Verify students previously in Clase B can no longer access Ciencias Test via class enrollment. | `[MANUAL]` `[HIGH]` |
+| 6.21 | ⬜ | **Assign multiple subjects to one class:** Link both Matemáticas Test and Historia Test to Clase A simultaneously. Verify students in Clase A see both subjects on their home page. | `[MANUAL]` `[HIGH]` |
+| 6.22 | ⬜ | **Class deletion:** Delete Clase B Test. Verify class doc is removed from Firestore. Verify students previously in Clase B still exist as users (only class membership removed). | `[MANUAL]` `[HIGH]` |
+| 6.23 | ⬜ | **Class deletion — linked subject cleanup:** After deleting Clase B, verify Ciencias Test's `classIds` in Firestore no longer contains Clase B's ID. Verify Firestore integrity. | `[HYBRID]` `[HIGH]` |
+| 6.24 | ⬜ | **Teacher class visibility:** Login as Teacher A. Verify Teacher A can see which classes are linked to their subjects from the home page or subject settings. If absent, log as GAP. | `[MANUAL]` `[MEDIUM]` |
+| 6.25 | ⬜ | **Class student count accuracy:** Verify the institution admin Organization tab shows an accurate student count per class (updated after add/remove operations). | `[MANUAL]` `[LOW]` |
+| 6.26 | ⬜ | **Transfer student between classes:** Move Student 3 from Clase B to Clase A. Verify Firestore `studentIds` updated in both classes. Verify Student 3's accessible subjects update accordingly. | `[MANUAL]` `[HIGH]` |
+| 6.27 | ⬜ | **Bulk add students to class (if available):** Verify if a bulk student import/add option exists for a class (CSV upload or multi-select). If absent, log as GAP. | `[MANUAL]` `[LOW]` |
 
 ---
 
@@ -229,7 +283,8 @@
 | 9.4 | ⬜ | **Update global logs — known-issues.md:** Log any non-blocking issues discovered (⚠️ items). | `[MANUAL]` — |
 | 9.5 | ⬜ | **Propose actions:** For every failure, issue, and security risk found, create a proposed plan (small scope) or proposed architecture (large/security-critical) in `copilot/plans/todo/` or `copilot/architectures/todo/`. Log each proposal link and priority in `findings.md` under "Proposed Actions". | `[MANUAL]` — |
 | 9.6 | ⬜ | **Archive LIA instance:** Move `active/lia-YYYY-MM-DD/` to `finished/`. | `[MANUAL]` — |
-| 9.7 | ⬜ | **Cleanup test data per TEST_INSTITUTION_SPEC.md cleanup procedure.** | `[MANUAL]` — |
+| 9.7 | ⬜ | **Export emulator snapshot BEFORE cleanup:** Before wiping test data, export a named emulator snapshot for use by future LIA v2 runs. Run: `firebase emulators:export emulator-data/lia-snapshots/lia-YYYY-MM-DD` (replace date). Verify folder created with `auth_export/`, `firestore_export/`, and `storage_export/` subdirectories. This snapshot enables LIA v2 to start from a provisioned state without re-creating users and institution. | `[MANUAL]` `[HIGH]` |
+| 9.8 | ⬜ | **Cleanup test data per TEST_INSTITUTION_SPEC.md cleanup procedure.** | `[MANUAL]` — |
 
 ---
 
@@ -307,17 +362,18 @@ Fill this out at the end of the LIA:
 
 | Phase | Total Steps | ✅ Passed | ❌ Failed | ⚠️ Issues | ⏭️ Skipped |
 |-------|------------|---------|---------|---------|---------|
-| Phase 0 — Pre-Flight | 10 | | | | |
+| Phase 0 — Pre-Flight | 11 | | | | |
 | Phase 1 — Institution Provisioning | 10 | | | | |
 | Phase 2 — Institution Admin Onboarding | 17 | | | | |
+| Phase 2B — Institution Admin Deep Audit | 20 | | | | |
 | Phase 3 — Teacher Management | 11 | | | | |
 | Phase 4 — Student Management | 7 | | | | |
-| Phase 5 — Subject Creation | 10 | | | | |
-| Phase 6 — Class Assignment | 15 | | | | |
+| Phase 5 — Subject Creation + Deep | 20 | | | | |
+| Phase 6 — Class Assignment + Deep | 27 | | | | |
 | Phase 7 — Content Management | 16 | | | | |
 | Phase 8 — Permission Boundaries | 12 | | | | |
-| Phase 9 — Regression Baseline | 6 | | | | |
+| Phase 9 — Regression Baseline | 8 | | | | |
 | Phase 10 — UX & Feature Gap Audit | 25 | | | | |
-| **TOTAL** | **139** | | | | |
+| **TOTAL** | **184** | | | | |
 
 **Overall Result:** ⬜ Pending / ✅ Pass / ❌ Fail
