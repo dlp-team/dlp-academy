@@ -1,7 +1,7 @@
 <!-- copilot/ACTIVE-GOVERNANCE/BRANCHES_STATUS.md -->
 # Repository Branches Status
 
-**Last Updated:** 2026-04-26
+**Last Updated:** 2026-04-26 (lia-2026-04-26 registered)
 **Purpose:** Global registry of all active feature/fix/chore branches. Single source of truth for understanding what work is happening across the repo.
 
 **Retention Policy:** See [copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md](./BRANCH_RETENTION_POLICY.md) for auto-deletion rules and grace periods.
@@ -19,6 +19,7 @@
 
 | Branch Name | Owner | Type | Status | Pending-Delete Date | Summary | Related Plan | Key Files | Last Updated | Notes |
 |---|---|---|---|---|---|---|---|---|---|
+| lia/2026-04-26 | hector | chore | active | — | LIA 2026-04-26: Full lifecycle integrity audit v1 — 184-step MASTER_CHECKLIST, Phase 2B deep feature audit, Phase 5/6 deep testing, first run to reach Phase 9.7 snapshot export | copilot/institution-health-protocol/active/lia-2026-04-26/ | copilot/institution-health-protocol/active/lia-2026-04-26/step-checklist.md | 2026-04-26 | LIA v1 (no prior emulator snapshot available for v2); parent: development |
 | lia/2026-04-21 | hector | chore | pending-delete | 2026-04-26 | LIA 2026-04-21: .docs product docs, MASTER_CHECKLIST 184 steps, LIA v2 template, pause checkpoint protocol | copilot/institution-health-protocol/active/lia-2026-04-21/ | .docs/**, copilot/institution-health-protocol/MASTER_CHECKLIST.md, copilot/institution-health-protocol/templates/lia-v2-instance-template/** | 2026-04-26 | Merged into development on 2026-04-26 (squash, PR #2); will be auto-deleted on 2026-05-03 |
 | arch/multi-feature-enhancement-2026-04-19 | hector | feature | active | — | Architecture: Badges system (auto+manual, general+subject, grade-based dynamic styling), Subject enhancements (uniqueness constraint, cascading field updates), Centralized unsaved-changes confirmation, Theme toggle smoothness, Cursor pointer audit, Teacher dashboard conduct default | copilot/architectures/active/multi-feature-enhancement-2026-04-19/ | src/pages/Profile/components/BadgesSection.jsx, src/pages/TeacherDashboard/**, src/pages/Subject/modals/**, src/components/layout/Header.jsx, src/hooks/useDarkMode.js | 2026-04-19 | Architecture with 8 phases; parent: development |
 | feature/hector/e2e-firebase-emulators-2026-04-17 | hector | feature | pending-delete | 2026-04-17 | Migrate all 75 E2E Playwright tests to use Firebase Auth+Firestore+Storage emulators for full test isolation and CI/CD friendliness | copilot/plans/active/migrate-e2e-to-firebase-emulators-2026-04-17/ | src/firebase/config.ts, playwright.config.js, tests/e2e/global-setup.ts, tests/e2e/emulator-seed.ts, tests/e2e/seed/firestore-seed.ts | 2026-04-17 | Merged into feature/hector/e2e-home-firestore-tests-2026-04-16 on 2026-04-17; will be auto-deleted on 2026-04-24 |
