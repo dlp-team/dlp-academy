@@ -6,6 +6,24 @@
 
 ---
 
+## ⏸️ PAUSE CHECKPOINT PROTOCOL (MANDATORY)
+
+> **Every time you stop working on this LIA mid-run — whether closing VS Code, stopping the emulator, or ending the session — you MUST export the emulator state FIRST.**
+
+**Before stopping:**
+```bash
+firebase emulators:export emulator-data/lia-sessions/lia-2026-04-21-pause
+```
+
+**When resuming:**
+```bash
+firebase emulators:start --import=emulator-data/lia-sessions/lia-2026-04-21-pause
+```
+
+> ⚠️ If you forget to export before stopping, all emulator data (users, Firestore docs, Storage files) is permanently lost. You must restart from Phase 1.
+
+---
+
 ## Step Status Legend
 
 | Symbol | Meaning |
@@ -23,18 +41,19 @@
 
 | # | Status | Step | Tags |
 |---|--------|------|------|
-| 0.1 | ⬜ | **Build compiles without errors:** `npm run build` exits 0 | `[AUTO]` `[CRITICAL]` |
-| 0.2 | ⬜ | **No TypeScript errors:** `npx tsc --noEmit` exits 0 | `[AUTO]` `[CRITICAL]` |
-| 0.3 | ⬜ | **Lint passes:** `npm run lint` 0 errors | `[AUTO]` `[CRITICAL]` |
-| 0.4 | ⬜ | **Unit tests pass:** `npm run test` all green | `[AUTO]` `[CRITICAL]` |
-| 0.5 | ⬜ | **Firebase emulator running** or staging target confirmed | `[MANUAL]` `[CRITICAL]` |
-| 0.6 | ⬜ | **Environment variables present:** `.env`/`.env.local` has all `VITE_*` keys | `[MANUAL]` `[CRITICAL]` |
-| 0.7 | ⬜ | **No leftover test data:** Firestore has no prior `Academia de Prueba DLP` institution | `[HYBRID]` `[CRITICAL]` |
-| 0.8 | ⬜ | **No leftover Auth users:** No `lia-*` accounts from prior runs | `[HYBRID]` `[CRITICAL]` |
-| 0.9 | ⬜ | **App loads in browser:** `localhost:5173` loads without console errors | `[MANUAL]` `[CRITICAL]` |
-| 0.10 | ⬜ | **Complete environment-snapshot.md** before starting | `[MANUAL]` `[CRITICAL]` |
+| 0.1 | ✅ | **Build compiles without errors:** `npm run build` exits 0 | `[AUTO]` `[CRITICAL]` |
+| 0.2 | ✅ | **No TypeScript errors:** `npx tsc --noEmit` exits 0 | `[AUTO]` `[CRITICAL]` |
+| 0.3 | ✅ | **Lint passes:** `npm run lint` 0 errors | `[AUTO]` `[CRITICAL]` |
+| 0.4 | ✅ | **Unit tests pass:** `npm run test` all green | `[AUTO]` `[CRITICAL]` |
+| 0.5 | ✅ | **Firebase emulator running** or staging target confirmed | `[MANUAL]` `[CRITICAL]` |
+| 0.6 | ✅ | **Environment variables present:** `.env`/`.env.local` has all `VITE_*` keys | `[MANUAL]` `[CRITICAL]` |
+| 0.7 | ✅ | **No leftover test data:** Firestore has no prior `Academia de Prueba DLP` institution | `[HYBRID]` `[CRITICAL]` |
+| 0.8 | ✅ | **No leftover Auth users:** No `lia-*` accounts from prior runs | `[HYBRID]` `[CRITICAL]` |
+| 0.9 | ✅ | **App loads in browser:** `localhost:5173` loads without console errors | `[MANUAL]` `[CRITICAL]` |
+| 0.10 | ✅ | **Complete environment-snapshot.md** before starting | `[MANUAL]` `[CRITICAL]` |
+| 0.11 | ✅ | **Live pages open in VSCode:** DLP web app at `http://localhost:5173` and Firebase Emulator UI at `http://127.0.0.1:4000` open and accessible (confirmed open in browser during this run) | `[MANUAL]` `[HIGH]` |
 
-**Phase 0 Result:** ⬜ PASS / ❌ FAIL
+**Phase 0 Result:** ✅ PASS
 
 ---
 
@@ -42,18 +61,18 @@
 
 | # | Status | Step |
 |---|--------|------|
-| 1.1 | ⬜ | Global admin logs in successfully |
-| 1.2 | ⬜ | Admin dashboard renders |
-| 1.3 | ⬜ | Create institution: "Academia de Prueba DLP" |
-| 1.4 | ⬜ | Institution doc created in Firestore with correct fields |
-| 1.5 | ⬜ | Institution appears in admin institution list |
-| 1.6 | ⬜ | Create direct institutionadmin invite for `admin.lia.20260421@dlptest.dev` |
-| 1.7 | ⬜ | Invite doc exists in `institution_invites` with `role: 'institutionadmin'` |
-| 1.8 | ⬜ | Create institutional access code |
-| 1.9 | ⬜ | Access code doc in Firestore with `type: 'institutional'`, 8-char code |
-| 1.10 | ⬜ | Code is valid: 8 chars, only from alphabet (no I, O, 0, 1) |
+| 1.1 | ✅ | Global admin logs in successfully |
+| 1.2 | ✅ | Admin dashboard renders |
+| 1.3 | ✅ | Create institution: "Academia de Prueba DLP" |
+| 1.4 | ✅ | Institution doc created in Firestore with correct fields |
+| 1.5 | ✅ | Institution appears in admin institution list |
+| 1.6 | ✅ | Create direct institutionadmin invite for `admin.lia.20260421@dlptest.dev` |
+| 1.7 | ✅ | Invite doc exists in `institution_invites` with `role: 'institutionadmin'` |
+| 1.8 | ✅ | Create institutional access code — code `DLPTEST8` set via institution edit form |
+| 1.9 | ✅ | Access code doc `institution_invites/DLPTEST8` in Firestore with `type: 'institutional'`, `institutionId: 'w6Tg2XMnpUjM038a8gyl'` |
+| 1.10 | ✅ | Code is valid: 8 chars `DLPTEST8`, only from alphabet (no I, O, 0, 1) |
 
-**Phase 1 Result:** ⬜ PASS / ❌ FAIL / ⚠️ PARTIAL
+**Phase 1 Result:** ✅ PASS
 
 ---
 
@@ -61,22 +80,22 @@
 
 | # | Status | Step |
 |---|--------|------|
-| 2.1 | ⬜ | Register with invite: `admin.lia.20260421@dlptest.dev` |
-| 2.2 | ⬜ | Firestore user doc created at `users/{uid}` |
-| 2.3 | ⬜ | `role === 'institutionadmin'` |
-| 2.4 | ⬜ | `institutionId` matches test institution |
-| 2.5 | ⬜ | Invite doc deleted after use (or marked used) |
-| 2.6 | ⬜ | Redirected to email verification page |
-| 2.7 | ⬜ | Institution admin login succeeds |
-| 2.8 | ⬜ | Institution admin dashboard loads |
-| 2.9 | ⬜ | Users tab renders (teacher + student sections) |
-| 2.10 | ⬜ | Settings tab renders with policy toggles |
-| 2.11 | ⬜ | Customization tab renders with branding controls |
-| 2.12 | ⬜ | Update institution display name, save and persist |
-| 2.13 | ⬜ | Branding/colors applied in UI after save |
-| 2.14 | ⬜ | Enable teacher subject creation policy, save and persist |
+| 2.1 | ✅ | Register with invite: `admin.lia.20260421@dlptest.dev` — registered via /register with invite code `bU3r4itpjYz6Jc4p2HzY` |
+| 2.2 | ✅ | Firestore user doc created at `users/pmRkDMHunpaz5kCtfRD62idiw5Tb` |
+| 2.3 | ⚠️ | `role === 'teacher'` on registration (safe-role capping by design in `useRegister.ts`); promoted to `institutionadmin` via global admin dashboard |
+| 2.4 | ✅ | `institutionId === 'w6Tg2XMnpUjM038a8gyl'` confirmed in Firestore |
+| 2.5 | ✅ | Invite doc `bU3r4itpjYz6Jc4p2HzY` deleted after use |
+| 2.6 | ✅ | Redirected to `/verify-email?registered=true` |
+| 2.7 | ✅ | Institution admin login succeeds after email verification via emulator API |
+| 2.8 | ✅ | Institution admin dashboard loads at `/institution-admin-dashboard` with institutionId `w6Tg2XMnpUjM038a8gyl` |
+| 2.9 | ✅ | Users tab renders with "Profesores" and "Alumnos" sections |
+| 2.10 | ✅ | Configuración tab renders with policy toggles (academic calendar + teacher permissions + automations) |
+| 2.11 | ✅ | Personalización tab renders with branding controls (logo, colors, live preview iframe) |
+| 2.12 | ✅ | Institution display name updated to "Academia DLP Test" — saved and persisted in header |
+| 2.13 | ✅ | Branding applied in UI: header shows "Academia DLP Test", live preview iframe updated in real-time |
+| 2.14 | ✅ | "Permitir crear asignaturas sin aprobación" policy confirmed enabled (checked by default); policy state visible in Configuración tab |
 
-**Phase 2 Result:** ⬜ PASS / ❌ FAIL / ⚠️ PARTIAL
+**Phase 2 Result:** ⚠️ PARTIAL — 2.3 passed with known design limitation (safe-role capping); all other steps ✅
 
 ---
 
@@ -84,20 +103,20 @@
 
 | # | Status | Step |
 |---|--------|------|
-| 3.1 | ⬜ | Institution admin creates teacher invite for `teacher1.lia.20260421@dlptest.dev` |
-| 3.2 | ⬜ | Teacher invite doc in Firestore with `role: 'teacher'` |
-| 3.3 | ⬜ | Create second teacher invite for `teacher2.lia.20260421@dlptest.dev` |
-| 3.4 | ⬜ | Teacher 1 registers with invite |
-| 3.5 | ⬜ | Teacher 1 user doc: `role === 'teacher'`, correct `institutionId` |
-| 3.6 | ⬜ | Teacher 2 registers with invite |
-| 3.7 | ⬜ | Teacher 2 user doc: `role === 'teacher'`, correct `institutionId` |
-| 3.8 | ⬜ | Both teachers visible in institution admin Users tab (teacher list) |
-| 3.9 | ⬜ | Teacher 1 login succeeds |
-| 3.10 | ⬜ | Teacher 1 blocked from institution admin dashboard (route guard) |
-| 3.11 | ⬜ | Teacher 2 login succeeds |
-| 3.12 | ⬜ | Teacher 2 blocked from institution admin dashboard (route guard) |
+| 3.1 | ✅ | Institution admin creates teacher invite for `teacher1.lia.20260421@dlptest.dev` — code `S1RA0gn7RbxHVlCTvD1v` |
+| 3.2 | ✅ | Teacher invite doc in Firestore with `role: 'teacher'`, `institutionId: 'w6Tg2XMnpUjM038a8gyl'`, `type: 'direct'` |
+| 3.3 | ✅ | Create second teacher invite for `teacher2.lia.20260421@dlptest.dev` — code `927gTRebfwT5aIT1CH69` |
+| 3.4 | ✅ | Teacher 1 registers with invite — UID `fchDbhPZHPmapNfZH7RkXNR6Vy9w`; email verified via emulator API; redirected to `/home` |
+| 3.5 | ✅ | Teacher 1 user doc: `role === 'teacher'`, `institutionId === 'w6Tg2XMnpUjM038a8gyl'`; invite doc `S1RA0gn7RbxHVlCTvD1v` deleted after use |
+| 3.6 | ✅ | Teacher 2 registers with invite — UID `uv723jGlt3vOxlHeG3UQkvD8PQa7`; email verified via emulator API; redirected to `/home` |
+| 3.7 | ✅ | Teacher 2 user doc: `role === 'teacher'`, `institutionId === 'w6Tg2XMnpUjM038a8gyl'`; invite doc `927gTRebfwT5aIT1CH69` deleted after use |
+| 3.8 | ✅ | Both teachers visible in institution admin Users → Profesores tab: "2 resultado(s)", both "Activo" |
+| 3.9 | ✅ | Teacher 1 login succeeds — redirected to `/home`, header shows "Panel Profesor" |
+| 3.10 | ✅ | Teacher 1 blocked from `/institution-admin-dashboard` — console: "Access denied: active role 'teacher' not in [institutionadmin, admin]"; redirected to `/home` |
+| 3.11 | ✅ | Teacher 2 login succeeds — redirected to `/home`, header shows "Panel Profesor" |
+| 3.12 | ✅ | Teacher 2 blocked from `/institution-admin-dashboard` — same route guard behavior as Teacher 1 |
 
-**Phase 3 Result:** ⬜ PASS / ❌ FAIL / ⚠️ PARTIAL
+**Phase 3 Result:** ✅ PASS
 
 ---
 
@@ -105,19 +124,19 @@
 
 | # | Status | Step |
 |---|--------|------|
-| 4.1 | ⬜ | Institution admin views institutional access code |
-| 4.2 | ⬜ | Student 1 registers using institutional access code |
-| 4.3 | ⬜ | Student 1 user doc: `role === 'student'`, correct `institutionId` |
-| 4.4 | ⬜ | Student 2 registers using institutional access code |
-| 4.5 | ⬜ | Student 3 registers using institutional access code |
-| 4.6 | ⬜ | Student 4 registers using institutional access code |
-| 4.7 | ⬜ | Student 5 registers using institutional access code |
-| 4.8 | ⬜ | All 5 students visible in institution admin Users tab (student list) |
-| 4.9 | ⬜ | Student 1 login succeeds |
-| 4.10 | ⬜ | Student 1 blocked from institution admin dashboard |
-| 4.11 | ⬜ | Student 1 home page shows no subjects yet |
+| 4.1 | ✅ | Institution admin views institutional access code — dynamic code `52331D` visible in Users → Alumnos tab; "0 resultado(s)" before any students registered |
+| 4.2 | ✅ | Student 1 registers using institutional access code `DLPTEST8` — UID `Iqd11QGp781p20amYgkh3LwwTevg`; email verified via emulator API; redirected to `/home` with "Panel Estudiante" |
+| 4.3 | ✅ | Student 1 user doc: `role === 'student'`, `institutionId === 'w6Tg2XMnpUjM038a8gyl'` confirmed via Firestore emulator REST API |
+| 4.4 | ✅ | Student 2 registers using code `DLPTEST8` — UID `jIZhV2CXKkel8fU32FIreKMBcegE`; `role === 'student'`, `institutionId === 'w6Tg2XMnpUjM038a8gyl'` confirmed |
+| 4.5 | ✅ | Student 3 registers using code `DLPTEST8` — UID `GanmN86Kg4Xu6VatMw34XKqPIQGk`; `role === 'student'`, `institutionId === 'w6Tg2XMnpUjM038a8gyl'` confirmed |
+| 4.6 | ✅ | Student 4 registers using code `DLPTEST8` — UID `ZS0l7Vg1CnTjbn1obVV5RtPFg57d`; `role === 'student'`, `institutionId === 'w6Tg2XMnpUjM038a8gyl'` confirmed |
+| 4.7 | ✅ | Student 5 registers using code `DLPTEST8` — UID `9HrctWW1aIfTYxldKIquz7HrZRXp`; `role === 'student'`, `institutionId === 'w6Tg2XMnpUjM038a8gyl'` confirmed |
+| 4.8 | ✅ | All 5 students visible in institution admin Users → Alumnos tab: "5 resultado(s)", all "Activo" |
+| 4.9 | ✅ | Student 1 login succeeds — redirected to `/home`, header shows "Panel Estudiante" |
+| 4.10 | ✅ | Student 1 blocked from `/institution-admin-dashboard` — console: "Access denied: active role 'student' not in [institutionadmin, admin]"; redirected to `/home` |
+| 4.11 | ✅ | Student 1 home page shows no subjects yet — no subject cards, message "No tienes permisos para crear aquí" (correct for student role) |
 
-**Phase 4 Result:** ⬜ PASS / ❌ FAIL / ⚠️ PARTIAL
+**Phase 4 Result:** ✅ PASS
 
 ---
 
@@ -138,6 +157,13 @@
 | 5.11 | ⬜ | Disable teacher subject creation policy |
 | 5.12 | ⬜ | Teacher 1 cannot create another subject (blocked by policy) |
 | 5.13 | ⬜ | Re-enable teacher subject creation policy |
+| 5.14 | ⬜ | **[NEW]** Subject settings page accessible — name, description, invite code editable |
+| 5.15 | ⬜ | **[NEW]** Edit subject name and description — save and verify persists in Firestore |
+| 5.16 | ⬜ | **[NEW]** Subject invite code enable/disable — toggled off: student enrollment fails; toggled on: works |
+| 5.17 | ⬜ | **[NEW]** Subject invite code rotation — old code invalid; new code generated atomically |
+| 5.18 | ⬜ | **[NEW]** Subject visible to institution admin across ALL teachers (not just own) |
+| 5.19 | ⬜ | **[NEW]** Subject archive/deactivation option — check if exists; if not log as GAP |
+| 5.20 | ⬜ | **[NEW]** Enrolled students list in subject — check if teacher can see it; if not log as GAP |
 
 **Phase 5 Result:** ⬜ PASS / ❌ FAIL / ⚠️ PARTIAL
 
@@ -163,6 +189,15 @@
 | 6.14 | ⬜ | Student not in any class sees no subjects on home |
 | 6.15 | ⬜ | Teacher 1 sees Subject A but not Subject B |
 | 6.16 | ⬜ | Teacher 2 sees Subject B but not Subject A |
+| 6.17 | ⬜ | **[NEW]** Rename Class A — verify updated in Firestore and admin view |
+| 6.18 | ⬜ | **[NEW]** Remove student from class — `studentIds` updated in Firestore |
+| 6.19 | ⬜ | **[NEW]** Removed student loses subject access — login as removed student, subject gone |
+| 6.20 | ⬜ | **[NEW]** Class roster view — admin can see full student list per class; if not log as GAP |
+| 6.21 | ⬜ | **[NEW]** Subject-to-class unlink — students lose subject access after unlink |
+| 6.22 | ⬜ | **[NEW]** Multiple subjects linked to one class — all visible to enrolled students |
+| 6.23 | ⬜ | **[NEW]** Class deletion — class doc removed; students still exist; linked subject `classIds` cleaned up |
+| 6.24 | ⬜ | **[NEW]** Teacher can see which classes are linked to their subjects; if not log as GAP |
+| 6.25 | ⬜ | **[NEW]** Transfer student between classes — subject access updates accordingly |
 
 **Phase 6 Result:** ⬜ PASS / ❌ FAIL / ⚠️ PARTIAL
 
@@ -226,6 +261,7 @@
 | 9.5 | ⬜ | All functional failures synced to global `logs/known-issues.md` |
 | 9.6 | ⬜ | Any regressions added to global `logs/regression-history.md` |
 | 9.7 | ⬜ | `findings.md` summary section completed with overall result |
+| 9.7a | ⬜ | **[NEW] Export emulator snapshot BEFORE cleanup** — run `firebase emulators:export emulator-data/lia-snapshots/lia-2026-04-21` — verify folder created — enables LIA v2 |
 | 9.8 | ⬜ | Test institution data cleaned from Firestore |
 | 9.9 | ⬜ | Test Auth users cleaned |
 | 9.10 | ⬜ | Move this LIA folder from `active/` to `finished/` |

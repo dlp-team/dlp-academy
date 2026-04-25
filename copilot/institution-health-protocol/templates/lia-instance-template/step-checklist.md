@@ -6,6 +6,24 @@
 
 ---
 
+## ⏸️ PAUSE CHECKPOINT PROTOCOL (MANDATORY)
+
+> **Every time you stop working on this LIA mid-run — whether closing VS Code, stopping the emulator, or ending the session — you MUST export the emulator state FIRST.**
+
+**Before stopping:**
+```bash
+firebase emulators:export emulator-data/lia-sessions/lia-YYYY-MM-DD-pause
+```
+
+**When resuming:**
+```bash
+firebase emulators:start --import=emulator-data/lia-sessions/lia-YYYY-MM-DD-pause
+```
+
+> ⚠️ If you forget to export before stopping, all emulator data (users, Firestore docs, Storage files) is permanently lost. You must restart from Phase 1.
+
+---
+
 ## Step Status Legend
 
 | Symbol | Meaning |
@@ -33,6 +51,7 @@
 | 0.8 | ⬜ | **No leftover Auth users:** No `lia-*` accounts from prior runs | `[HYBRID]` `[CRITICAL]` |
 | 0.9 | ⬜ | **App loads in browser:** `localhost:5173` loads without console errors | `[MANUAL]` `[CRITICAL]` |
 | 0.10 | ⬜ | **Complete environment-snapshot.md** before starting | `[MANUAL]` `[CRITICAL]` |
+| 0.11 | ⬜ | **Open live pages in VSCode:** Open the DLP web app (`http://localhost:5173`) and Firebase Emulator UI (`http://127.0.0.1:4000`) using the VSCode Simple Browser (Ctrl+Shift+P → "Simple Browser: Show") or external browser. Confirm both accessible. | `[MANUAL]` `[HIGH]` |
 
 **Phase 0 Result:** ⬜ PASS / ❌ FAIL
 

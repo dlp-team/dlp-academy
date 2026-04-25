@@ -131,9 +131,21 @@ copilot/institution-health-protocol/
 │   └── regression-history.md        ← Timeline: feature state changes across runs
 │
 └── templates/                       ← Master templates for new LIA instances
-    ├── lia-instance-template/       ← Copy this to spawn a new active instance
+    ├── lia-instance-template/       ← Copy this to spawn a new LIA v1 instance (full from-scratch run)
+    ├── lia-v2-instance-template/    ← Copy this to spawn a LIA v2 instance (uses a prior v1 emulator snapshot)
     └── architecture-doc-template.md ← Base template for new architecture documents
 ```
+
+---
+
+## LIA Version Guide
+
+| Version | Template | When to Use |
+|---------|----------|-------------|
+| **LIA v1** | `lia-instance-template/` | Full from-scratch audit: provisions new institution, new users, new content. Use for initial validation or after major changes. |
+| **LIA v2** | `lia-v2-instance-template/` | Starts from a saved emulator snapshot from a completed v1 run. Use to test advanced workflows, institution admin deep features, class management, and permission edge cases — without repeating all creation steps. Requires a snapshot from a prior v1 run exported to `emulator-data/lia-snapshots/`. |
+
+> **LIA v2 pre-condition:** The source LIA v1 run MUST have reached Phase 9 and executed step 9.7a (emulator snapshot export) before archiving.
 
 ---
 
