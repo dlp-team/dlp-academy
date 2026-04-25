@@ -6,6 +6,24 @@
 
 ---
 
+## ⏸️ PAUSE CHECKPOINT PROTOCOL (MANDATORY)
+
+> **Every time you stop working on this LIA mid-run, export the emulator state FIRST.**
+
+**Before stopping:**
+```bash
+firebase emulators:export emulator-data/lia-sessions/lia-v2-YYYY-MM-DD-pause
+```
+
+**When resuming:**
+```bash
+firebase emulators:start --import=emulator-data/lia-sessions/lia-v2-YYYY-MM-DD-pause
+```
+
+> ⚠️ If you forget to export, all in-progress emulator data is lost. You can restart by re-loading the original source snapshot at `emulator-data/lia-snapshots/[SOURCE-LIA-ID]/`, but any changes made during this run will be gone.
+
+---
+
 ## Step Status Legend
 
 | Symbol | Meaning |

@@ -7,6 +7,24 @@
 
 ---
 
+## ⏸️ PAUSE CHECKPOINT PROTOCOL (MANDATORY)
+
+> **Every time you stop working on a LIA mid-run — whether closing VS Code, stopping the emulator, or ending the session — you MUST export the emulator state FIRST.**
+
+**Before stopping:**
+```bash
+firebase emulators:export emulator-data/lia-sessions/lia-YYYY-MM-DD-pause
+```
+
+**When resuming:**
+```bash
+firebase emulators:start --import=emulator-data/lia-sessions/lia-YYYY-MM-DD-pause
+```
+
+> ⚠️ If you forget to export before stopping, all emulator data (users, Firestore docs, Storage files) is permanently lost and you must restart from Phase 1. This export is different from the final snapshot in step 9.7a — the final snapshot is for LIA v2 use; this one is purely for resuming in-progress work.
+
+---
+
 ## Step Status Legend
 
 | Symbol | Meaning |
